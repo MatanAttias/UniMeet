@@ -9,16 +9,16 @@ const Button = ({
     textStyle,
     title='',
     onPress=()=>{},
-    loading = true,
+    loading = false,
     hasShadow = true,
 }) => {
 
     const shadowStyle = {
         shadowColor: theme.colors.dark,
-        shadowOffset: {width: 0, height: 10 },
+        shadowOffset: {width: 0, height: 10},
         shadowOpacity: 0.2,
         shadowRadius: 8,
-        elevation: 4,
+        elevation: 4
     };
 
     if(loading){
