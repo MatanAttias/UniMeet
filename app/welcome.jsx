@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image } from 'react-native'
+import { StyleSheet, Text, View, Image, Pressable } from 'react-native'
 import React from 'react'
 import ScreenWrapper from '../components/ScreenWrapper'
 import { StatusBar } from 'expo-status-bar'
@@ -16,9 +16,10 @@ const Welcome = () => {
 
             {/* title */}
             <View style={{gap: 20}} >
-                <Text style={styles.title} >LinkUp!</Text>
+                <Text style={styles.title} >UniMeet - מקום להכיר להתחבר ולצמוח יחד</Text>
                 <Text style={styles.punchline} >
-                    Where every thought finds a home and every image tells a story.
+                ב-UniMeet כל אחד יכול להרגיש שייך. כאן תוכל להכיר חברים חדשים, ליצור קשרים אמיתיים ואפילו למצוא אהבה.
+                כי לכל אחד מגיע מקום מיוחד, ולכל אחד יש סיפור. ב-UniMeet, הסיפורים מתחברים ויוצרים קהילה אחת תומכת ומכילה.
                 </Text>
             </View>
         
@@ -30,6 +31,16 @@ const Welcome = () => {
                     buttonStyle={{marginHorizontal: wp(3)}}
                     onPress={()=>{}}
                 />
+                <View style={styles.bottomTextContainer}>
+                    <Text style={styles.loginText}>
+                        Already have an account!
+                    </Text>
+                    <Pressable>
+                        <Text style={[styles.loginText, {color: theme.colors.primaryDark, fontWeight: theme.fonts.semibold}]}>
+                            Login
+                        </Text>
+                    </Pressable>
+                </View>
             </View>
         </View>
     </ScreenWrapper>
@@ -54,9 +65,9 @@ const styles = StyleSheet.create({
     },
     title: {
         color: theme.colors.text,
-        frontSize: hp(4),
+        fontSize: hp(4),
         textAlign: 'center',
-        frontWeight: theme.fonts.extraBold
+        fontWeight: theme.fonts.extraBold
     },
     punchline: {
         textAlign: 'center',
@@ -68,6 +79,17 @@ const styles = StyleSheet.create({
         gap: 30,
         width: '100%'
 
+    },
+    bottomTextContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 5
+    },
+    loginText: {
+        textAlign: 'center',
+        color: theme.colors.text,
+        fontSize: hp(1.6)
     }
 
 })

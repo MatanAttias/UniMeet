@@ -2,23 +2,25 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 import { theme } from '../constants/theme'
 import { hp, wp } from '../constants/helpers/common'
+import Loading from './Loading'
 
 const Button = ({
     buttonStyle,
     textStyle,
     title='',
     onPress=()=>{},
-    loading = false,
+    loading = true,
     hasShadow = true,
 }) => {
 
     const shadowStyle = {
         shadowColor: theme.colors.dark,
-        shadowOffset: {width: 0, height:10 },
+        shadowOffset: {width: 0 height:10 },
         shadowOpacity: 0.2,
-        shadowRadius: 8,
+        shaowRadius: 8,
         elevation: 4
     }
+
 
   return (
     <Pressable onPress={onPress} style={[styles.button, buttonStyle,hasShadow && shadowStyle ]} >
@@ -34,7 +36,7 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.primary,
         height: hp(6),
         justifyContent: 'center',
-        alignContent: 'center',
+        alignItems: 'center',
         borderCurve: 'continuous',
         borderRadius: theme.radius.xl
     },
