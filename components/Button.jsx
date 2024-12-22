@@ -15,9 +15,9 @@ const Button = ({
 
     const shadowStyle = {
         shadowColor: theme.colors.dark,
-        shadowOffset: {width: 0 height:10 },
+        shadowOffset: {width: 0, height:10 },
         shadowOpacity: 0.2,
-        shaowRadius: 8,
+        shadowRadius: 8,
         elevation: 4
     }
 
