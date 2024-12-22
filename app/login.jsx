@@ -16,7 +16,7 @@ const Login = () => {
     const emailRef = useRef("")
     const passwordRef = useRef("")
     const [loading, setLoading] = useState(false)
-    
+
     const onSubmit = async ()=>{
         if(!emailRef.current || !passwordRef.current){
             Alert.alert('Login', "Please fill all the fields!")
@@ -64,7 +64,7 @@ const Login = () => {
             <Text style={styles.footerText}>
                 Don't have an account?
             </Text>
-            <Pressable>
+            <Pressable onPress={() => router.push('signUp')}>
                 <Text style={[styles.footerText, {color: theme.colors.primaryDark, fontWeight: theme.fonts.semibold}]} >Sign up</Text>
             </Pressable>
         </View>

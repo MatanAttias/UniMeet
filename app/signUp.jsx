@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TextInput, Pressable, Alert } from 'react-native'
+import { StyleSheet, Text, View, Pressable, Alert } from 'react-native'
 import React, { useRef, useState } from 'react'
 import ScreenWrapper from '../components/ScreenWrapper'
 import Icon from '../assets/icons'
@@ -13,17 +13,24 @@ import Button from '../components/Button'
 
 const SignUp = () => {
     const router = useRouter()
-    const emailRef = useRef("")
     const nameRef = useRef("")
+    const lastNameRef = useRef("")
+    const emailRef = useRef("")
     const passwordRef = useRef("")
+    const confirmPassRef = useRef("")
     const [loading, setLoading] = useState(false)
     
     const onSubmit = async ()=>{
-        if(!emailRef.current || !passwordRef.current){
+        if(!emailRef.current || !passwordRef.current || !nameRef.current || !confirmPassRef.current){
             Alert.alert('Sign Up', "Please fill all the fields!")
             return
         }
         // good to go
+    }
+
+    if(passwordRef.current !== confirmPassRef.current){
+      Alert.alert('Sign up', 'Passwords do not match!')
+      return  
     }
 
   return (
@@ -49,10 +56,26 @@ const SignUp = () => {
                 onChangeText={value=> nameRef.current = value}
             />
             <Input
+                icon={<Icon name="user" size={26} strokeWidth={1.6} />}
+                placeholder='Enter your last name'
+                onChangeText={value=> lastNameRef.current = value}
+            />
+            <Input
+                icon={<Icon name="mail" size={26} strokeWidth={0.5} />}
+                placeholder='Enter your email'
+                onChangeText={value=> emailRef.current = value}
+            />
+            <Input
                 icon={<Icon name="lock" size={26} strokeWidth={1.6} />}
                 placeholder='Enter your password'
                 secureTextEntry
                 onChangeText={value=> passwordRef.current = value}
+            />
+            <Input
+                icon={<Icon name="confirm" size={26} strokeWidth={1.6} />}
+                placeholder='Confirm password'
+                secureTextEntry
+                onChangeText={value=> confirmPassRef.current = value}
             />
             {/* login button */}
             <Button title={'Sign up'} loading={loading} onPress={onSubmit} />
@@ -63,7 +86,7 @@ const SignUp = () => {
             <Text style={styles.footerText}>
                 Already have an account!
             </Text>
-            <Pressable>
+            <Pressable onPress={() => router.push('login')}>
                 <Text style={[styles.footerText, {color: theme.colors.primaryDark, fontWeight: theme.fonts.semibold}]} >Login</Text>
             </Pressable>
         </View>
