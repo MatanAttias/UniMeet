@@ -9,6 +9,7 @@ import { hp, wp } from '../constants/helpers/common'
 import { theme } from '../constants/theme'
 import Input from '../components/input'
 import Button from '../components/Button'
+import { supabase } from '../lib/supabase'
 
 
 const SignUp = () => {
@@ -21,17 +22,41 @@ const SignUp = () => {
     const [loading, setLoading] = useState(false)
     
     const onSubmit = async ()=>{
-        if(!emailRef.current || !passwordRef.current || !nameRef.current || !confirmPassRef.current){
+        if(!emailRef.current || !passwordRef.current || !nameRef.current || !lastNameRef.current || !confirmPassRef.current){
             Alert.alert('Sign Up', "Please fill all the fields!")
             return
         }
-        // good to go
+        if(passwordRef.current !== confirmPassRef.current){
+            Alert.alert('Sign up', 'Passwords do not match!')
+            return  
+          }
+
+        let name = nameRef.current.trim()
+        let lastName = lastNameRef.current.trim()
+        let email = emailRef.current.trim()
+        let password = passwordRef.current.trim()
+        let confirmPass = confirmPassRef.current.trim()
+
+        setLoading(true)
+
+        const {data: {session}, error} = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                name
+              }
+            }
+        })
+
+        setLoading(false)
+        console.log('session: ', session)
+        console.log('error: ', error)
+        if(error){
+          Alert.alert('Sign up', error.message)
+        }
     }
 
-    if(passwordRef.current !== confirmPassRef.current){
-      Alert.alert('Sign up', 'Passwords do not match!')
-      return  
-    }
 
   return (
     <ScreenWrapper bg="white">
