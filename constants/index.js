@@ -1,2 +1,0 @@
-export const supabaseUrl = 'https://surhaerqaladvpmyhudu.supabase.co'
-export const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cmhhZXJxYWxhZHZwbXlodWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ5NDgzMTUsImV4cCI6MjA1MDUyNDMxNX0.d_54mxL8XcARFBkENalDBLD-HKz5wnZ1oixCUhq7Lyk'
