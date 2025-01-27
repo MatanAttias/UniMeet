@@ -9,7 +9,6 @@ import { hp, wp } from '../constants/helpers/common'
 import { theme } from '../constants/theme'
 import Input from '../components/input'
 import Button from '../components/Button'
-import { supabase } from '../lib/supabase'
 
 
 const SignUp = () => {
@@ -39,15 +38,7 @@ const SignUp = () => {
 
         setLoading(true)
 
-        const {data: {session}, error} = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              data: {
-                name
-              }
-            }
-        })
+       
 
         setLoading(false)
         console.log('session: ', session)
