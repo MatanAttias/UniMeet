@@ -1,4 +1,3 @@
-import { Text, View } from 'react-native'
 import React from 'react'
 import Home from './Home'
 import { theme } from '../../constants/theme'
@@ -50,7 +49,7 @@ const icons = {
 }
 
 const Icon = ({name, ...props}) => {
-    const IconComponent = icons[name];
+    const IconComponent = icons[name];  
   return (
     <IconComponent
         height={props.size || 24}
@@ -64,3 +63,4 @@ const Icon = ({name, ...props}) => {
 }
 
 export default Icon
+
