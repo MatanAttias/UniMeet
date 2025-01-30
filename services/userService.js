@@ -5,7 +5,7 @@ export const getUserData = async (userId) =>{
 
     try{
         const { data, error } = await supabase
-        .from('user')
+        .from('users')
         .select()
         .eq('id', userId)
         .single()
@@ -25,7 +25,7 @@ export const updateUser = async (userId, data) =>{
 
     try{
         const { error } = await supabase
-        .from('user')
+        .from('users')
         .update(data) 
         .eq('id', userId);
  
