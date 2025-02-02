@@ -42,6 +42,8 @@ const Login = () => {
         if(error){
             Alert.alert('Login', error.message);
         }
+
+        
     }
 
   return (

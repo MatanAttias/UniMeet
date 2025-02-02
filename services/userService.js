@@ -1,41 +1,54 @@
-import User from "../assets/icons/User";
-import { supabase } from "../lib/supabase";
+import { createClient } from '@supabase/supabase-js';
+import { supabaseUrl, supabaseAnonKey } from '../constants';
+import { supabase } from '../lib/supabase'; 
 
-export const getUserData = async (userId) =>{
+console.log("🔍 Supabase inside userService:", supabase);
 
-    try{
+export const getUserData = async (userId) => {
+    console.log("🔍 Fetching user data for:", userId);
+    if (!supabase) {
+        console.error("❌ Supabase is undefined in getUserData");
+        return { success: false, msg: "Supabase not initialized" };
+    }
+
+    try {
         const { data, error } = await supabase
-        .from('users')
-        .select()
-        .eq('id', userId)
-        .single()
-        
-        if(error){
-            return {success: false, msg: error?.message};
+            .from("users")
+            .select()
+            .eq("id", userId)
+            .single();
+
+        if (error) {
+            return { success: false, msg: error.message };
         }
-        return{success: true, data};
-
-    }catch(error){
-        console.log('got error: ', error);
-        return {success: false, msg: error.message};
+        return { success: true, data };
+    } catch (error) {
+        console.log("❌ Error in getUserData:", error);
+        return { success: false, msg: error.message };
     }
-}
+};
 
-export const updateUser = async (userId, data) =>{
+export const updateUser = async (userId, data) => {
+    console.log("🔍 Using Supabase inside updateUser:", supabase);
 
-    try{
+    if (!supabase) {
+        console.error("❌ Supabase is undefined inside updateUser!");
+        return { success: false, msg: "Supabase not initialized" };
+    }
+
+    try {
         const { error } = await supabase
-        .from('users')
-        .update(data) 
-        .eq('id', userId);
- 
-        if(error){
-            return {success: false, msg: error?.message};
-        }
-        return{success: true, data};
+            .from("users")
+            .update(data)
+            .eq("id", userId);
 
-    }catch(error){
-        console.log('got error: ', error);
-        return {success: false, msg: error.message};
+        if (error) {
+            console.log("❌ Update Error:", error);
+            return { success: false, msg: error?.message };
+        }
+        return { success: true, data };
+    } catch (error) {
+        console.log("❌ Catch Error in updateUser:", error);
+        return { success: false, msg: error.message };
     }
-}
+};

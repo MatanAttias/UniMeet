@@ -1,5 +1,5 @@
-import { Alert, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React from 'react'
+import { Alert, Pressable, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native'
+import React, { useEffect, useState } from 'react'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import { useRouter } from 'expo-router';
 import Header from '../../components/Header';
@@ -11,102 +11,105 @@ import Icon from '../../assets/icons';
 import Avatar from '../../components/Avatar';
 
 const Profile = () => {
-    const {user, setAuth} = useAuth();
+    const { user, setUserData, setAuth } = useAuth();
     const router = useRouter();
+    const [loading, setLoading] = useState(true);
 
-    const onLogout = async () =>{
-            //setAuth(null);
-            const {error} = await supabase.auth.signOut();
-            if(error){
-                Alert.alert('Sign Out', "Error signing out!");
+    useEffect(() => {
+        const fetchUserData = async () => {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('users') // ודא שזה שם הטבלה שלך ב-Supabase
+                .select('*')
+                .eq('id', user?.id)
+                .single(); // מביא רק שורה אחת
+
+            if (error) {
+                console.error("Error fetching user data:", error);
+                Alert.alert("Error", "Failed to fetch user data.");
+            } else {
+                setUserData(data); // מעדכן את הקונטקסט עם הנתונים החדשים
             }
+            setLoading(false);
+        };
+
+        if (user?.id) {
+            fetchUserData();
+        }
+    }, [user?.id]); // רץ כאשר מזהה המשתמש משתנה
+
+    const onLogout = async () => {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            Alert.alert('Sign Out', "Error signing out!");
+        } else {
+            setAuth(null); // איפוס המשתמש
+            router.replace('/login'); // ניתוב למסך ההתחברות
+        }
+    };
+
+    if (loading) {
+        return <ActivityIndicator size="large" color={theme.colors.primary} />;
     }
 
+    return (
+        <ScreenWrapper bg="white">
+            <UserHeader user={user} router={router} handleLogout={onLogout} />
+        </ScreenWrapper>
+    );
+};
 
-    const handleLogout = async ()=>{
-        Alert.alert('Confirm', "Are you sure you want to log out?", [
-          {
-            text: 'Cancel',
-            onPress: ()=> console.log('modal cancelled'),
-            style: 'cancel'
-          },
-          {
-            text: 'Logout',
-            onPress: ()=> onLogout(),
-            style: 'destructive'
-          }
-        ])
+const UserHeader = ({ user, router, handleLogout }) => {
+    return (
+        <View style={{ flex: 1, backgroundColor: 'white', paddingHorizontal: wp(4) }}>
+            <View>
+                <Header title="Profile" mb={30} />
+                <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                    <Icon name="logout" color={theme.colors.rose} />
+                </TouchableOpacity>
+            </View>
 
-    }
-  return (
-    <ScreenWrapper bg="white">
-      <UserHeader user={user} router={router} handleLogout={handleLogout} />
-    </ScreenWrapper>
-  )
-}
+            <View style={styles.container}>
+                <View style={{ gap: 15 }}>
+                    <View style={styles.avatarContainer}>
+                        <Avatar
+                            uri={user?.image}
+                            size={hp(12)}
+                            rounded={theme.radius.xxl * 1.4}
+                        />
+                        <Pressable style={styles.editIcon} onPress={() => router.push('editProfile')}>
+                            <Icon name="edit" strokeWidth={2.5} size={20} />
+                        </Pressable>
+                    </View>
 
-const UserHeader = ({user, router, handleLogout}) => {
+                    {/* שם וכתובת */}
+                    <View style={{ alignItems: 'center', gap: 4 }}>
+                        <Text style={styles.userName}>{user?.name || "No name"}</Text>
+                        <Text style={styles.infoText}>{user?.address || "No address"}</Text>
+                    </View>
 
-  return (
-    <View style={{flex: 1, backgroundColor: 'white', paddingHorizontal: wp(4)}}>
-      <View>
-          <Header title="Profile" mb={30} />
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-              <Icon name="logout" color={theme.colors.rose} />
-          </TouchableOpacity>
-      </View>  
-
-      <View style={styles.container}> 
-          <View style={{gap: 15}}>
-              <View style={styles.avatarContainer}>
-                  <Avatar
-                    uri={user?.image}
-                    size={hp(12)}
-                    rounded={theme.radius.xxl*1.4}
-                  />
-                  <Pressable style={styles.editIcon} onPress={()=> router.push('editProfile')}>
-                    <Icon name="edit" strokeWidth={2.5} size={20} />
-                  </Pressable>
-              </View>
-
-              {/* user name and adress*/}
-              <View style={{alignItems: 'center', gap: 4}}>
-              <Text style={styles.userName}>{user && user.user_metadata.name}</Text>
-                <Text style={styles.infoText}>{user && user.adress}</Text>
-              </View>
-
-              {/* email, phone, bio*/}
-              <View style={{gap: 10}}>
-                  <View style={styles.info}>
-                      <Icon name="mail" size={20} color={theme.colors.textLight}/>
-                      <Text style={styles.infoText}>
-                         {user && user.email}
-                      </Text>
-                  </View>
-                  {
-                    user && user.phoneNumber && (
-                      <View style={styles.info}>
-                          <Icon name="call" size={24} color={theme.colors.textLight} />    
-                          <Text style={styles.infoText}>
-                              {user && user.phoneNumber}
-                          </Text>
-                      </View>
-                  )
-                }
-
-                {
-                  user && user.bio && (
-                    <Text style={styles.infoText}>{user.bio}</Text>
-                  )
-                }
-              </View>
-          </View>
+                    {/* אימייל, טלפון וביוגרפיה */}
+                    <View style={{ gap: 10 }}>
+                        <View style={styles.info}>
+                            <Icon name="mail" size={20} color={theme.colors.textLight} />
+                            <Text style={styles.infoText}>{user?.email || "No email"}</Text>
+                        </View>
+                        {user?.phoneNumber && (
+                            <View style={styles.info}>
+                                <Icon name="call" size={24} color={theme.colors.textLight} />
+                                <Text style={styles.infoText}>{user.phoneNumber}</Text>
+                            </View>
+                        )}
+                        {user?.bio && <Text style={styles.infoText}>{user.bio}</Text>}
+                    </View>
+                </View>
+            </View>
         </View>
-    </View>
-  )
-}
+    );
+};
 
-export default Profile
+export default Profile;
+
 
 const styles = StyleSheet.create({
   container: {
