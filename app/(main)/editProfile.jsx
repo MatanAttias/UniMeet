@@ -82,6 +82,7 @@ const EditProfile = () => {
           setUser({...user, image: result.assets[0]});
         }
     }
+    
     const onSubmit = async () => {
       let userData = { ...user };
       setLoading(true);
