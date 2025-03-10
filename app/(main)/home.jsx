@@ -9,12 +9,17 @@ import { useRouter } from 'expo-router';
 import Icon from '../../assets/icons';
 import Avatar from '../../components/Avatar';
 
+
 const Home = () => {
   
     const {user, setAuth} = useAuth();
     const router = useRouter();
-    
-    console.log('user: ', user);
+
+
+
+    // console.log('user: ', user);
+
+
 
 
    return (

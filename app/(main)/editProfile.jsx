@@ -19,6 +19,7 @@ import { supabase } from '../../lib/supabase';
 
 
 
+
 const EditProfile = () => {
 
     const {user: currentUser, setUserData} = useAuth();
