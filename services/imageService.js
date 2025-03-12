@@ -12,11 +12,13 @@ export const getUserImageSrc = (imagePath) => {
     }
 };
 
-export const getSupabaseFileUrl = filePath =>{
-    if(filePath){
-        return {uri: `${supabaseUrl}/storage/v1/object/public/uploads/profiles/${filePath}`}
+export const getSupabaseFileUrl = filePath => {
+    if (!filePath) return undefined; // החזרת undefined במקרה שאין נתיב
+    if (filePath.startsWith("http")) {
+        return { uri: filePath }; // אם זה כבר URL מלא, מחזירים אותו כמו שהוא
     }
-}
+    return { uri: `${supabaseUrl}/storage/v1/object/public/uploads/${filePath}` };
+};
 
 export const uploadFile = async (folderName, fileUri, isImage = true) => {
     try {
