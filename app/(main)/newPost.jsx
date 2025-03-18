@@ -14,6 +14,7 @@ import { Image } from 'expo-image'
 import { getSupabaseFileUrl } from '../../services/imageService'
 import {Video} from 'expo-av'
 import { createOrUpdatePost } from '../../services/PostService'
+import { useRouter } from 'expo-router';
 
 const NewPost = () => {
 
@@ -22,6 +23,7 @@ const NewPost = () => {
   const editorRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(null);
+  const router = useRouter();
 
   const onPick=async (isImage)=>{
 
@@ -77,31 +79,30 @@ const NewPost = () => {
       return getSupabaseFileUrl(file)?.uri
   }
 
-  const onSubmit = async ()=>{
-      if(!bodyRef.current && !file){
-          Alert.alert('Post', "please choose an image or add post body")
-          return
-      }
-
-      let data = {
-          file,
-          body: bodyRef.current,
-          userId: user?.id,
-
-      }
-
-      // create post
-      setLoading(true)
-      let res = await createOrUpdatePost(data)
-      setLoading(false)
-      if(res.success){
-          setFile(null)
-          bodyRef.current = ''
-          editorRef.current?.setContentHTML('')
-          router.back()
-      }else{
-          Alert.alert('Post', res.msg)
-      }
+  const onSubmit = async () => {
+    if (!bodyRef.current && !file) {
+      Alert.alert('Post', "please choose an image or add post body");
+      return;
+    }
+  
+    let data = {
+      file,
+      body: bodyRef.current,
+      userId: user?.id,
+    };
+  
+    // create post
+    setLoading(true);
+    let res = await createOrUpdatePost(data);
+    setLoading(false);
+    if (res.success) {
+      setFile(null);
+      bodyRef.current = '';
+      editorRef.current?.setContentHTML('');
+      router.replace('/home'); // חזרה למסך הבית
+    } else {
+      Alert.alert('Post', res.msg);
+    }
   }
 
   return (
