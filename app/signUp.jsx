@@ -34,13 +34,18 @@ const SignUp = () => {
       const { data: { session }, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            name
+          }
+        }
       })
 
       setLoading(false)
 
-      console.log('session: ', session)
+     //console.log('session: ', session)
       if (error) {
-        console.log('error: ', error)
+        //console.log('error: ', error)
         Alert.alert('Sign up', error.message)
       } else {
         Alert.alert('Sign up', 'Account created successfully!')
@@ -87,7 +92,7 @@ const SignUp = () => {
             onChangeText={value => passwordRef.current = value}
           />
 
-          {/* login button */}
+          {/* signup button */}
           <Button title={'Sign up'} loading={loading} onPress={onSubmit} />
         </View>
 
