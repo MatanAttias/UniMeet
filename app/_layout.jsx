@@ -8,8 +8,11 @@ import { getUserData } from '../services/userService'
 import { LogBox } from 'react-native';
 
 
-LogBox.ignoreLogs(['Warning: TNodeChildrenRenderer', 'Warning: MemoizedTNodeRenderer', 'Warning: TRenderEngineProvider'])
-const _layout = ()=>{
+LogBox.ignoreLogs(['Warning: TNodeChildrenRenderer',
+     'Warning: MemoizedTNodeRenderer',
+      'Warning: TRenderEngineProvider'])
+      
+const _layout = ()=> {
     return (
 
        <AuthProvider>
@@ -41,14 +44,22 @@ const MainLayout = () => {
 
     const updateUserData = async (user, email)=>{
         let res = await getUserData(user?.id);
-        if(res,success) setUserData({...res.data, email});
+        if(res?.success) setUserData({...res.data, email});
     }
   return (
     <Stack
         screenOptions={{
             headerShown: false
         }}
-    />
+    >
+        <Stack.Screen
+            name="(main)/postDetails"
+            options={{
+                presentation: 'modal'
+            }}
+        />
+    </Stack>   
+
   )
 }
 

@@ -32,14 +32,15 @@ export const createOrUpdatePost = async (post)=>{
 
 }
 
-export const fetchPosts = async (limit=20)=>{
+export const fetchPosts = async (limit=15)=>{
     try{
         const {data, error} = await supabase
         .from('posts')
         .select(`
             *,
             user: users (id, name, image),
-            postLikes (*)
+            postLikes (*),
+            comments (count)
         `)
         .order('created_at', {ascending: false})
         .limit(limit)
@@ -53,6 +54,34 @@ export const fetchPosts = async (limit=20)=>{
 
     }catch(error){
         console.log('fetchPosts error: ', error)
+        return {success: false, msg: 'Could not fetch the posts'}
+    }
+
+}
+
+export const fetchPostDetails = async (postId)=>{
+    try{
+        const {data, error} = await supabase
+        .from('posts')
+        .select(`
+            *,
+            user: users (id, name, image),
+            postLikes (*),
+            comments (*, user: users(id, name, image))
+        `)
+        .eq('id', postId)
+        .order("created_at", {ascending: false, foreignTable: 'comments'})
+        .single()
+
+        if(error){
+            console.log('fetchPostDetails error: ', error)
+            return {success: false, msg: 'Could not fetch the posts'}
+        }
+
+        return {success: true, data: data}
+
+    }catch(error){
+        console.log('fetchPostDetails error: ', error)
         return {success: false, msg: 'Could not fetch the posts'}
     }
 
@@ -78,9 +107,31 @@ export const createPostLike = async (postLike)=>{
         console.log('postLike error: ', error)
         return {success: false, msg: 'Could not like the post'}
     }
-
 }
 
+
+export const createComment = async (comment)=>{
+    try{
+       
+        const {data, error} = await supabase
+        .from('comments')
+        .insert(comment)
+        .select()
+        .single()
+
+        if(error){
+            console.log('comment error: ', error)
+            return {success: false, msg: 'Could not create your comment'}
+        }
+
+        return {success: true, data: data}
+
+    }catch(error){
+        console.log('comment error: ', error)
+        return {success: false, msg: 'Could not create your comment'}
+    }
+
+}
 export const removePostLike = async (postId, userId)=>{
     try{
        

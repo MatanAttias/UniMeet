@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Alert, Share } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { theme } from '../constants/theme';
 import { hp, wp } from '../constants/helpers/common';
@@ -11,7 +11,7 @@ import { getSupabaseFileUrl } from '../services/imageService';
 import { Video } from 'expo-av';
 import { createPostLike, removePostLike } from '../services/PostService';
 import { stripHtmlTags } from '../constants/helpers/common';
-import { Share } from 'react-native';
+import Loading from '../components/Loading';
 
 const textStyles = {
     color: theme.colors.dark,
@@ -26,7 +26,11 @@ const tagsStyles = {
     h4: { color: theme.colors.dark },
 };
 
-const PostCard = ({ item, currentUser, router, hasShadow = true }) => {
+const PostCard = ({ item, currentUser, router, hasShadow = true, showMoreIcon = true }) => {
+    if (!item) {
+        return <Text style={{ color: 'red', textAlign: 'center' }}>Error: Post data is missing</Text>;
+    }
+    
     const shadowStyles = {
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.06,
@@ -34,130 +38,98 @@ const PostCard = ({ item, currentUser, router, hasShadow = true }) => {
         elevation: 1,
     };
     
-    const [likes, setLikes] = useState([])
+    const [likes, setLikes] = useState(item?.postLikes || []);
+    const [loading, setLoading] = useState(false);
 
-    useEffect(()=>  {
-        setLikes(item?.postLikes)
-    },[])
+    useEffect(() => {
+        setLikes(item?.postLikes || []);
+    }, [item]);
 
-    const openPostDetails = () => {};
+    const openPostDetails = () => {
+        if (!showMoreIcon) return;
+        router.push({ pathname: 'postDetails', params: { postId: item?.id } });
+    };
 
-    const onLike = async ()=>{
-        if(liked){
-            // remove like
-            let updatedLikes = likes.filter(like=> like.userId!=currentUser?.id)
-
-            setLikes([...updatedLikes])
-            let res = await removePostLike(item?.id, currentUser?.id)
-            console.log('removed like: ', res)
-            if(!res.success){
-                Alert.alert('Post', 'Something went wrong!')
+    const onLike = async () => {
+        if (!currentUser) return;
+        
+        const liked = likes.some(like => like.userId === currentUser?.id);
+        
+        if (liked) {
+            const updatedLikes = likes.filter(like => like.userId !== currentUser?.id);
+            setLikes(updatedLikes);
+            let res = await removePostLike(item?.id, currentUser?.id);
+            if (!res?.success) {
+                Alert.alert('Post', 'Something went wrong!');
             }
-        }else{
-            // create like
-            let data = {
-                userId: currentUser?.id,
-                postId: item?.id
-            }
-            setLikes([...likes, data])
-            let res = await createPostLike(data)
-            console.log('added like: ', res)
-            if(!res.success){
-                Alert.alert('Post', 'Something went wrong!')
+        } else {
+            const newLike = { userId: currentUser?.id, postId: item?.id };
+            setLikes([...likes, newLike]);
+            let res = await createPostLike(newLike);
+            if (!res?.success) {
+                Alert.alert('Post', 'Something went wrong!');
             }
         }
-    
-    }
+    };
 
-    const onShare = async ()=> {
-        let content = {message: stripHtmlTags(item?.body)}
-        Share.share(content)
-    }
-    const createdAt = moment(item?.created_at).format('D MMM');
-    const liked = likes.filter(like=> like.userId == currentUser?.id)[0]? true: false
+    const onShare = async () => {
+        if (!item?.body) return;
+        Share.share({ message: stripHtmlTags(item.body) });
+    };
+
+    const createdAt = item?.created_at ? moment(item.created_at).format('D MMM') : "Unknown";
+    const liked = likes.some(like => like.userId === currentUser?.id);
 
     return (
         <View style={[styles.container, hasShadow && shadowStyles]}>
             <View style={styles.header}>
-                {/* user info and post time */}
                 <View style={styles.userInfo}>
-                    <Avatar
-                        size={hp(4.5)}
-                        uri={item?.user?.image}
-                        rounded={theme.radius.md}
-                    />
+                    <Avatar size={hp(4.5)} uri={item?.user?.image} rounded={theme.radius.md} />
                     <View style={{ gap: 2 }}>
-                        <Text style={styles.username}>{item?.user?.name}</Text>
+                        <Text style={styles.username}>{item?.user?.name || 'Unknown User'}</Text>
                         <Text style={styles.postTime}>{createdAt}</Text>
                     </View>
                 </View>
-
-                <TouchableOpacity onPress={openPostDetails}>
-                    <Icon name="threeDotsHorizontal" size={hp(3.4)} strokeWidth={3} color={theme.colors.text} />
-                </TouchableOpacity>
+                {showMoreIcon && (
+                    <TouchableOpacity onPress={openPostDetails}>
+                        <Icon name="threeDotsHorizontal" size={hp(3.4)} strokeWidth={3} color={theme.colors.text} />
+                    </TouchableOpacity>
+                )}
             </View>
 
-            {/* post body & media */}
             <View style={styles.content}>
                 <View style={styles.postBody}>
                     {item?.body && (
-                        <RenderHtml
-                            contentWidth={wp(100)}
-                            source={{ html: item?.body }}
-                            tagsStyles={tagsStyles}
-                        />
+                        <RenderHtml contentWidth={wp(100)} source={{ html: item.body }} tagsStyles={tagsStyles} />
                     )}
                 </View>
-
-                {/* post media (images or videos) */}
                 {item?.file && (
                     item.file.includes('postImages') ? (
-                        <Image
-                            source={getSupabaseFileUrl(item?.file)}
-                            transition={100}
-                            style={styles.postMedia}
-                            contentFit="cover"
-                        />
+                        <Image source={getSupabaseFileUrl(item.file)} transition={100} style={styles.postMedia} contentFit="cover" />
                     ) : item.file.includes('postVideos') ? (
-                        <Video
-                            style={[styles.postMedia, { height: hp(30) }]}
-                            source={{ uri: getSupabaseFileUrl(item?.file)?.uri }}
-                            useNativeControls
-                            resizeMode="cover"
-                            isLooping
-                            onError={(e) => console.log("Video Error:", e)} // לוג לשגיאות
-                        />
+                        <Video style={[styles.postMedia, { height: hp(30) }]} source={{ uri: getSupabaseFileUrl(item.file)?.uri }} useNativeControls resizeMode="cover" isLooping onError={(e) => console.log("Video Error:", e)} />
                     ) : null
                 )}
             </View>
-            {/* like comments and share */}
             <View style={styles.footer}>
                 <View style={styles.footerButton}>
                     <TouchableOpacity onPress={onLike}>
-                        <Icon name="heart" size={24} fill={liked? theme.colors.rose: 'transparent'} color={liked? theme.colors.rose: theme.colors.textLight} />
+                        <Icon name="heart" size={24} fill={liked ? theme.colors.rose : 'transparent'} color={liked ? theme.colors.rose : theme.colors.textLight} />
                     </TouchableOpacity>
-                    <Text style={styles.count}>
-                        {
-                            likes?.length
-                        }
-                    </Text>
+                    <Text style={styles.count}>{likes.length}</Text>
                 </View>
                 <View style={styles.footerButton}>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={openPostDetails}>
                         <Icon name="comment" size={24} color={theme.colors.textLight} />
                     </TouchableOpacity>
-                    <Text style={styles.count}>
-                        {
-                            0
-                        }
-                    </Text>
+                    <Text style={styles.count}>{item?.comment?.[0]?.count || 0}</Text>
                 </View>
                 <View style={styles.footerButton}>
-                    <TouchableOpacity onPress={onShare}>
-                        <Icon name="share" size={24} color={theme.colors.textLight} />
-                    </TouchableOpacity>
-                   
-                   
+                    {loading ? <Loading size="small" /> : (
+                        <TouchableOpacity onPress={onShare}>
+                            <Icon name="share" size={24} color={theme.colors.textLight} />
+                        </TouchableOpacity>
+                    )}
                 </View>
             </View>
         </View>
@@ -171,7 +143,6 @@ const styles = StyleSheet.create({
         gap: 10,
         marginBottom: 15,
         borderRadius: theme.radius.xxl * 1.1,
-        borderCurve: 'continuous',
         padding: 10,
         paddingVertical: 12,
         backgroundColor: 'white',
@@ -206,29 +177,19 @@ const styles = StyleSheet.create({
         height: hp(40),
         width: '100%',
         borderRadius: theme.radius.xl,
-        borderCurve: 'continuous',
-    },
-    postBody: {
-        marginLeft: 5,
     },
     footer: {
-        flexDirection: 'row', // שורה אופקית
-        alignItems: 'center', // יישור אנכי למרכז
-        flexWrap: 'nowrap', // מונע עטיפה לשורות חדשות
-        paddingHorizontal: 5, // מרווח קטן בצדדים
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 5,
     },
     footerButton: {
-        flexDirection: 'row', // סמל וטקסט זה לצד זה
-        alignItems: 'center', // יישור אנכי
-        gap: 10, // מרווח קטן בין סמל לטקסט
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
     },
     count: {
         color: theme.colors.text,
         fontSize: hp(1.8),
-    },
-    tightFooterButton: {
-        flexDirection: 'row-reverse', // מציג את האלמנטים מימין לשמאל
-        alignItems: 'center',
-        gap: 0,
     },
 });

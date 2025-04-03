@@ -19,10 +19,10 @@ const Profile = () => {
         const fetchUserData = async () => {
             setLoading(true);
             const { data, error } = await supabase
-                .from('users') // ודא שזה שם הטבלה שלך ב-Supabase
+                .from('users') 
                 .select('*')
                 .eq('id', user?.id)
-                .single(); // מביא רק שורה אחת
+                .single(); 
 
             if (error) {
                 console.error("Error fetching user data:", error);
@@ -43,8 +43,8 @@ const Profile = () => {
         if (error) {
             Alert.alert('Sign Out', "Error signing out!");
         } else {
-            setAuth(null); // איפוס המשתמש
-            router.replace('/login'); // ניתוב למסך ההתחברות
+            setAuth(null); 
+            router.replace('/login'); 
         }
     };
 
