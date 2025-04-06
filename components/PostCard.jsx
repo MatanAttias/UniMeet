@@ -122,7 +122,7 @@ const PostCard = ({ item, currentUser, router, hasShadow = true, showMoreIcon = 
                     <TouchableOpacity onPress={openPostDetails}>
                         <Icon name="comment" size={24} color={theme.colors.textLight} />
                     </TouchableOpacity>
-                    <Text style={styles.count}>{item?.comment?.[0]?.count || 0}</Text>
+                    <Text style={styles.count}>{item?.comments?.[0]?.count || 0}</Text>
                 </View>
                 <View style={styles.footerButton}>
                     {loading ? <Loading size="small" /> : (

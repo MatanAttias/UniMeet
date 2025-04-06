@@ -52,6 +52,22 @@ const Profile = () => {
         return <ActivityIndicator size="large" color={theme.colors.primary} />;
     }
 
+    const handleLogout = async ()=>{
+        //show confirm modal
+        Alert.alert('Confirm', "Are you sure you want to log out?", [
+            {
+                text: 'Cancel',
+                onPress: ()=> console.log('modal cancelled'),
+                styles: 'cancel'
+            },
+            {
+                text: 'Logout',
+                onPress: ()=> onLogout(),
+                style: 'destructive'
+            }
+        ])
+    }
+
     return (
         <ScreenWrapper bg="white">
             <UserHeader user={user} router={router} handleLogout={onLogout} />
