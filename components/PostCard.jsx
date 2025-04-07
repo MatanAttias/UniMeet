@@ -26,7 +26,15 @@ const tagsStyles = {
     h4: { color: theme.colors.dark },
 };
 
-const PostCard = ({ item, currentUser, router, hasShadow = true, showMoreIcon = true }) => {
+const PostCard = ({ item,
+    currentUser,
+    router,
+    hasShadow = true,
+    showMoreIcon = true,
+    showDelete = false,
+    onDelete=()=>{},
+    onEdit =()=>{}, 
+    }) => {
     if (!item) {
         return <Text style={{ color: 'red', textAlign: 'center' }}>Error: Post data is missing</Text>;
     }
@@ -75,7 +83,23 @@ const PostCard = ({ item, currentUser, router, hasShadow = true, showMoreIcon = 
     const onShare = async () => {
         if (!item?.body) return;
         Share.share({ message: stripHtmlTags(item.body) });
-    };
+    }
+
+
+    const handlePostDelete =()=>{
+         Alert.alert('Confirm', "Are you sure you want to do this?", [
+            {
+                text: 'Cancel',
+                onPress: ()=> console.log('modal cancelled'),
+                styles: 'cancel'
+            },
+            {
+                text: 'Delete',
+                onPress: ()=> onDelete(item),
+                style: 'destructive'
+            }
+        ])
+    }
 
     const createdAt = item?.created_at ? moment(item.created_at).format('D MMM') : "Unknown";
     const liked = likes.some(like => like.userId === currentUser?.id);
@@ -90,11 +114,28 @@ const PostCard = ({ item, currentUser, router, hasShadow = true, showMoreIcon = 
                         <Text style={styles.postTime}>{createdAt}</Text>
                     </View>
                 </View>
-                {showMoreIcon && (
-                    <TouchableOpacity onPress={openPostDetails}>
-                        <Icon name="threeDotsHorizontal" size={hp(3.4)} strokeWidth={3} color={theme.colors.text} />
-                    </TouchableOpacity>
-                )}
+
+                {
+                    showMoreIcon && (
+                        <TouchableOpacity onPress={openPostDetails}>
+                            <Icon name="threeDotsHorizontal" size={hp(3.4)} strokeWidth={3} color={theme.colors.text} />
+                        </TouchableOpacity>
+                    )
+                }
+
+                {
+                    showDelete && currentUser.id == item?.userId && (
+                        <View style = {styles.actions}>
+                             <TouchableOpacity onPress={()=>onEdit(item)}>
+                                <Icon name="edit" size={hp(2.5)} color={theme.colors.text} />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity onPress={handlePostDelete}>
+                                <Icon name="delete" size={hp(2.5)} color={theme.colors.rose} />
+                            </TouchableOpacity>
+                        </View>
+                    )
+                }
             </View>
 
             <View style={styles.content}>
@@ -187,6 +228,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
+    },
+    actions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 18,
     },
     count: {
         color: theme.colors.text,

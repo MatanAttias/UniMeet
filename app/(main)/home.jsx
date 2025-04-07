@@ -23,19 +23,29 @@ const Home = () => {
 
     const [posts, setPosts] = useState([])
     
-    const handePostEvent = async (payload) => {
+    const handlePostEvent = async (payload) => {
+        //console.log('payload: ', payload)
         if (payload.eventType === 'INSERT' && payload?.new?.id) {
             let newPost = { ...payload.new }
             let res = await getUserData(newPost.userId)
+            newPost.postLikes = []
+            newPost.comments = [{count: 0}]
             newPost.user = res.success ? res.data : {}
             setPosts(prevPosts => [newPost, ...prevPosts])
+        }
+        if(payload.eventType == 'DELETE' && payload.old.id){
+            setPosts(prevPosts=>{
+                let updatedPost = prevPosts.filter(post=> post.id!= payload.old.id)
+                return updatedPost
+            })
+
         }
     }
 
     useEffect(() => {
         let postChannel = supabase
             .channel('posts')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, handePostEvent)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, handlePostEvent)
             .subscribe()
 
         //getPosts()
@@ -49,7 +59,6 @@ const Home = () => {
         if (!hasMore) return null;
         limit = limit + 4;
     
-        console.log('fetching post: ', limit);
         let res = await fetchPosts(limit);
         if (res.success) {
             if (posts.length === res.data.length) setHasMore(false);
