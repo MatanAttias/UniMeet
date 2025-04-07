@@ -1,5 +1,5 @@
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import Header from '../../components/Header'
 import { hp, wp } from '../../constants/helpers/common'
@@ -14,16 +14,29 @@ import { Image } from 'expo-image'
 import { getSupabaseFileUrl } from '../../services/imageService'
 import {Video} from 'expo-av'
 import { createOrUpdatePost } from '../../services/PostService'
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const NewPost = () => {
 
+  const post = useLocalSearchParams()
+  console.log('post', post)
   const { user } = useAuth();
   const bodyRef = useRef("");
   const editorRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(null);
   const router = useRouter();
+
+  useEffect(()=> {
+    if(post && post.id){
+      bodyRef.current = post.body
+      setFile(post.file || null)
+      setTimeout(()=> {
+        editorRef?.current?.setContentHTML(post.body)
+      }, 300)
+
+    }
+  },[])
 
   const onPick=async (isImage)=>{
 
@@ -90,6 +103,8 @@ const NewPost = () => {
       body: bodyRef.current,
       userId: user?.id,
     };
+
+    if(post && post.id) data.id = post.id
   
     // create post
     setLoading(true);
@@ -179,7 +194,7 @@ const NewPost = () => {
         <View style={styles.buttonContainer}>
           <Button
             buttonStyle={{ height: hp(6.2), width: '100%' }} // הכפתור ימלא את כל הרוחב
-            title="Post"
+            title={post && post.id? "Update": "Post"}
             loading={loading}
             hasShadow={false}
             onPress={onSubmit}

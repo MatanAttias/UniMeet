@@ -32,31 +32,59 @@ export const createOrUpdatePost = async (post)=>{
 
 }
 
-export const fetchPosts = async (limit=15)=>{
-    try{
-        const {data, error} = await supabase
-        .from('posts')
-        .select(`
-            *,
-            user: users (id, name, image),
-            postLikes (*),
-            comments (count)
-        `)
-        .order('created_at', {ascending: false})
-        .limit(limit)
-
-        if(error){
+export const fetchPosts = async (limit=15, userId)=>{
+    if(userId){
+        try{
+            const {data, error} = await supabase
+            .from('posts')
+            .select(`
+                *,
+                user: users (id, name, image),
+                postLikes (*),
+                comments (count)
+            `)
+            .order('created_at', {ascending: false})
+            .eq('userId', userId)
+            .limit(limit)
+    
+            if(error){
+                console.log('fetchPosts error: ', error)
+                return {success: false, msg: 'Could not fetch the posts'}
+            }
+    
+            return {success: true, data: data}
+    
+        }catch(error){
             console.log('fetchPosts error: ', error)
             return {success: false, msg: 'Could not fetch the posts'}
         }
-
-        return {success: true, data: data}
-
-    }catch(error){
-        console.log('fetchPosts error: ', error)
-        return {success: false, msg: 'Could not fetch the posts'}
+    
+    }else{
+        try{
+            const {data, error} = await supabase
+            .from('posts')
+            .select(`
+                *,
+                user: users (id, name, image),
+                postLikes (*),
+                comments (count)
+            `)
+            .order('created_at', {ascending: false})
+            .limit(limit)
+    
+            if(error){
+                console.log('fetchPosts error: ', error)
+                return {success: false, msg: 'Could not fetch the posts'}
+            }
+    
+            return {success: true, data: data}
+    
+        }catch(error){
+            console.log('fetchPosts error: ', error)
+            return {success: false, msg: 'Could not fetch the posts'}
+        }
+    
     }
-
 }
 
 export const fetchPostDetails = async (postId)=>{

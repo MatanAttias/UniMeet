@@ -20,7 +20,6 @@ const Home = () => {
     const { user, setAuth } = useAuth();
     const router = useRouter();
     const [hasMore, setHasMore] = useState(true)
-
     const [posts, setPosts] = useState([])
     
     const handlePostEvent = async (payload) => {
@@ -40,6 +39,18 @@ const Home = () => {
             })
 
         }
+        if (payload.eventType === 'UPDATE' && payload?.new?.id) {
+            setPosts(prevPosts=>{
+                let updatePosts = prevPosts.map(post=> {
+                    if(post.id==payload.new.id){
+                        post.body = payload.new.body
+                        post.file = payload.new.file
+                    }
+                    return post
+                })
+                return updatePosts
+            })
+        }
     }
 
     useEffect(() => {
@@ -57,7 +68,7 @@ const Home = () => {
 
     const getPosts = async () => {
         if (!hasMore) return null;
-        limit = limit + 4;
+        limit = limit + 10;
     
         let res = await fetchPosts(limit);
         if (res.success) {

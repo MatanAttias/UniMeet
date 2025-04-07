@@ -1,4 +1,4 @@
-import { Alert, Pressable, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native'
+import { Alert, Pressable, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, FlatList } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import { useRouter } from 'expo-router';
@@ -9,11 +9,18 @@ import { theme } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import Icon from '../../assets/icons';
 import Avatar from '../../components/Avatar';
+import { fetchPosts } from '../../services/PostService';
+import PostCard from '../../components/PostCard';
+import Loading from '../../components/Loading';
 
+
+var limit = 0
 const Profile = () => {
     const { user, setUserData, setAuth } = useAuth();
     const router = useRouter();
     const [loading, setLoading] = useState(true);
+    const [posts, setPosts] = useState([])
+    const [hasMore, setHasMore] = useState(true)
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -48,6 +55,22 @@ const Profile = () => {
         }
     };
 
+    const getPosts = async () => {
+            if (!hasMore) return null;
+            limit = limit + 10;
+        
+            let res = await fetchPosts(limit, user.id);
+            if (res.success) {
+                if (posts.length === res.data.length) setHasMore(false);
+        
+                setPosts(prevPosts => {
+                    const postIds = new Set(prevPosts.map(post => post.id));
+                    const uniquePosts = res.data.filter(post => !postIds.has(post.id));
+                    return [...prevPosts, ...uniquePosts];
+                });
+            }
+        };
+
     if (loading) {
         return <ActivityIndicator size="large" color={theme.colors.primary} />;
     }
@@ -70,10 +93,39 @@ const Profile = () => {
 
     return (
         <ScreenWrapper bg="white">
-            <UserHeader user={user} router={router} handleLogout={onLogout} />
+           <FlatList
+                data={posts}f
+                ListEmptyComponent={<UserHeader user={user} router={router} handleLogout={onLogout} />}
+                ListHeaderComponentStyle={{marginBottom: 30}}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.listStyle}
+                keyExtractor={(item, index) => item.id ? `post-${item.id}` : `default-${index}`}
+                renderItem={({ item }) => <PostCard  
+                        item={item}
+                        currentUser={user}
+                        router={router}
+                />
+                }
+                
+                onEndReached={() => {
+                    getPosts()
+                }}
+                onEndReachedThreshold={0}
+                ListFooterComponent={hasMore ? (
+                    <View style={{ marginVertical: posts.length == 0 ? 100 : 30 }}>
+                        <Loading />
+                    </View>
+                ) : (
+                    <View style={{ marginVertical: 30 }}>
+                        <Text style={styles.noPosts}> No more posts</Text>
+                    </View>
+                )}
+            />
         </ScreenWrapper>
     );
 };
+
+
 
 const UserHeader = ({ user, router, handleLogout }) => {
     return (

@@ -121,7 +121,8 @@ const PostDetails = () => {
     }
 
     const onEditPost = async (item)=>{
-        console.log('edit post: ', item)
+        router.back()
+        router.push({pathname: 'newPost' , params: {...item}})
     }
 
     if (startLoading) {
