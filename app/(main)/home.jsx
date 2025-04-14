@@ -19,8 +19,10 @@ const Home = () => {
 
     const { user, setAuth } = useAuth();
     const router = useRouter();
-    const [hasMore, setHasMore] = useState(true)
+
     const [posts, setPosts] = useState([])
+    const [hasMore, setHasMore] = useState(true)
+    const [notificationCount, setNotificationCount] = useState(0)
     
     const handlePostEvent = async (payload) => {
         //console.log('payload: ', payload)
@@ -53,6 +55,15 @@ const Home = () => {
         }
     }
 
+
+    const handleNewNotification = async (payload)=>{
+        console.log('got nre notification: ', payload)
+        if(payload.eventType=='INSERT' && payload.new.id){
+            setNotificationCount(prev=> prev+1)
+        }
+    }
+
+
     useEffect(() => {
         let postChannel = supabase
             .channel('posts')
@@ -61,8 +72,15 @@ const Home = () => {
 
         //getPosts()
 
+        let notificationChannel = supabase
+        .channel('posts')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `receiverId=eq.${user.id}`}, handleNewNotification)
+        .subscribe()
+
         return () => {
             supabase.removeChannel(postChannel)
+            supabase.removeChannel(notificationChannel)
+
         }
     }, [])
 
@@ -89,15 +107,22 @@ const Home = () => {
                 <View style={styles.header}>
                     <Text style={styles.title}>UniMeet</Text>
                     <View style={styles.icons}>
-
-                        <Pressable onPress={() => router.push('notifications')}>
+                        <Pressable onPress={() => {
+                            setNotificationCount(0)
+                            router.push('notifications')
+                        }}>
                             <Icon name="heart" size={hp(4.5)} strokeWidth={2} color={theme.colors.textDark} />
+                            {
+                                notificationCount>0 && (
+                                    <View style={styles.pill}>
+                                        <Text style={styles.pillText}>{notificationCount}</Text>
+                                    </View>
+                                )
+                            }
                         </Pressable>
-
                         <Pressable onPress={() => router.push('newPost')}>
                             <Icon name="plus" type="entypo" size={hp(4.5)} color="black" />
                         </Pressable>
-
                         <Pressable onPress={() => router.push('profile')}>
                             <Avatar
                                 uri={user?.image}

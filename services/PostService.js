@@ -112,7 +112,6 @@ export const fetchPostDetails = async (postId)=>{
         console.log('fetchPostDetails error: ', error)
         return {success: false, msg: 'Could not fetch the posts'}
     }
-
 }
 
 export const createPostLike = async (postLike)=>{
