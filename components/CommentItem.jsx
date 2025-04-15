@@ -13,9 +13,20 @@ const CommentItem = ({
     onDelete = ()=>{},
     highlight = false
 }) => {
-    const createdAt = moment(item?.created_at).format('d MMM')
-    const handleDelete = () =>{
-        
+    const createdAt = moment(item?.created_at).format('D MMM')
+        const handleDelete = () =>{
+            Alert.alert('Confirm', "Are you sure you want to do this?", [
+                {
+                    text: 'Cancel',
+                    onPress: ()=> console.log('modal cancelled'),
+                    styles: 'cancel'
+                },
+                {
+                    text: 'Delete',
+                    onPress: ()=> onDelete(item),
+                    style: 'destructive'
+                }
+            ])
         
     }
   return (

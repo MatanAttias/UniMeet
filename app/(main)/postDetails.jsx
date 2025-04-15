@@ -25,18 +25,26 @@ const PostDetails = () => {
     const [loading, setLoading] = useState(false);
     const [post, setPost] = useState(null);
 
-    const handleNewComment = async (payload) =>{
-        console.log('got new comment ', payload.new)
-        if(payload.new){
-            let newComment = {...payload.new}
-            let res = await getUserData(newComment.userId)
-            newComment.user = res.success? res.data: {}
-            setPost(prevPost =>{
-                return { 
+    const handleNewComment = async (payload) => {
+        console.log('got new comment ', payload.new);
+    
+        if (payload.new) {
+            let newComment = { ...payload.new };
+    
+            // ודא שיש תאריך יצירה
+            if (!newComment.created_at) {
+                newComment.created_at = new Date().toISOString(); // תאריך נוכחי כגיבוי
+            }
+    
+            let res = await getUserData(newComment.userId);
+            newComment.user = res.success ? res.data : {};
+    
+            setPost(prevPost => {
+                return {
                     ...prevPost,
                     comments: [newComment, ...prevPost.comments]
-                }
-            })
+                };
+            });
         }
     }
 

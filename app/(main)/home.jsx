@@ -23,28 +23,27 @@ const Home = () => {
     const [posts, setPosts] = useState([])
     const [hasMore, setHasMore] = useState(true)
     const [notificationCount, setNotificationCount] = useState(0)
-    
+    const [refreshing, setRefreshing] = useState(false)
+
     const handlePostEvent = async (payload) => {
-        //console.log('payload: ', payload)
         if (payload.eventType === 'INSERT' && payload?.new?.id) {
             let newPost = { ...payload.new }
             let res = await getUserData(newPost.userId)
             newPost.postLikes = []
-            newPost.comments = [{count: 0}]
+            newPost.comments = [{ count: 0 }]
             newPost.user = res.success ? res.data : {}
             setPosts(prevPosts => [newPost, ...prevPosts])
         }
-        if(payload.eventType == 'DELETE' && payload.old.id){
-            setPosts(prevPosts=>{
-                let updatedPost = prevPosts.filter(post=> post.id!= payload.old.id)
+        if (payload.eventType == 'DELETE' && payload.old.id) {
+            setPosts(prevPosts => {
+                let updatedPost = prevPosts.filter(post => post.id != payload.old.id)
                 return updatedPost
             })
-
         }
         if (payload.eventType === 'UPDATE' && payload?.new?.id) {
-            setPosts(prevPosts=>{
-                let updatePosts = prevPosts.map(post=> {
-                    if(post.id==payload.new.id){
+            setPosts(prevPosts => {
+                let updatePosts = prevPosts.map(post => {
+                    if (post.id == payload.new.id) {
                         post.body = payload.new.body
                         post.file = payload.new.file
                     }
@@ -55,14 +54,12 @@ const Home = () => {
         }
     }
 
-
-    const handleNewNotification = async (payload)=>{
+    const handleNewNotification = async (payload) => {
         console.log('got nre notification: ', payload)
-        if(payload.eventType=='INSERT' && payload.new.id){
-            setNotificationCount(prev=> prev+1)
+        if (payload.eventType == 'INSERT' && payload.new.id) {
+            setNotificationCount(prev => prev + 1)
         }
     }
-
 
     useEffect(() => {
         let postChannel = supabase
@@ -70,34 +67,44 @@ const Home = () => {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, handlePostEvent)
             .subscribe()
 
-        //getPosts()
-
         let notificationChannel = supabase
-        .channel('posts')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `receiverId=eq.${user.id}`}, handleNewNotification)
-        .subscribe()
+            .channel('posts')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `receiverId=eq.${user.id}` }, handleNewNotification)
+            .subscribe()
 
         return () => {
             supabase.removeChannel(postChannel)
             supabase.removeChannel(notificationChannel)
-
         }
     }, [])
 
     const getPosts = async () => {
         if (!hasMore) return null;
         limit = limit + 10;
-    
+
         let res = await fetchPosts(limit);
         if (res.success) {
             if (posts.length === res.data.length) setHasMore(false);
-    
+
             setPosts(prevPosts => {
                 const postIds = new Set(prevPosts.map(post => post.id));
                 const uniquePosts = res.data.filter(post => !postIds.has(post.id));
                 return [...prevPosts, ...uniquePosts];
             });
         }
+    };
+
+    const refreshPosts = async () => {
+        setRefreshing(true);
+    
+        let res = await fetchPosts(10); // נביא תמיד רק את 10 הפוסטים הכי עדכניים
+        if (res.success) {
+            setHasMore(true);
+            setPosts(res.data); // נחליף את כל הפוסטים הנוכחיים בחדשים
+            limit = res.data.length; // נעדכן את ה-limit בהתאם לכמות שהגיעה
+        }
+    
+        setRefreshing(false);
     };
 
     return (
@@ -113,7 +120,7 @@ const Home = () => {
                         }}>
                             <Icon name="heart" size={hp(4.5)} strokeWidth={2} color={theme.colors.textDark} />
                             {
-                                notificationCount>0 && (
+                                notificationCount > 0 && (
                                     <View style={styles.pill}>
                                         <Text style={styles.pillText}>{notificationCount}</Text>
                                     </View>
@@ -143,6 +150,8 @@ const Home = () => {
                 {/* posts */}
                 <FlatList
                     data={posts}
+                    refreshing={refreshing}
+                    onRefresh={refreshPosts}
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.listStyle}
                     keyExtractor={(item, index) => item.id ? `post-${item.id}` : `default-${index}`}
@@ -177,9 +186,7 @@ export default Home
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        // paddingHorizontal: wp(4)
     },
-
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -187,13 +194,11 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         marginHorizontal: wp(4),
     },
-
     title: {
         color: theme.colors.text,
         fontSize: hp(3.2),
         fontWeight: theme.fonts.bold,
     },
-
     avatarImage: {
         height: hp(4.3),
         width: hp(4.3),
@@ -202,25 +207,21 @@ const styles = StyleSheet.create({
         borderColor: theme.colors.gray,
         borderWidth: 3,
     },
-
     icons: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
         gap: 18,
     },
-
     listStyle: {
         paddingTop: 20,
         paddingHorizontal: wp(4),
     },
-
     noPosts: {
         fontSize: hp(2),
         textAlign: 'center',
         color: theme.colors.text,
     },
-
     pill: {
         position: 'absolute',
         right: -10,
@@ -232,7 +233,6 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         backgroundColor: theme.colors.roseLight,
     },
-
     pillText: {
         color: 'white',
         fontSize: hp(1.2),
