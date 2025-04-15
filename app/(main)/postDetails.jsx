@@ -60,6 +60,7 @@ const PostDetails = () => {
             }
         }, [])
 
+
     const getPostDetails = async () => {
         let res = await fetchPostDetails(postId);
         if (res.success) setPost(res.data);
@@ -203,7 +204,7 @@ const PostDetails = () => {
                             <CommentItem
                                 key={comment?.id?.toString()}
                                 item={comment}
-                                onDelete={onDeleteComment}
+                                onDelete={() => onDeleteComment(comment)}
                                 highlight = {commentId == commentId}
                                 canDelete = {user.id == comment.userId || user.id == post.userId}
                             />

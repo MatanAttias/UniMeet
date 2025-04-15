@@ -15,8 +15,14 @@ const CommentItem = ({
 }) => {
     const createdAt = moment(item?.created_at).format('d MMM')
     const handleDelete = () =>{
-        
-        
+        Alert.alert(
+            "מחיקת תגובה",
+            "האם אתה בטוח שברצונך למחוק את התגובה?",
+            [
+              { text: "ביטול", style: "cancel" },
+              { text: "מחק", onPress: onDelete, style: "destructive" }
+            ]
+        )
     }
   return (
     <View style={styles.container}>
@@ -40,7 +46,7 @@ const CommentItem = ({
                 </View>
                 {
                     canDelete && (
-                        <TouchableOpacity onPress={handleDelete }>
+                        <TouchableOpacity onPress={handleDelete}>
                             <Icon name="delete" size={20} color={theme.colors.rose} />
                         </TouchableOpacity>
                     )
