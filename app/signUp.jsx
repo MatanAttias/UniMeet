@@ -17,6 +17,7 @@ const SignUp = () => {
   const emailRef = useRef("")
   const passwordRef = useRef("")
   const [loading, setLoading] = useState(false)
+  const [userType, setUserType] = useState('user')
 
   const onSubmit = async () => {
     if (!emailRef.current || !passwordRef.current) {
@@ -36,7 +37,8 @@ const SignUp = () => {
         password,
         options: {
           data: {
-            name
+            name,
+            type: userType // 👈 שמירת הסוג בפרופיל המשתמש
           }
         }
       })
@@ -91,6 +93,29 @@ const SignUp = () => {
             secureTextEntry
             onChangeText={value => passwordRef.current = value}
           />
+           <View style={{ flexDirection: 'row', gap: 15 }}>
+            <Pressable onPress={() => setUserType('user')}>
+              <Text style={{
+                padding: 10,
+                backgroundColor: userType === 'user' ? theme.colors.primary : '#ccc',
+                color: 'white',
+                borderRadius: 5,
+              }}>
+                משתמש רגיל
+              </Text>
+            </Pressable>
+
+            <Pressable onPress={() => setUserType('parent')}>
+              <Text style={{
+                padding: 10,
+                backgroundColor: userType === 'parent' ? theme.colors.primary : '#ccc',
+                color: 'white',
+                borderRadius: 5,
+              }}>
+                הורה
+              </Text>
+            </Pressable>
+            </View>
 
           {/* signup button */}
           <Button title={'Sign up'} loading={loading} onPress={onSubmit} />
