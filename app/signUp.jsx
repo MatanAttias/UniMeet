@@ -1,31 +1,31 @@
-// app/signUp.jsx
-
-import { StyleSheet, Text, View, Pressable, Alert } from 'react-native'
 import React, { useRef, useState } from 'react'
+import { StyleSheet, Text, View, Pressable, Alert } from 'react-native'
+import { useRouter, useLocalSearchParams } from 'expo-router'
 import ScreenWrapper from '../components/ScreenWrapper'
 import Icon from '../assets/icons'
 import { StatusBar } from 'expo-status-bar'
 import BackButton from '../components/BackButton'
-import { useRouter } from 'expo-router'
 import { hp, wp } from '../constants/helpers/common'
 import { theme } from '../constants/theme'
 import Input from '../components/input'
 import Button from '../components/Button'
 import { supabase } from '../lib/supabase'
+import React, { useRef, useState } from 'react'
 
-const SignUp = () => {
+
+export default function SignUp() {
   const router = useRouter()
+  const params = useLocalSearchParams()
+  const role = params.role || 'user'  
 
   const nameRef = useRef('')
   const emailRef = useRef('')
   const passwordRef = useRef('')
   const [loading, setLoading] = useState(false)
-  const [userType, setUserType] = useState('user') // יכול להיות 'user' או 'parent'
 
   const onSubmit = async () => {
-    if (!emailRef.current || !passwordRef.current) {
-      Alert.alert('Sign Up', 'Please fill all the fields!')
-      return
+    if (!emailRef.current.trim() || !passwordRef.current.trim()) {
+      return Alert.alert('Sign Up', 'Please fill all the fields!')
     }
 
     const name = nameRef.current.trim()
@@ -33,41 +33,24 @@ const SignUp = () => {
     const password = passwordRef.current.trim()
 
     setLoading(true)
-    try {
-      // שונה: שיניתי את השדה metadata מ־type ל־role
-      // ושיניתי את הפירוק כדי לקבל את אובייקט data המלא במקום רק session
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name,
-            role: userType  // שונה: השתמשתי ב־role במקום type
-          }
-        }
-      })
-
-      setLoading(false)
-      if (error) {
-        Alert.alert('Sign up', error.message)
-      } else {
-        // שונה: הוספת לוג לקונסולה כדי לוודא מה התקבל ב‑user_metadata
-        console.log('New user metadata:', data.user.user_metadata)
-
-        // שונה: הצגת הודעה עם סוג המשתמש שנשמר
-        Alert.alert(
-          'Sign up',
-          `Account created successfully as ${data.user.user_metadata.role}`
-        )
-        router.push('login') // מעבר לעמוד ההתחברות
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name, role }
       }
-    } catch (error) {
-      console.error('Unexpected error:', error)
+    })
+    setLoading(false)
+
+    if (error) {
+      Alert.alert('Sign up', error.message)
+    } else {
+      console.log('New user metadata:', data.user.user_metadata)
       Alert.alert(
         'Sign up',
-        'An unexpected error occurred. Please try again.'
+        `Account created successfully as ${data.user.user_metadata.role}`
       )
-      setLoading(false)
+      router.push('login')
     }
   }
 
@@ -108,37 +91,6 @@ const SignUp = () => {
             onChangeText={value => (passwordRef.current = value)}
           />
 
-          {/* בחירת סוג משתמש */}
-          <View style={{ flexDirection: 'row', gap: 15 }}>
-            <Pressable onPress={() => setUserType('user')}>
-              <Text
-                style={{
-                  padding: 10,
-                  backgroundColor:
-                    userType === 'user' ? theme.colors.primary : '#ccc',
-                  color: 'white',
-                  borderRadius: 5
-                }}
-              >
-                משתמש רגיל
-              </Text>
-            </Pressable>
-            <Pressable onPress={() => setUserType('parent')}>
-              <Text
-                style={{
-                  padding: 10,
-                  backgroundColor:
-                    userType === 'parent' ? theme.colors.primary : '#ccc',
-                  color: 'white',
-                  borderRadius: 5
-                }}
-              >
-                הורה
-              </Text>
-            </Pressable>
-          </View>
-
-          {/* כפתור הרשמה */}
           <Button title="Sign up" loading={loading} onPress={onSubmit} />
         </View>
 
@@ -149,10 +101,7 @@ const SignUp = () => {
             <Text
               style={[
                 styles.footerText,
-                {
-                  color: theme.colors.primaryDark,
-                  fontWeight: theme.fonts.semibold
-                }
+                { color: theme.colors.primaryDark, fontWeight: theme.fonts.semibold }
               ]}
             >
               Login
@@ -163,8 +112,6 @@ const SignUp = () => {
     </ScreenWrapper>
   )
 }
-
-export default SignUp
 
 const styles = StyleSheet.create({
   container: {
