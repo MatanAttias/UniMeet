@@ -26,11 +26,11 @@ export default function SelectType() {
 
         <Pressable
           style={({ pressed }) => [styles.button, pressed && styles.pressed]}
-          onPress={handleSelect('user')}
+          onPress={() => router.push('/signUpUser')}
           android_ripple={{ color: theme.colors.primary + '20' }}
           accessibilityLabel="צור חשבון אישי"
         >
-          <Text style={styles.btnText}>צור חשבון אישי</Text>
+        <Text style={styles.btnText}>צור חשבון אישי</Text>
         </Pressable>
       </View>
     </SafeAreaView>

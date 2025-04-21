@@ -10,7 +10,6 @@ import { theme } from '../constants/theme'
 import Input from '../components/input'
 import Button from '../components/Button'
 import { supabase } from '../lib/supabase'
-import React, { useRef, useState } from 'react'
 
 
 export default function SignUp() {
