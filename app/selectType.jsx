@@ -2,23 +2,35 @@ import React from 'react'
 import { SafeAreaView, View, Text, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { hp, wp } from '../constants/helpers/common'
-import { theme } from '../constants/theme'
 
 export default function SelectType() {
   const router = useRouter()
+
   const handleSelect = (role) => () => {
     router.push({ pathname: '/signUp', params: { role } })
   }
 
+  const handleSelectUser = () => {
+    router.push('/signUpUser')
+  }
+
+  const handleBack = () => {
+    router.push('/welcome')
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
+      {/* כפתור חזור מעוצב */}
+      <Pressable style={styles.backToWelcomeButton} onPress={handleBack}>
+        <Text style={styles.backToWelcomeText}>חזור</Text>
+      </Pressable>
+
       <View style={styles.container}>
         <Text style={styles.title}>איך נרצה להכיר אותך?</Text>
 
         <Pressable
           style={({ pressed }) => [styles.button, pressed && styles.pressed]}
           onPress={handleSelect('parent')}
-          android_ripple={{ color: theme.colors.primary + '20' }}
           accessibilityLabel="צור חשבון הורה"
         >
           <Text style={styles.btnText}>צור חשבון הורה</Text>
@@ -26,11 +38,10 @@ export default function SelectType() {
 
         <Pressable
           style={({ pressed }) => [styles.button, pressed && styles.pressed]}
-          onPress={() => router.push('/signUpUser')}
-          android_ripple={{ color: theme.colors.primary + '20' }}
+          onPress={handleSelectUser}
           accessibilityLabel="צור חשבון אישי"
         >
-        <Text style={styles.btnText}>צור חשבון אישי</Text>
+          <Text style={styles.btnText}>צור חשבון אישי</Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -40,7 +51,7 @@ export default function SelectType() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#2A262F',
   },
   container: {
     flex: 1,
@@ -53,27 +64,42 @@ const styles = StyleSheet.create({
   title: {
     fontSize: hp(3),
     fontWeight: '700',
-    color: theme.colors.text,
+    color: '#FFB3C1',
     textAlign: 'center',
   },
   button: {
     width: '80%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#3E3A45',
     paddingVertical: hp(2),
     borderRadius: 12,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.85,
   },
   btnText: {
     fontSize: hp(2.2),
-    color: theme.colors.primary,
+    color: '#FFB3C1',
     fontWeight: '600',
+  },
+  backToWelcomeButton: {
+    position: 'absolute',
+    top: hp(4),
+    left: hp(4),
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#6A4C9C', // צבע סגול
+    borderRadius: 10,
+    zIndex: 1,
+  },
+  backToWelcomeText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: hp(2),
   },
 })
