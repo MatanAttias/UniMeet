@@ -20,7 +20,7 @@ const Login = () => {
 
     const onSubmit = async ()=>{
         if(!emailRef.current || !passwordRef.current){
-            Alert.alert('Login', "Please fill all the fields!")
+            Alert.alert('התחברות', "אנא מלא את כל השדות!")
             return
         }
         const email = emailRef.current.trim();
@@ -40,7 +40,7 @@ const Login = () => {
 
         console.log('error: ', error);
         if(error){
-            Alert.alert('Login', error.message);
+            Alert.alert('התחברות', error.message);
         }
 
         
@@ -49,44 +49,48 @@ const Login = () => {
   return (
     <ScreenWrapper bg="white">
       <StatusBar style="dark" />
-      <View style={styles.container}>
+      <View style={[styles.container, { writingDirection: 'rtl' }]}>
         <BackButton router={router} />
         
-        {/* welcome */}
+        {/* ברוך הבא */}
         <View>
-            <Text style={styles.welcomeText}>Hey,</Text>
-            <Text style={styles.welcomeText}>Welcome Back</Text>
+            <Text style={[styles.welcomeText, { textAlign: 'right' }]}>היי,</Text>
+            <Text style={[styles.welcomeText, { textAlign: 'right' }]}>ברוך שובך! </Text>
         </View>
 
-        {/* form */}
+        {/* טופס התחברות */}
         <View style={styles.form}>
-            <Text style={{fontSize: hp(1.5), color: theme.colors.text}}>
-                Please login to continue
+            <Text style={[{fontSize: hp(1.5), color: theme.colors.text}, { textAlign: 'right' }]}>
+                אנא היכנס כדי להמשיך
             </Text>
             <Input
                 icon={<Icon name="mail" size={26} strokeWidth={1.6} />}
-                placeholder='Enter your email'
+                placeholder='הכנס את כתובת האימייל שלך'
                 onChangeText={value=> emailRef.current = value}
+                style={{ textAlign: 'right' }}  // טקסט בתיבת הקלט
             />
             <Input
                 icon={<Icon name="lock" size={26} strokeWidth={1.6} />}
-                placeholder='Enter your password'
+                placeholder='הכנס את הסיסמה שלך'
                 secureTextEntry
                 onChangeText={value=> passwordRef.current = value}
+                style={{ textAlign: 'right' }}  // טקסט בתיבת הקלט
             />
-            <Text style={styles.forgotPassword}>
-                Forgot Password?
+            <Text style={[styles.forgotPassword, { textAlign: 'right' }]}>
+                שכחת סיסמה?
             </Text>
-            {/* login button */}
-            <Button title={'Login'} loading={loading} onPress={onSubmit} />
+            {/* כפתור התחברות */}
+            <Button title={'התחבר'} loading={loading} onPress={onSubmit} />
         </View>
-        {/* footer */}
+        {/* כותרת תחתונה */}
         <View style={styles.footer}>
-            <Text style={styles.footerText}>
-                Don't have an account?
+            <Text style={[styles.footerText, { textAlign: 'right' }]}>
+                אין לך חשבון?
             </Text>
             <Pressable onPress={() => router.push('signUp')}>
-                <Text style={[styles.footerText, {color: theme.colors.primaryDark, fontWeight: theme.fonts.semibold}]} >Sign up</Text>
+                <Text style={[styles.footerText, {color: theme.colors.primaryDark, fontWeight: theme.fonts.semibold, textAlign: 'right' }]} >
+                    הירשם
+                </Text>
             </Pressable>
         </View>
 
@@ -104,9 +108,11 @@ const styles = StyleSheet.create({
         flex: 1,
         gap: 45,
         paddingHorizontal: wp(5),
+        textAlign: 'right', // הכיוון של כל הטקסט
     },
     welcomeText: {
         fontSize: hp(4),
+        textAlign: 'right', // גם כאן הכיוון מימין לשמאל
     },
     form: {
         gap: 25,
@@ -118,7 +124,7 @@ const styles = StyleSheet.create({
         gap: 5,
     },
     footerText: {
-        textAlign: 'center',
+        textAlign: 'right',
         color: theme.colors.text,
         fontSize: hp(1.6)
     }

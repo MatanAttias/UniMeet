@@ -51,7 +51,7 @@ export default function SelectType() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#2A262F',
+    backgroundColor: '#WHITE',
   },
   container: {
     flex: 1,

@@ -24,7 +24,7 @@ export default function SignUp() {
 
   const onSubmit = async () => {
     if (!emailRef.current.trim() || !passwordRef.current.trim()) {
-      return Alert.alert('Sign Up', 'Please fill all the fields!')
+      return Alert.alert('הרשמה', 'אנא מלא את כל השדות!')
     }
 
     const name = nameRef.current.trim()
@@ -42,12 +42,12 @@ export default function SignUp() {
     setLoading(false)
 
     if (error) {
-      Alert.alert('Sign up', error.message)
+      Alert.alert('הרשמה', error.message)
     } else {
-      console.log('New user metadata:', data.user.user_metadata)
+      console.log('מטה-נתונים של משתמש חדש:', data.user.user_metadata)
       Alert.alert(
-        'Sign up',
-        `Account created successfully as ${data.user.user_metadata.role}`
+        'הרשמה',
+        `החשבון נוצר בהצלחה כ-${data.user.user_metadata.role}`
       )
       router.push('login')
     }
@@ -61,41 +61,49 @@ export default function SignUp() {
 
         {/* כותרת */}
         <View>
-          <Text style={styles.welcomeText}>Let's</Text>
-          <Text style={styles.welcomeText}>Get Started</Text>
+          <Text style={styles.welcomeText}>בוא נתחיל</Text>
+          <Text style={styles.welcomeText}>הירשם עכשיו</Text>
         </View>
 
         {/* טופס הרשמה */}
         <View style={styles.form}>
-          <Text style={{ fontSize: hp(1.5), color: theme.colors.text }}>
-            Please fill the details to create an account
+        <Text style={{ 
+            fontSize: hp(1.5), 
+            color: theme.colors.text, 
+            textAlign: 'right',  // כיוון הטקסט מימין לשמאל
+            writingDirection: 'rtl'  // כיוון התוכן מימין לשמאל
+          }}>
+            אנא מלא את הפרטים כדי ליצור חשבון
           </Text>
 
           <Input
             icon={<Icon name="user" size={26} strokeWidth={1.6} />}
-            placeholder="Enter your name"
+            placeholder="הכנס את שמך"
             onChangeText={value => (nameRef.current = value)}
+            style={styles.input}  // הוספתי סטייל כאן
           />
 
           <Input
             icon={<Icon name="mail" size={26} strokeWidth={0.5} />}
-            placeholder="Enter your email"
+            placeholder="הכנס את כתובת האימייל שלך"
             onChangeText={value => (emailRef.current = value)}
+            style={styles.input}  // הוספתי סטייל כאן
           />
 
           <Input
             icon={<Icon name="lock" size={26} strokeWidth={1.6} />}
-            placeholder="Enter your password"
+            placeholder="הכנס את הסיסמה שלך"
             secureTextEntry
             onChangeText={value => (passwordRef.current = value)}
+            style={styles.input}  // הוספתי סטייל כאן
           />
 
-          <Button title="Sign up" loading={loading} onPress={onSubmit} />
+          <Button title="הרשם" loading={loading} onPress={onSubmit} />
         </View>
 
         {/* ניווט לעמוד התחברות */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Already have an account!</Text>
+          <Text style={styles.footerText}>כבר יש לך חשבון?</Text>
           <Pressable onPress={() => router.push('login')}>
             <Text
               style={[
@@ -103,7 +111,7 @@ export default function SignUp() {
                 { color: theme.colors.primaryDark, fontWeight: theme.fonts.semibold }
               ]}
             >
-              Login
+              התחבר
             </Text>
           </Pressable>
         </View>
@@ -116,10 +124,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     gap: 45,
-    paddingHorizontal: wp(5)
+    paddingHorizontal: wp(5),
+    textAlign: 'right', // כיוון הטקסט מימין לשמאל
+    writingDirection: 'rtl', // כיוון התוכן מימין לשמאל
   },
   welcomeText: {
-    fontSize: hp(4)
+    fontSize: hp(4),
+    textAlign: 'right', // כיוון הטקסט מימין לשמאל
+    writingDirection: 'rtl', // כיוון התוכן מימין לשמאל
   },
   form: {
     gap: 25
@@ -133,6 +145,11 @@ const styles = StyleSheet.create({
   footerText: {
     textAlign: 'center',
     color: theme.colors.text,
-    fontSize: hp(1.6)
+    fontSize: hp(1.6),
+    writingDirection: 'rtl', // כיוון התוכן מימין לשמאל
+  },
+  input: {
+    textAlign: 'right', // כיוון הטקסט מימין לשמאל
+    writingDirection: 'rtl', // כיוון התוכן מימין לשמאל
   }
 })
