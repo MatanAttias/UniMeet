@@ -1,8 +1,9 @@
 import React from 'react'
-import { SafeAreaView, View, Text, Pressable, StyleSheet } from 'react-native'
+import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { hp, wp } from '../constants/helpers/common'
 import { theme } from '../constants/theme'
+import Button from '../components/Button'
 
 export default function SelectType() {
   const router = useRouter()
@@ -20,32 +21,30 @@ export default function SelectType() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
-      {/* כפתור חזור מעוצב */}
+    <View style={styles.safe}>
+      {/* כפתור חזור */}
       <Pressable style={styles.backToWelcomeButton} onPress={handleBack}>
         <Text style={styles.backToWelcomeText}>חזור</Text>
       </Pressable>
 
+      {/* תוכן מרכזי כולל כפתורים */}
       <View style={styles.container}>
         <Text style={styles.title}>איך נרצה להכיר אותך?</Text>
 
-        <Pressable
-          style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+        <Button
+          title="צור חשבון הורה"
+          buttonStyle={styles.button}
+          textStyle={styles.btnText}
           onPress={handleSelect('parent')}
-          accessibilityLabel="צור חשבון הורה"
-        >
-          <Text style={styles.btnText}>צור חשבון הורה</Text>
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+        />
+        <Button
+          title="צור חשבון אישי"
+          buttonStyle={styles.button}
+          textStyle={styles.btnText}
           onPress={handleSelectUser}
-          accessibilityLabel="צור חשבון אישי"
-        >
-          <Text style={styles.btnText}>צור חשבון אישי</Text>
-        </Pressable>
+        />
       </View>
-    </SafeAreaView>
+    </View>
   )
 }
 
@@ -69,38 +68,42 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   button: {
-    width: '80%',
+    width: '100%',
     backgroundColor: theme.colors.card,
     paddingVertical: hp(2),
     borderRadius: theme.radius.md,
     alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.15,
     shadowRadius: 6,
-    elevation: 5,
-  },
-  pressed: {
-    opacity: 0.85,
+    elevation: 4,
   },
   btnText: {
-    fontSize: hp(2.2),
     color: theme.colors.primary,
+    fontSize: hp(2.2),
     fontWeight: theme.fonts.semibold,
   },
   backToWelcomeButton: {
     position: 'absolute',
-    top: hp(4),
-    left: hp(4),
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: theme.colors.accent,
-    borderRadius: theme.radius.sm,
-    zIndex: 1,
+    top: hp(8), // העברת כפתור למטה (שינוי ערך לפי הצורך)
+    right: hp(4), // העברה לצד ימין של המסך
+    width: '14%', // רוחב קטן יותר מכפתור ה-"הבא"
+    backgroundColor: theme.colors.card, // צבע רקע כמו כפתור הבא
+    paddingVertical: hp(1.0), // גובה קטן יותר מהכפתור הבא
+    borderRadius: theme.radius.md, // רדיוס פינות כמו כפתור הבא
+    alignItems: 'center', // מרכז את הטקסט בכפתור
+    justifyContent: 'center', // מוודא שהתוכן ממורכז
+    shadowColor: theme.colors.shadow, // הצללה כמו כפתור הבא
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   backToWelcomeText: {
-    color: theme.colors.textPrimary,
-    fontWeight: theme.fonts.bold,
-    fontSize: hp(2),
-  },
+    color: theme.colors.primary, // צבע טקסט כמו כפתור הבא
+    fontSize: hp(2), // גודל טקסט קטן יותר מהכפתור הבא
+    fontWeight: theme.fonts.semibold, // משקל פונט כמו כפתור הבא
+  },
 })

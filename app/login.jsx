@@ -40,12 +40,15 @@ const Login = () => {
     <ScreenWrapper bg={theme.colors.dark}>
       <StatusBar style="light" />
       <View style={[styles.container, { writingDirection: 'rtl' }]}>
-        <BackButton router={router} />
+        {/* הכפתור חזור מימין למעלה */}
+        <View style={styles.backButtonWrapper}>
+          <BackButton router={router} />
+        </View>
 
         {/* ברוך הבא */}
         <View>
           <Text style={styles.welcomeText}>היי,</Text>
-          <Text style={styles.welcomeText}>ברוך שובך! </Text>
+          <Text style={styles.welcomeText}>ברוך שובך!</Text>
         </View>
 
         {/* טופס התחברות */}
@@ -53,12 +56,14 @@ const Login = () => {
           <Text style={styles.subtext}>אנא היכנס כדי להמשיך</Text>
           <Input
             icon={<Icon name="mail" size={26} strokeWidth={1.6} color={theme.colors.textLight} />}
+            iconPosition="right"
             placeholder="הכנס את כתובת האימייל שלך"
             onChangeText={(value) => (emailRef.current = value)}
             style={{ textAlign: 'right' }}
           />
           <Input
             icon={<Icon name="lock" size={26} strokeWidth={1.6} color={theme.colors.textLight} />}
+            iconPosition="right"
             placeholder="הכנס את הסיסמה שלך"
             secureTextEntry
             onChangeText={(value) => (passwordRef.current = value)}
@@ -88,18 +93,24 @@ export default Login;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    gap: 45,
     paddingHorizontal: wp(5),
+    paddingTop: hp(4),
+    paddingBottom: hp(4),
+    gap: hp(4),
+    justifyContent: 'flex-start',
+  },
+  backButtonWrapper: {
+    alignSelf: 'flex-end',
   },
   welcomeText: {
     fontSize: hp(4),
-    color: theme.colors.text,
+    color: theme.colors.textPrimary,
     textAlign: 'right',
     fontWeight: theme.fonts.bold,
   },
   subtext: {
     fontSize: hp(1.6),
-    color: theme.colors.textLight,
+    color: theme.colors.textSecondary,
     textAlign: 'right',
   },
   form: {
@@ -117,7 +128,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   footerText: {
-    color: theme.colors.textLight,
+    color: theme.colors.textSecondary,
     fontSize: hp(1.6),
   },
   signupText: {
