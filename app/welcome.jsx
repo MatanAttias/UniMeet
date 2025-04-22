@@ -7,6 +7,7 @@ import Button from '../components/Button'
 import { useRouter } from 'expo-router'
 import { theme } from '../constants/theme'
 
+
 const Welcome = () => {
   const router = useRouter()
 
@@ -39,9 +40,10 @@ const Welcome = () => {
 
         {/* actions */}
         <View style={styles.footer}>
-          <Button
+        <Button
             title="התחל"
             buttonStyle={styles.button}
+            textStyle={styles.btnText}
             onPress={() => router.push('selectType')}
           />
           <View style={styles.bottomTextContainer}>
@@ -86,19 +88,29 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary
   },
   footer: {
-    gap: 30,
-    width: '100%'
-  },
+  alignItems: 'center',
+  gap: hp(3),
+  marginBottom: hp(5),
+},
   button: {
-    marginHorizontal: wp(3),
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.text,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 4
-  },
+  width: '80%',
+  backgroundColor: theme.colors.card,
+  paddingVertical: hp(2),
+  borderRadius: theme.radius.md,
+  alignItems: 'center',
+  justifyContent: 'center',
+  shadowColor: theme.colors.shadow,
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.15,
+  shadowRadius: 6,
+  elevation: 4,
+},
+btnText: {
+  color: theme.colors.primary,
+  fontSize: hp(2.2),
+  fontWeight: theme.fonts.semibold,
+},
+
   bottomTextContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
