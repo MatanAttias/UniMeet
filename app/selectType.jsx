@@ -2,6 +2,7 @@ import React from 'react'
 import { SafeAreaView, View, Text, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { hp, wp } from '../constants/helpers/common'
+import { theme } from '../constants/theme'
 
 export default function SelectType() {
   const router = useRouter()
@@ -51,7 +52,7 @@ export default function SelectType() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#WHITE',
+    backgroundColor: theme.colors.background,
   },
   container: {
     flex: 1,
@@ -63,17 +64,17 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: hp(3),
-    fontWeight: '700',
-    color: '#FFB3C1',
+    fontWeight: theme.fonts.bold,
+    color: theme.colors.primary,
     textAlign: 'center',
   },
   button: {
     width: '80%',
-    backgroundColor: '#3E3A45',
+    backgroundColor: theme.colors.card,
     paddingVertical: hp(2),
-    borderRadius: 12,
+    borderRadius: theme.radius.md,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
@@ -84,8 +85,8 @@ const styles = StyleSheet.create({
   },
   btnText: {
     fontSize: hp(2.2),
-    color: '#FFB3C1',
-    fontWeight: '600',
+    color: theme.colors.primary,
+    fontWeight: theme.fonts.semibold,
   },
   backToWelcomeButton: {
     position: 'absolute',
@@ -93,13 +94,13 @@ const styles = StyleSheet.create({
     left: hp(4),
     paddingVertical: 6,
     paddingHorizontal: 12,
-    backgroundColor: '#6A4C9C', // צבע סגול
-    borderRadius: 10,
+    backgroundColor: theme.colors.accent,
+    borderRadius: theme.radius.sm,
     zIndex: 1,
   },
   backToWelcomeText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    color: theme.colors.textPrimary,
+    fontWeight: theme.fonts.bold,
     fontSize: hp(2),
   },
 })
