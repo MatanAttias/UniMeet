@@ -58,19 +58,44 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(6),
     justifyContent: 'center',
     alignItems: 'center',
-    gap: hp(4),
+    gap: hp(3.5),
     writingDirection: 'rtl',
   },
   title: {
-    fontSize: hp(3),
+    fontSize: hp(3.1),
     fontWeight: theme.fonts.bold,
     color: theme.colors.primary,
     textAlign: 'center',
   },
   button: {
-    width: '100%',
+    width: '80%',
+    minHeight: hp(6.5),
     backgroundColor: theme.colors.card,
-    paddingVertical: hp(2),
+    borderRadius: theme.radius.md,
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(4),
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  btnText: {
+    color: theme.colors.primary,
+    fontSize: hp(2.3),
+    fontWeight: theme.fonts.semibold,
+    textAlign: 'center',
+    flexShrink: 1, // מונע חיתוך של טקסט
+  },
+  backToWelcomeButton: {
+    position: 'absolute',
+    top: hp(8),
+    right: hp(4),
+    width: '14%',
+    backgroundColor: theme.colors.card,
+    paddingVertical: hp(1.0),
     borderRadius: theme.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
@@ -80,30 +105,9 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
   },
-  btnText: {
+  backToWelcomeText: {
     color: theme.colors.primary,
-    fontSize: hp(2.2),
+    fontSize: hp(2),
     fontWeight: theme.fonts.semibold,
   },
-  backToWelcomeButton: {
-    position: 'absolute',
-    top: hp(8), // העברת כפתור למטה (שינוי ערך לפי הצורך)
-    right: hp(4), // העברה לצד ימין של המסך
-    width: '14%', // רוחב קטן יותר מכפתור ה-"הבא"
-    backgroundColor: theme.colors.card, // צבע רקע כמו כפתור הבא
-    paddingVertical: hp(1.0), // גובה קטן יותר מהכפתור הבא
-    borderRadius: theme.radius.md, // רדיוס פינות כמו כפתור הבא
-    alignItems: 'center', // מרכז את הטקסט בכפתור
-    justifyContent: 'center', // מוודא שהתוכן ממורכז
-    shadowColor: theme.colors.shadow, // הצללה כמו כפתור הבא
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  backToWelcomeText: {
-    color: theme.colors.primary, // צבע טקסט כמו כפתור הבא
-    fontSize: hp(2), // גודל טקסט קטן יותר מהכפתור הבא
-    fontWeight: theme.fonts.semibold, // משקל פונט כמו כפתור הבא
-  },
 })

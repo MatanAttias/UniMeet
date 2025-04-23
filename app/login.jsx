@@ -3,7 +3,7 @@ import React, { useRef, useState } from 'react';
 import ScreenWrapper from '../components/ScreenWrapper';
 import Icon from '../assets/icons';
 import { StatusBar } from 'expo-status-bar';
-import BackButton from '../components/BackButton';
+import CustomBackButton from '../components/CustomBackButton';
 import { useRouter } from 'expo-router';
 import { hp, wp } from '../constants/helpers/common';
 import { theme } from '../constants/theme';
@@ -39,12 +39,11 @@ const Login = () => {
   return (
     <ScreenWrapper bg={theme.colors.dark}>
       <StatusBar style="light" />
-      <View style={[styles.container, { writingDirection: 'rtl' }]}>
-        {/* הכפתור חזור מימין למעלה */}
-        <View style={styles.backButtonWrapper}>
-          <BackButton router={router} />
-        </View>
 
+      {/* כפתור חזור אחיד */}
+      <CustomBackButton to="/welcome" style={styles.backButton} />
+
+      <View style={[styles.container, { writingDirection: 'rtl' }]}>
         {/* ברוך הבא */}
         <View>
           <Text style={styles.welcomeText}>היי,</Text>
@@ -91,16 +90,28 @@ const Login = () => {
 export default Login;
 
 const styles = StyleSheet.create({
+  backButton: {
+    position: 'absolute',
+    top: hp(7.5),
+    right: wp(4),
+    paddingVertical: hp(0.7),
+    paddingHorizontal: hp(1.5),
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.radius.md,
+    zIndex: 10,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
   container: {
     flex: 1,
     paddingHorizontal: wp(5),
-    paddingTop: hp(4),
+    paddingTop: hp(14),
     paddingBottom: hp(4),
     gap: hp(4),
     justifyContent: 'flex-start',
-  },
-  backButtonWrapper: {
-    alignSelf: 'flex-end',
   },
   welcomeText: {
     fontSize: hp(4),
@@ -118,7 +129,7 @@ const styles = StyleSheet.create({
   },
   forgotPassword: {
     textAlign: 'right',
-    color: theme.colors.roseLight,
+    color: theme.colors.textSecondary,
     fontSize: hp(1.6),
   },
   footer: {
