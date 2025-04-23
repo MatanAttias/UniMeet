@@ -1,233 +1,160 @@
-import React, { useRef, useState } from 'react'
-import { View, Text, Alert, StyleSheet, TouchableOpacity } from 'react-native'
+import React, { useRef } from 'react'
+import { View, Text, Alert, StyleSheet, Pressable } from 'react-native'
 import { useRouter } from 'expo-router'
 import Input from '../components/input'
 import Button from '../components/Button'
-import { supabase } from '../lib/supabase'
-import { hp } from '../constants/helpers/common'
+import { hp, wp } from '../constants/helpers/common'
+import { theme } from '../constants/theme'
 
 export default function SignUpUser() {
   const router = useRouter()
 
   const nameRef = useRef('')
-  const emailRef = useRef('')
-  const passwordRef = useRef('')
+  const lastNameRef = useRef('')
 
-  const [step, setStep] = useState(1)
-  const [loading, setLoading] = useState(false)
-
-  const goToNextStep = () => {
-    if (step === 1 && !nameRef.current.trim()) {
-      return Alert.alert('שגיאה', 'אנא הכנס שם מלא')
+  const handleNext = () => {
+    const name = nameRef.current.trim();
+    const lastName = lastNameRef.current.trim();
+  
+    if (!name) {
+      return Alert.alert('שגיאה', 'אנא הכנס שם פרטי');
     }
-    if (step === 2 && !emailRef.current.trim()) {
-      return Alert.alert('שגיאה', 'אנא הכנס אימייל')
+  
+    if (!lastName) {
+      return Alert.alert('שגיאה', 'אנא הכנס שם משפחה');
     }
-    if (step === 3 && !passwordRef.current.trim()) {
-      return Alert.alert('שגיאה', 'אנא הכנס סיסמה')
-    }
-
-    if (step < 3) {
-      setStep(prev => prev + 1)
-    } else {
-      onSubmit()
-    }
-  }
-
-  const goToPreviousStep = () => {
-    if (step > 1) {
-      setStep(prev => prev - 1)
-    }
-  }
-
-  const goToWelcome = () => {
-    router.push('/welcome')
-  }
-
-  const onSubmit = async () => {
-    const name = nameRef.current.trim()
-    const email = emailRef.current.trim()
-    const password = passwordRef.current.trim()
-
-    setLoading(true)
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { name, role: 'user' }
-      }
-    })
-    setLoading(false)
-
-    if (error) {
-      Alert.alert('שגיאה', error.message)
-    } else {
-      Alert.alert('הצלחה', 'ההרשמה בוצעה בהצלחה')
-      router.push('/login')
-    }
-  }
+  
+    const fullName = `${name} ${lastName}`;
+  
+    router.push({
+      pathname: '/emailSignUp',
+      params: { name },
+    });
+  };
 
   return (
-    <View style={styles.container}>
-      {step === 1 && (
-        <TouchableOpacity style={styles.backToWelcomeButton} onPress={goToWelcome}>
-          <Text style={styles.backToWelcomeText}>חזור</Text>
-        </TouchableOpacity>
-      )}
+    <View style={styles.safe}>
+      <Pressable style={styles.backToWelcomeButton} onPress={() => router.push('/selectType')}>
+        <Text style={styles.backToWelcomeText}>חזור</Text>
+      </Pressable>
 
-      <Text style={styles.stepTitle}>שלב {step} מתוך 3</Text>
+      <View style={styles.container}>
+        <Text style={styles.title}>מה השם שלך?</Text>
+        <Text style={styles.punchline}>אנחנו מתרגשים לראות אותך!</Text>
 
-      {/* סרגל התקדמות */}
-      <View style={styles.progressContainer}>
-        <View style={[styles.progressBar, { width: `${(step / 3) * 100}%` }]} />
-      </View>
-
-      {/* עיגולי שלבים */}
-      <View style={styles.stepIndicators}>
-        {[1, 2, 3].map(s => (
-          <Text
-            key={s}
-            style={[
-              styles.stepCircle,
-              step === s && styles.activeStepCircle
-            ]}
-          >
-            {s}
-          </Text>
-        ))}
-      </View>
-
-      <View style={styles.stepContent}>
-        {step === 1 && (
-          <>
-            <Text style={styles.label}>מה שמך?</Text>
-            <Input
-              placeholder="שם מלא"
-              onChangeText={value => (nameRef.current = value)}
-              style={{ backgroundColor: '#3E3A45', color: '#FFFFFF' }}
-              placeholderTextColor="#AAAAAA"
-            />
-          </>
-        )}
-
-        {step === 2 && (
-          <>
-            <Text style={styles.label}>כתובת אימייל</Text>
-            <Input
-              placeholder="הכנס אימייל"
-              keyboardType="email-address"
-              onChangeText={value => (emailRef.current = value)}
-              style={{ backgroundColor: '#3E3A45', color: '#FFFFFF' }}
-              placeholderTextColor="#AAAAAA"
-            />
-          </>
-        )}
-
-        {step === 3 && (
-          <>
-            <Text style={styles.label}>בחר סיסמה</Text>
-            <Input
-              placeholder="הכנס סיסמה"
-              onChangeText={value => (passwordRef.current = value)}
-              style={{ backgroundColor: '#3E3A45', color: '#FFFFFF' }}
-              placeholderTextColor="#AAAAAA"
-            />
-          </>
-        )}
-      </View>
-
-      <View style={styles.buttonGroup}>
-        <Button
-          title={step < 3 ? 'המשך' : 'צור חשבון'}
-          loading={loading}
-          onPress={goToNextStep}
-          style={{ backgroundColor: '#3E3A45', color: '#FFFFFF' }}
-          placeholderTextColor="#AAAAAA"
+        <Input
+          placeholder="שם פרטי..."
+          onChangeText={(text) => (nameRef.current = text)}
+          containerStyle={styles.inputContainer}
+          inputStyle={styles.inputText}
+          placeholderTextColor="white"
         />
-        {step > 1 && (
-          <Button
-            title="חזור"
-            onPress={goToPreviousStep}
-            style={{ backgroundColor: '#3E3A45', color: '#FFFFFF' }}
-            placeholderTextColor="#AAAAAA"
-          />
-        )}
+        <Input
+          placeholder="שם משפחה..."
+          onChangeText={(text) => (lastNameRef.current = text)}
+          containerStyle={styles.inputContainer}
+          inputStyle={styles.inputText}
+          placeholderTextColor="white"
+        />
+
+        <Button
+          title="הבא"
+          buttonStyle={styles.bottomButton}
+          textStyle={styles.btnText}
+          onPress={handleNext}
+        />
       </View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
   container: {
     flex: 1,
-    padding: hp(4),
-    backgroundColor: '#2A262F',
+    paddingHorizontal: wp(6),
     justifyContent: 'center',
+    alignItems: 'center',
+    gap: hp(3),
+    writingDirection: 'rtl',
   },
-  stepTitle: {
-    fontSize: hp(3),
+  title: {
+    fontSize: hp(4),
+    fontWeight: theme.fonts.bold,
+    color: theme.colors.primary,
     textAlign: 'center',
-    marginBottom: hp(3),
-    fontWeight: 'bold',
-    color: '#FFB3C1',
+    marginTop: hp(-10),
   },
-  progressContainer: {
-    height: 10,
-    backgroundColor: '#3E3A45',
-    borderRadius: 10,
-    overflow: 'hidden',
-    marginBottom: hp(2),
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: '#FFB3C1',
-  },
-  stepIndicators: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: hp(3),
-  },
-  stepCircle: {
-    width: hp(5),
-    height: hp(5),
-    borderRadius: hp(2.5),
-    borderWidth: 1,
-    borderColor: '#FFB3C1',
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    color: '#FFB3C1',
-    fontWeight: 'bold',
-    backgroundColor: '#3E3A45',
-  },
-  activeStepCircle: {
-    backgroundColor: '#FFB3C1',
-    color: '#2A262F',
-  },
-  label: {
-    fontSize: hp(2.5),
+  punchline: {
+    fontSize: hp(2.2),
+    color: 'white',
     marginBottom: hp(1),
-    color: '#F2F2F2',
+  },
+  inputContainer: {
+    borderColor: 'white',
+    borderWidth: 1,
+    width: '100%',
+  },
+  inputText: {
+    color: 'white',
     textAlign: 'right',
   },
-  stepContent: {
-    marginBottom: hp(4),
+  button: {
+    width: '80%',
+    backgroundColor: theme.colors.card,
+    paddingVertical: hp(2),
+    borderRadius: theme.radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  buttonGroup: {
-    marginTop: hp(2),
-    gap: hp(1.5),
+  btnText: {
+    color: theme.colors.primary,
+    fontSize: hp(2.2),
+    fontWeight: theme.fonts.semibold,
   },
   backToWelcomeButton: {
     position: 'absolute',
-    top: hp(4),
-    left: hp(4),
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#6A4C9C', // צבע סגול
-    borderRadius: 10,
-    zIndex: 1,
+    top: hp(8),
+    right: hp(4),
+    width: '14%',
+    backgroundColor: theme.colors.card,
+    paddingVertical: hp(1.0),
+    borderRadius: theme.radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   backToWelcomeText: {
-    color: '#FFFFFF',
+    color: theme.colors.primary,
     fontWeight: 'bold',
+    fontSize: hp(2),
+  },
+  bottomButton: {
+    position: 'absolute',
+    bottom: hp(4), // גובה מהרצפה
+    left: wp(6),
+    right: wp(6),
+    paddingVertical: hp(1.5),
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
 })
