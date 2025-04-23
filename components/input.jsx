@@ -1,5 +1,4 @@
 import { StyleSheet, TextInput, View } from 'react-native'
-import { StyleSheet, TextInput, View } from 'react-native'
 import React from 'react'
 import { theme } from '../constants/theme'
 import { hp } from '../constants/helpers/common'
@@ -19,7 +18,6 @@ const Input = ({ icon, iconPosition = 'left', containerStyle, inputRef, ...props
         placeholderTextColor={theme.colors.textLight}
         ref={inputRef}
         {...props}
-      />
       />
     </View>
   )

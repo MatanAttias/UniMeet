@@ -6,7 +6,8 @@ import { hp, wp } from '../constants/helpers/common'
 import Button from '../components/Button'
 import { useRouter } from 'expo-router'
 import { theme } from '../constants/theme'
-
+import BottomButtonContainer from '../components/BottomButtonContainer'
+import { MotiView, MotiText } from 'moti'
 
 const Welcome = () => {
   const router = useRouter()
@@ -17,43 +18,66 @@ const Welcome = () => {
       <View style={styles.container}>
 
         {/* image */}
-        <Image
-          style={styles.welcomeImage}
-          resizeMode="cover"
-          source={require('../assets/images/welcome.png')}
-        />
+        <MotiView
+          from={{ opacity: 0, translateY: 20 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: 'timing', duration: 600 }}
+        >
+          <Image
+            style={styles.welcomeImage}
+            resizeMode="cover"
+            source={require('../assets/images/welcome.png')}
+          />
+        </MotiView>
 
         {/* texts */}
         <View style={styles.textContainer}>
-          <Text style={styles.title}>
+          <MotiText
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ delay: 200, type: 'timing', duration: 600 }}
+            style={styles.title}
+          >
             UniMeet - מקום להכיר להתחבר ולצמוח יחד
-          </Text>
-          <Text style={styles.punchline}>
+          </MotiText>
+
+          <MotiText
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ delay: 400, type: 'timing', duration: 600 }}
+            style={styles.punchline}
+          >
             ב-UniMeet כל אחד יכול להרגיש שייך. כאן תוכל להכיר חברים חדשים,
             ליצור קשרים אמיתיים ואפילו למצוא אהבה.
-          </Text>
-          <Text style={styles.punchline}>
+          </MotiText>
+          <MotiText
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ delay: 600, type: 'timing', duration: 600 }}
+            style={styles.punchline}
+          >
             כי לכל אחד מגיע מקום מיוחד, ולכל אחד יש סיפור. ב-UniMeet, הסיפורים
             מתחברים ויוצרים קהילה אחת תומכת ומכילה.
-          </Text>
+          </MotiText>
         </View>
 
-        {/* actions */}
-        <View style={styles.footer}>
-        <Button
-            title="התחל"
-            buttonStyle={styles.button}
-            textStyle={styles.btnText}
-            onPress={() => router.push('selectType')}
-          />
-          <View style={styles.bottomTextContainer}>
-            <Text style={styles.loginText}>כבר יש לך חשבון?</Text>
-            <Pressable onPress={() => router.push('login')}>
-              <Text style={styles.loginLink}>התחבר</Text>
-            </Pressable>
-          </View>
-        </View>
       </View>
+
+      {/* bottom actions */}
+      <BottomButtonContainer>
+        <Button
+          title="התחל"
+          buttonStyle={styles.button}
+          textStyle={styles.btnText}
+          onPress={() => router.push('selectType')}
+        />
+        <View style={styles.bottomTextContainer}>
+          <Text style={styles.loginText}>כבר יש לך חשבון?</Text>
+          <Pressable onPress={() => router.push('login')}>
+            <Text style={styles.loginLink}>התחבר</Text>
+          </Pressable>
+        </View>
+      </BottomButtonContainer>
     </ScreenWrapper>
   )
 }
@@ -70,7 +94,8 @@ const styles = StyleSheet.create({
   welcomeImage: {
     height: hp(30),
     width: wp(100),
-    alignSelf: 'center'
+    alignSelf: 'center',
+    marginBottom: hp(3),
   },
   textContainer: {
     gap: hp(1)
@@ -79,38 +104,42 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontSize: hp(3.8),
     textAlign: 'center',
-    fontWeight: theme.fonts.bold
+    fontWeight: theme.fonts.bold,
+    marginBottom: hp(2.5),
   },
   punchline: {
     textAlign: 'center',
-    paddingHorizontal: wp(6),
-    fontSize: hp(1.8),
-    color: theme.colors.textPrimary
+    fontSize: hp(1.9),
+    lineHeight: hp(2.6),
+    fontWeight: theme.fonts.medium,
+    color: '#FFFFFF',
+    paddingHorizontal: wp(10),
+    marginTop: hp(1),
+    marginBottom: hp(2),
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    opacity: 0.9,
   },
-  footer: {
-  alignItems: 'center',
-  gap: hp(3),
-  marginBottom: hp(5),
-},
   button: {
-  width: '80%',
-  backgroundColor: theme.colors.card,
-  paddingVertical: hp(2),
-  borderRadius: theme.radius.md,
-  alignItems: 'center',
-  justifyContent: 'center',
-  shadowColor: theme.colors.shadow,
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.15,
-  shadowRadius: 6,
-  elevation: 4,
-},
-btnText: {
-  color: theme.colors.primary,
-  fontSize: hp(2.2),
-  fontWeight: theme.fonts.semibold,
-},
-
+    width: '100%',
+    backgroundColor: theme.colors.card,
+    paddingVertical: hp(2),
+    borderRadius: theme.radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+    marginBottom: 0,
+  },
+  btnText: {
+    color: theme.colors.primary,
+    fontSize: hp(2.2),
+    fontWeight: theme.fonts.semibold,
+  },
   bottomTextContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -119,11 +148,13 @@ btnText: {
   },
   loginText: {
     color: theme.colors.textPrimary,
-    fontSize: hp(1.6)
+    fontSize: hp(1.6),
+    marginBottom: 30,
   },
   loginLink: {
     color: theme.colors.primary,
     fontWeight: theme.fonts.bold,
-    fontSize: hp(1.6)
+    fontSize: hp(1.6),
+    marginBottom: 30,
   }
 })
