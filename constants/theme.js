@@ -1,24 +1,29 @@
 export const theme = {
   colors: {
     // רקעים
-    background: '#1C1C1E',       // כהה נעים לעין (רקע כללי)
-    card: '#2C2C2E',             // רקע לכרטיסים, שדות, אזורים פנימיים
-    surface: '#3A3A3C',          // שימוש בגבולות, אזורים מודגשים
+    dark: '#1C1C1E',           // alias ל־background (רקע כהה)
+    background: '#1C1C1E',     // רקע כללי
+    card: '#2C2C2E',           // רקע לכרטיסים, שדות, אזורים פנימיים
+    surface: '#3A3A3C',        // גבולות, אזורים מודגשים
+    border: '#3A3A3C',         
+    shadow: '#00000066',
 
     // טקסטים
-    textPrimary: '#FFFFFF',      // טקסט עיקרי – ניגוד גבוה
-    textSecondary: '#CCCCCC',    // טקסט משני – כמו תיאורים
-    textDisabled: '#888888',     // טקסט לא פעיל / placeholder
-    onPrimary: '#1C1C1E',        // טקסט על כפתורים בהירים
+    text: '#FFFFFF',           // טקסט עיקרי – ניגוד גבוה
+    textPrimary: '#FFFFFF',
+    textDark: '#000000',       // אם צריך טקסט כהה
+    textSecondary: '#CCCCCC',  // תיאורים
+    textLight: '#888888',      // placeholder / טקסט לא פעיל
+    textDisabled: '#888888',
+    onPrimary: '#1C1C1E',      
 
     // צבעים ראשיים
-    primary: '#E471A3',          // ורוד נעים – כפתור עיקרי
-    primaryDark: '#AD4D79',      // ורוד כהה – במצבים מודגשים
-    accent: '#B69FEC',           // סגול משלים לכפתורים משניים
+    primary: '#E471A3',        
+    primaryDark: '#AD4D79',    
+    accent: '#B69FEC',         
 
-    // כפתורים/טפסים
-    border: '#3A3A3C',
-    shadow: '#00000066',
+    // "רוז" קל לחצני קישור/forget
+    roseLight: '#FFB3C1',      
 
     // מצבים
     success: '#4CAF50',
