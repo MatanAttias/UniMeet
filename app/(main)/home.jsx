@@ -4,7 +4,8 @@ import {
     Pressable,
     StyleSheet,
     Text,
-    View
+    TextInput,
+    View,
   } from 'react-native';
   import React, { useEffect, useState } from 'react';
   import ScreenWrapper from '../../components/ScreenWrapper';
@@ -26,13 +27,12 @@ import {
     const { user } = useAuth();
     const router = useRouter();
   
-    const [selectedTab, setSelectedTab] = useState('home'); // 'home' או 'matches'
+    const [selectedTab, setSelectedTab] = useState('home');
     const [posts, setPosts] = useState([]);
     const [hasMore, setHasMore] = useState(true);
     const [notificationCount, setNotificationCount] = useState(0);
     const [refreshing, setRefreshing] = useState(false);
   
-    // חיבור ל־Realtime
     useEffect(() => {
       const postChannel = supabase
         .channel('posts')
@@ -106,16 +106,10 @@ import {
   
     return (
       <ScreenWrapper bg={theme.colors.background}>
-        {/* ---- HEADER ---- */}
         <View style={styles.header}>
           <Text style={styles.title}>UniMeet</Text>
           <View style={styles.icons}>
-            <Pressable
-              onPress={() => {
-                setNotificationCount(0);
-                router.push('notifications');
-              }}
-            >
+            <Pressable onPress={() => { setNotificationCount(0); router.push('notifications'); }}>
               <Icon name="heart" size={hp(4)} strokeWidth={2} color={theme.colors.primary} />
               {notificationCount > 0 && (
                 <View style={styles.badge}>
@@ -137,27 +131,15 @@ import {
           </View>
         </View>
   
-        {/* ---- TABS ---- */}
         <View style={styles.tabsContainer}>
-          <Pressable
-            style={[styles.tab, selectedTab === 'home' && styles.tabActive]}
-            onPress={() => setSelectedTab('home')}
-          >
-            <Text style={[styles.tabText, selectedTab === 'home' && styles.tabTextActive]}>
-              דף הבית
-            </Text>
+          <Pressable style={[styles.tab, selectedTab === 'home' && styles.tabActive]} onPress={() => setSelectedTab('home')}>
+            <Text style={[styles.tabText, selectedTab === 'home' && styles.tabTextActive]}>דף הבית</Text>
           </Pressable>
-          <Pressable
-            style={[styles.tab, selectedTab === 'matches' && styles.tabActive]}
-            onPress={() => setSelectedTab('matches')}
-          >
-            <Text style={[styles.tabText, selectedTab === 'matches' && styles.tabTextActive]}>
-              התאמות
-            </Text>
+          <Pressable style={[styles.tab, selectedTab === 'matches' && styles.tabActive]} onPress={() => setSelectedTab('matches')}>
+            <Text style={[styles.tabText, selectedTab === 'matches' && styles.tabTextActive]}>התאמות</Text>
           </Pressable>
         </View>
   
-        {/* ---- CONTENT ---- */}
         {selectedTab === 'home' ? (
           <FlatList
             data={posts}
@@ -167,6 +149,14 @@ import {
             onEndReachedThreshold={0.5}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.list}
+            ListHeaderComponent={
+                <Pressable style={styles.fakeInput} onPress={() => router.push('newPost')}>
+                  <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: wp(2) }}>
+                    <Avatar uri={user?.image} size={hp(4)} rounded={theme.radius.md} />
+                    <Text style={styles.fakeInputText}>מה אתה מרגיש?</Text>
+                  </View>
+                </Pressable>
+              }              
             keyExtractor={(item) => `post-${item.id}`}
             renderItem={({ item }) => (
               <PostCard item={item} currentUser={user} router={router} />
@@ -181,7 +171,6 @@ import {
           />
         ) : (
           <View style={styles.matchesPlaceholder}>
-            {/* כאן תוכל למקם את הלוגיקה של 'התאמות' */}
             <Text style={styles.matchesText}>אין עדיין התאמות כדי להציג</Text>
             <Pressable style={styles.matchesButton} onPress={() => Alert.alert('Find matches')}>
               <Text style={styles.matchesButtonText}>מצא התאמות ∞</Text>
@@ -235,7 +224,6 @@ import {
       shadowOpacity: 0.1,
       shadowRadius: 4,
     },
-  
     tabsContainer: {
       flexDirection: 'row-reverse',
       paddingHorizontal: wp(4),
@@ -260,17 +248,28 @@ import {
       color: theme.colors.primary,
       fontWeight: theme.fonts.bold,
     },
-  
     list: {
       paddingHorizontal: wp(4),
       paddingBottom: hp(2),
+    },
+    inputWrapper: {
+      paddingBottom: hp(1.5),
+      paddingTop: hp(1),
+    },
+    input: {
+      backgroundColor: theme.colors.card,
+      borderRadius: theme.radius.lg,
+      paddingVertical: hp(1.5),
+      paddingHorizontal: wp(4),
+      fontSize: hp(1.9),
+      color: theme.colors.textPrimary,
+      textAlign: 'right',
     },
     noMore: {
       textAlign: 'center',
       color: theme.colors.textLight,
       marginVertical: hp(2),
     },
-  
     matchesPlaceholder: {
       flex: 1,
       alignItems: 'center',
@@ -294,5 +293,20 @@ import {
       color: theme.colors.textPrimary,
       fontWeight: theme.fonts.semibold,
     },
+    fakeInput: {
+        backgroundColor: theme.colors.card,
+        borderRadius: theme.radius.lg,
+        paddingVertical: hp(1.5),
+        paddingHorizontal: wp(4),
+        marginBottom: hp(2),
+        marginTop: hp(1),
+        marginHorizontal: wp(0.5),
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+      },
+      fakeInputText: {
+        color: theme.colors.textSecondary,
+        fontSize: hp(1.9),
+      },      
   });
   

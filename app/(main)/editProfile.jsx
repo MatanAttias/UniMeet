@@ -1,232 +1,204 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import ScreenWrapper from '../../components/ScreenWrapper'
-import { hp, wp } from '../../constants/helpers/common'
-import { theme } from '../../constants/theme'
-import Header from '../../components/Header'
-import { getUserImageSrc } from '../../services/imageService'
-import { useAuth } from '../../contexts/AuthContext'
-import { Image } from 'expo-image'
-import Icon from '../../assets/icons'
-import Input from '../../components/input'
-import Button from '../../components/Button'
-import { Alert } from 'react-native'
-import { updateUser } from '../../services/userService'
-import { useRouter } from 'expo-router'
-import * as ImagePicker from 'expo-image-picker'
-import { uploadFile } from '../../services/imageService'
+import React, { useEffect, useState } from 'react';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  Alert
+} from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
+import ScreenWrapper from '../../components/ScreenWrapper';
+import Header from '../../components/Header';
+import Avatar from '../../components/Avatar';
+import Input from '../../components/input';
+import Button from '../../components/Button';
+import Icon from '../../assets/icons';
+import { theme } from '../../constants/theme';
+import { hp, wp } from '../../constants/helpers/common';
 import { supabase } from '../../lib/supabase';
+import { updateUser } from '../../services/userService';
+import { uploadFile } from '../../services/imageService';
+import { useAuth } from '../../contexts/AuthContext';
 
+export default function EditProfile() {
+  const { user: currentUser, setUserData } = useAuth();
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
+  const [form, setForm] = useState({
+    name: '',
+    phoneNumber: '',
+    email: '',
+    address: '',
+    bio: '',
+    image: ''
+  });
 
+  useEffect(() => {
+    if (currentUser) {
+      setForm({
+        name: currentUser.name || '',
+        phoneNumber: currentUser.phoneNumber || '',
+        email: currentUser.email || '',
+        address: currentUser.address || '',
+        bio: currentUser.bio || '',
+        image: currentUser.image || ''
+      });
+    }
+  }, [currentUser]);
 
-const EditProfile = () => {
+  const onPickImage = async () => {
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('שגיאה', 'נדרש אישור לגישה לגלריה');
+        return;
+      }
 
-    const {user: currentUser, setUserData} = useAuth();
-    const [loading, setLoading] = useState(false);
-    const router = useRouter();
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.7,
+      });
 
-    
-    const [user, setUser] = useState({
-        name: '',
-        phoneNumber: '',
-        email: '',
-        image: null,
-        address: '',
-        bio: ''
-    });
+      if (result.canceled || !result.assets?.length) return;
 
-    useEffect(() => {
-        if (currentUser) {
-            setUser({
-                name: currentUser.name || '',
-                phoneNumber: currentUser.phoneNumber || '',
-                email: currentUser.email || '',
-                image: currentUser.image || '',
-                bio: currentUser.bio || '',
-                address: currentUser.address || '',
-            });
-        }
-    }, [currentUser]);
+      const asset = result.assets[0];
+      if (asset?.uri) {
+        setForm(f => ({ ...f, image: asset.uri }));
+      }
+    } catch (e) {
+      console.error('Image picker error:', e);
+      Alert.alert('שגיאה', e.message || 'אירעה תקלה בעת בחירת תמונה');
+    }
+  };
 
-    const updateUserProfileImage = async (userId, imageUrl) => {
+  const onSubmit = async () => {
+    setLoading(true);
+    try {
+      let imageUrl = form.image;
 
-    
-      const { data, error } = await supabase
+      if (form.image && form.image.startsWith('file://')) {
+        const uploadRes = await uploadFile('profiles', form.image, true);
+        if (!uploadRes.success) throw new Error('העלאת התמונה נכשלה');
+        imageUrl = uploadRes.data;
+
+        const { error: imgErr } = await supabase
           .from('users')
           .update({ image: imageUrl })
-          .eq('id', userId)
-          .select();
-  
-      if (error) {
-          console.error("❌ Error updating user image:", error);
-          return false;
+          .eq('id', currentUser.id);
+        if (imgErr) throw imgErr;
       }
-  
-      console.log("✅ User image updated successfully:", data);
-      return true;
-  };
-  
-  
-  
-    const onPickImage = async ()=>{
 
-        let result = await ImagePicker.launchImageLibraryAsync ({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
-          aspect: [4,3],
-          quality: 0.7,
-        });
+      const { success, error } = await updateUser(currentUser.id, {
+        ...form,
+        image: imageUrl
+      });
+      if (!success) throw new Error(error || 'עדכון המשתמש נכשל');
 
-        if (!result.canceled) {
-          console.log(result.assets[0]);
-          setUser({...user, image: result.assets[0]});
-        }
+      setUserData(u => ({ ...u, ...form, image: imageUrl }));
+      Alert.alert('הצלחה', 'הפרופיל עודכן בהצלחה');
+      router.back();
+    } catch (e) {
+      console.error(e);
+      Alert.alert('שגיאה', e.message || 'שגיאה בעדכון הפרופיל');
+    } finally {
+      setLoading(false);
     }
-    
-    const onSubmit = async () => {
-      let userData = { ...user };
-      setLoading(true);
-      console.log("🚀 Start updating user profile...");
-  
-      try {
-          if (typeof user.image === 'object') {
-              console.log("📤 Uploading image to Supabase...");
-              let imageRes = await uploadFile('profiles', user.image.uri, true);
-  
-              if (imageRes.success) {
-                  userData.image = imageRes.data;
-                  const updatedImage = await updateUserProfileImage(currentUser?.id, userData.image);
-  
-                  if (!updatedImage) throw new Error("Failed to update user image in DB");
-              } else {
-                  throw new Error("Image upload failed");
-              }
-          }
-  
-          console.log("📡 Sending updateUser request with data:", userData);
-          const res = await updateUser(currentUser?.id, userData);
-          console.log("🔄 Update user response:", res);
-  
-          if (!res.success) throw new Error("User update failed");
-  
-          setUserData({ ...currentUser, ...userData });
-          router.back();
-      } catch (error) {
-          console.error("❌ Error updating profile:", error);
-          Alert.alert("Update Failed", error.message);
-      } finally {
-          setLoading(false);
-      }
   };
-  
-  
-  
 
-  let imageSource = user.image && typeof user.image == 'object'? user.image.uri : getUserImageSrc(user.image);
-
-  
   return (
-    <ScreenWrapper bg="white">
-        <View style={styles.container}>
-            <ScrollView style={{flex: 1}}>
-                <Header title="Edit Profile"/>
+    <ScreenWrapper bg={theme.colors.background}>
+      <View style={styles.container}>
+        <ScrollView contentContainerStyle={{ gap: hp(3) }}>
+          <Header title="עריכת פרופיל" />
 
+          <View style={styles.avatarContainer}>
+            <Avatar
+              uri={form.image}
+              size={hp(12)}
+              rounded={hp(6)}
+            />
+            <Pressable style={styles.cameraIcon} onPress={onPickImage}>
+              <Icon name="camera" size={24} strokeWidth={2} color={theme.colors.textPrimary} />
+            </Pressable>
+          </View>
 
-                {/* form */}
-                <View style={styles.form}>
-                    <View style={styles.avatarContainer}>
-                        <Image source={imageSource} style={styles.avatar}/>
-                        <Pressable style={styles.cameraIcon} onPress={onPickImage}>
-                            <Icon name="camera" size={20} storkewidth={2}/>
-                        </Pressable>
-                    </View>
-                    <Text style={{fontSize: hp(1.5), color: theme.colors.text}}>
-                        Please fill your profile details
-                    </Text>
-                    
-                    <Input
-                        icon={<Icon name="user" />}
-                        placeholder='Enter your name'
-                        value={user.name}
-                        onChangeText={value=> setUser({...user, name: value})}
-                    />
-                    <Input
-                        icon={<Icon name="call" />}
-                        placeholder='Enter your phone number'
-                        value={user.phoneNumber}
-                        onChangeText={value=> setUser({...user, phoneNumber: value})}
-                    />
-                    <Input
-                        icon={<Icon name="mail" />}
-                        placeholder='Enter your email'
-                        value={user.email}
-                        onChangeText={value=> setUser({...user, email: value})}
-                    /><Input
-                        icon={<Icon name="location" />}
-                        placeholder='Enter your address'
-                        value={user.address}
-                        onChangeText={value=> setUser({...user, address: value})}
-                    /><Input
-                        placeholder='Enter your bio'
-                        value={user.bio}
-                        multiline={true}
-                        containerStyle={styles.bio}
-                        onChangeText={value=> setUser({...user, bio: value})}
-                    />
+          <Text style={styles.subtext}>אנא מלא/י את פרטי הפרופיל שלך</Text>
 
-                    <Button title={'Update'} loading={loading} onPress={onSubmit} />
+          <Input
+            icon={<Icon name="user" size={24} color={theme.colors.textLight} />}
+            placeholder="הכנס/י את שמך"
+            value={form.name}
+            onChangeText={v => setForm(f => ({ ...f, name: v }))}
+          />
+          <Input
+            icon={<Icon name="call" size={24} color={theme.colors.textLight} />}
+            placeholder="הכנס/י טלפון"
+            value={form.phoneNumber}
+            onChangeText={v => setForm(f => ({ ...f, phoneNumber: v }))}
+          />
+          <Input
+            icon={<Icon name="mail" size={24} color={theme.colors.textLight} />}
+            placeholder="הכנס/י אימייל"
+            value={form.email}
+            onChangeText={v => setForm(f => ({ ...f, email: v }))}
+          />
+          <Input
+            icon={<Icon name="location" size={24} color={theme.colors.textLight} />}
+            placeholder="הכנס/י כתובת"
+            value={form.address}
+            onChangeText={v => setForm(f => ({ ...f, address: v }))}
+          />
+          <Input
+            placeholder="הכנס/י ביוגרפיה"
+            value={form.bio}
+            multiline
+            containerStyle={styles.bio}
+            onChangeText={v => setForm(f => ({ ...f, bio: v }))}
+          />
 
-                </View>
-            </ScrollView>
-        </View>
+          <Button title="עדכון" loading={loading} onPress={onSubmit} />
+        </ScrollView>
+      </View>
     </ScreenWrapper>
-  )
+  );
 }
 
-export default EditProfile;
-
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        paddingHorizontal: wp(4),
-    },
-    avatarContainer: {
-        height: hp(14),
-        width: hp(14),
-        alignSelf: 'center',
-    },
-    avatar: {
-        width: '100%',
-        height: '100%',
-        borderRadius: theme.radius.xxl * 1.8,
-        borderCurve: 'continuous',
-        borderWidth: 1,
-        borderColor: theme.colors.darkLight,
-    },
-    cameraIcon: {
-        position: 'absolute',
-        bottom: 0,
-        right: -10,
-        padding: 8,
-        borderRadius: 50,
-        backgroundColor: 'white',
-        shadowColor: theme.colors.textLight,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 5,
-        elevation: 7,
-    },
-    form: {
-        gap: 18,
-        marginTop: 20,
-    },
-    bio: {
-        flexDirection: 'row',
-        height: hp(15),
-        alignItems: 'flex-start',
-        paddingVertical: 15,
-    }
+  container: {
+    flex: 1,
+    paddingHorizontal: wp(4),
+    paddingTop: hp(2),
+  },
+  avatarContainer: {
+    alignItems: 'center',
+    marginBottom: hp(2),
+  },
+  cameraIcon: {
+    position: 'absolute',
+    bottom: 0,
+    right: wp(10),
+    backgroundColor: theme.colors.card,
+    padding: hp(1),
+    borderRadius: theme.radius.xl,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  subtext: {
+    color: theme.colors.textLight,
+    fontSize: hp(1.6),
+    textAlign: 'center',
+    marginBottom: hp(2),
+  },
+  bio: {
+    height: hp(12),
+    paddingVertical: hp(1.2),
+  },
 });
-
-

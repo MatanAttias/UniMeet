@@ -1,54 +1,38 @@
-import { createClient } from '@supabase/supabase-js';
-import { supabaseUrl, supabaseAnonKey } from '../constants';
-import { supabase } from '../lib/supabase'; 
+import { supabase } from '../lib/supabase';
 
-console.log("🔍 Supabase inside userService:", supabase);
-
+// קבלת מידע על משתמש לפי מזהה
 export const getUserData = async (userId) => {
-    console.log("🔍 Fetching user data for:", userId);
-    if (!supabase) {
-        console.error("❌ Supabase is undefined in getUserData");
-        return { success: false, msg: "Supabase not initialized" };
-    }
+  if (!userId) return { success: false, msg: 'חסר מזהה משתמש' };
 
-    try {
-        const { data, error } = await supabase
-            .from("users")
-            .select('id, name, role')
-            .eq("id", userId)
-            .single();
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, name, role')
+      .eq('id', userId)
+      .single();
 
-        if (error) {
-            return { success: false, msg: error.message };
-        }
-        return { success: true, data };
-    } catch (error) {
-        console.log("❌ Error in getUserData:", error);
-        return { success: false, msg: error.message };
-    }
+    if (error) return { success: false, msg: error.message };
+    return { success: true, data };
+  } catch (err) {
+    console.error('getUserData error:', err);
+    return { success: false, msg: err.message };
+  }
 };
 
+// עדכון פרטי משתמש לפי מזהה
 export const updateUser = async (userId, data) => {
-    console.log("🔍 Using Supabase inside updateUser:", supabase);
+  if (!userId || !data) return { success: false, msg: 'נתונים חסרים לעדכון' };
 
-    if (!supabase) {
-        console.error("❌ Supabase is undefined inside updateUser!");
-        return { success: false, msg: "Supabase not initialized" };
-    }
+  try {
+    const { error } = await supabase
+      .from('users')
+      .update(data)
+      .eq('id', userId);
 
-    try {
-        const { error } = await supabase
-            .from("users")
-            .update(data)
-            .eq("id", userId);
-
-        if (error) {
-            console.log("❌ Update Error:", error);
-            return { success: false, msg: error?.message };
-        }
-        return { success: true, data };
-    } catch (error) {
-        console.log("❌ Catch Error in updateUser:", error);
-        return { success: false, msg: error.message };
-    }
+    if (error) return { success: false, msg: error.message };
+    return { success: true };
+  } catch (err) {
+    console.error('updateUser error:', err);
+    return { success: false, msg: err.message };
+  }
 };

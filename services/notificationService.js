@@ -1,49 +1,52 @@
-import { supabase } from "../lib/supabase"
+import { supabase } from "../lib/supabase";
 
+/**
+ * יצירת התראה חדשה
+ * @param {Object} notification - אובייקט עם פרטי ההתראה
+ */
+export const createNotification = async (notification) => {
+  try {
+    const { data, error } = await supabase
+      .from("notifications")
+      .insert(notification)
+      .select()
+      .single();
 
-
-export const createNotification = async (notification)=>{
-    try{
-       
-        const {data, error} = await supabase
-        .from('notifications')
-        .insert(notification)
-        .select()
-        .single()
-
-        if(error){
-            console.log('notification error: ', error)
-            return {success: false, msg: 'Something went wrong!'}
-        }
-
-        return {success: true, data: data}
-
-    }catch(error){
-        console.log('notification error: ', error)
-        return {success: false, msg: 'Something went wrong!'}
+    if (error) {
+      console.log("❌ createNotification error:", error);
+      return { success: false, msg: "שגיאה ביצירת ההתראה" };
     }
-}
 
-export const fetchNotifications = async (receiverId)=>{
-    try{
-        const {data, error} = await supabase
-        .from('notifications')
-        .select(`
-            *,
-            sender: senderId(id, name, image)
-        `)
-        .eq('receiverId', receiverId)
-        .order("created_at", {ascending: false})
+    return { success: true, data };
+  } catch (error) {
+    console.log("❌ createNotification catch:", error);
+    return { success: false, msg: "שגיאה לא צפויה ביצירת ההתראה" };
+  }
+};
 
-        if(error){
-            console.log('fetchNotifications error: ', error)
-            return {success: false, msg: 'Could not fetch notifications'}
-        }
+/**
+ * שליפת התראות לפי מזהה מקבל (receiverId)
+ * @param {string} receiverId
+ */
+export const fetchNotifications = async (receiverId) => {
+  try {
+    const { data, error } = await supabase
+      .from("notifications")
+      .select(`
+        *,
+        sender: senderId(id, name, image)
+      `)
+      .eq("receiverId", receiverId)
+      .order("created_at", { ascending: false });
 
-        return {success: true, data: data}
-
-    }catch(error){
-        console.log('fetchPostDetails error: ', error)
-        return {success: false, msg: 'Could not fetch notifications'}
+    if (error) {
+      console.log("❌ fetchNotifications error:", error);
+      return { success: false, msg: "שגיאה בשליפת התראות" };
     }
-}
+
+    return { success: true, data };
+  } catch (error) {
+    console.log("❌ fetchNotifications catch:", error);
+    return { success: false, msg: "שגיאה לא צפויה בשליפת התראות" };
+  }
+};

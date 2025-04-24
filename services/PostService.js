@@ -1,228 +1,192 @@
-import { supabase } from "../lib/supabase"
-import { uploadFile } from "./imageService"
+import { supabase } from "../lib/supabase";
+import { uploadFile } from "./imageService";
 
-export const createOrUpdatePost = async (post)=>{
-    try{
-    // upload image
-        if(post.file && typeof post.file == 'object'){
-            let isImage = post?.file?.type == 'image'
-            let folderName = isImage? 'postImages': 'postVideos'
-            let fileResult = await uploadFile(folderName, post?.file?.uri, isImage)
-            if(fileResult.success) post.file = fileResult.data
-            else{
-                return fileResult
-            }
-        }
+// יצירת פוסט או עדכון פוסט קיים
+export const createOrUpdatePost = async (post) => {
+  try {
+    if (post.file && typeof post.file === 'object') {
+      const isImage = post.file.type === 'image';
+      const folderName = isImage ? 'postImages' : 'postVideos';
+      const fileResult = await uploadFile(folderName, post.file.uri, isImage);
 
-        const {data, error} = await supabase
-        .from('posts')
-        .upsert(post)
-        .select()
-        .single()
-
-        if(error){
-            console.log('create post error:', error)
-            return {success: false, msg: 'Could not create your post'}
-        }
-        return {success: true, data: data}    
-    }catch(error){
-        console.log('createPost error: ', error)
-        return {success: false, msg: 'Could not create your post'}
+      if (!fileResult.success) return fileResult;
+      post.file = fileResult.data;
     }
 
-}
+    const { data, error } = await supabase
+      .from('posts')
+      .upsert(post)
+      .select()
+      .single();
 
-export const fetchPosts = async (limit=15, userId)=>{
-    if(userId){
-        try{
-            const {data, error} = await supabase
-            .from('posts')
-            .select(`
-                *,
-                user: users (id, name, image),
-                postLikes (*),
-                comments (count)
-            `)
-            .order('created_at', {ascending: false})
-            .eq('userId', userId)
-            .limit(limit)
-    
-            if(error){
-                console.log('fetchPosts error: ', error)
-                return {success: false, msg: 'Could not fetch the posts'}
-            }
-    
-            return {success: true, data: data}
-    
-        }catch(error){
-            console.log('fetchPosts error: ', error)
-            return {success: false, msg: 'Could not fetch the posts'}
-        }
-    
-    }else{
-        try{
-            const {data, error} = await supabase
-            .from('posts')
-            .select(`
-                *,
-                user: users (id, name, image),
-                postLikes (*),
-                comments (count)
-            `)
-            .order('created_at', {ascending: false})
-            .limit(limit)
-    
-            if(error){
-                console.log('fetchPosts error: ', error)
-                return {success: false, msg: 'Could not fetch the posts'}
-            }
-    
-            return {success: true, data: data}
-    
-        }catch(error){
-            console.log('fetchPosts error: ', error)
-            return {success: false, msg: 'Could not fetch the posts'}
-        }
-    
-    }
-}
-
-export const fetchPostDetails = async (postId)=>{
-    try{
-        const {data, error} = await supabase
-        .from('posts')
-        .select(`
-            *,
-            user: users (id, name, image),
-            postLikes (*),
-            comments (*, user: users(id, name, image))
-        `)
-        .eq('id', postId)
-        .order("created_at", {ascending: false, foreignTable: 'comments'})
-        .single()
-
-        if(error){
-            console.log('fetchPostDetails error: ', error)
-            return {success: false, msg: 'Could not fetch the posts'}
-        }
-
-        return {success: true, data: data}
-
-    }catch(error){
-        console.log('fetchPostDetails error: ', error)
-        return {success: false, msg: 'Could not fetch the posts'}
-    }
-}
-
-export const createPostLike = async (postLike)=>{
-    try{
-       
-        const {data, error} = await supabase
-        .from('postLikes')
-        .insert(postLike)
-        .select()
-        .single()
-
-        if(error){
-            console.log('postLike error: ', error)
-            return {success: false, msg: 'Could not like the post'}
-        }
-
-        return {success: true, data: data}
-
-    }catch(error){
-        console.log('postLike error: ', error)
-        return {success: false, msg: 'Could not like the post'}
-    }
-}
-
-
-export const createComment = async (comment)=>{
-    try{
-       
-        const {data, error} = await supabase
-        .from('comments')
-        .insert(comment)
-        .select()
-        .single()
-
-        if(error){
-            console.log('comment error: ', error)
-            return {success: false, msg: 'Could not create your comment'}
-        }
-
-        return {success: true, data: data}
-
-    }catch(error){
-        console.log('comment error: ', error)
-        return {success: false, msg: 'Could not create your comment'}
+    if (error) {
+      console.error('createOrUpdatePost error:', error);
+      return { success: false, msg: 'יצירת הפוסט נכשלה' };
     }
 
-}
-export const removePostLike = async (postId, userId)=>{
-    try{
-       
-        const {error} = await supabase
-        .from('postLikes')
-        .delete()
-        .eq('userId', userId)
-        .eq('postId', postId)
+    return { success: true, data };
+  } catch (error) {
+    console.error('createOrUpdatePost error:', error);
+    return { success: false, msg: 'שגיאה בלתי צפויה ביצירת הפוסט' };
+  }
+};
 
-        if(error){
-            console.log('postLike error: ', error)
-            return {success: false, msg: 'Could not remove the post like'}
-        }
+// שליפת פוסטים
+export const fetchPosts = async (limit = 15, userId) => {
+  try {
+    const query = supabase
+      .from('posts')
+      .select(`
+        *,
+        user: users (id, name, image),
+        postLikes (*),
+        comments (count)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(limit);
 
-        return {success: true}
+    if (userId) query.eq('userId', userId);
 
-    }catch(error){
-        console.log('postLike error: ', error)
-        return {success: false, msg: 'Could not remove the post like'}
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('fetchPosts error:', error);
+      return { success: false, msg: 'שליפת פוסטים נכשלה' };
     }
 
-}
+    return { success: true, data };
+  } catch (error) {
+    console.error('fetchPosts error:', error);
+    return { success: false, msg: 'שגיאה בשליפת פוסטים' };
+  }
+};
 
-export const removeComment = async (commentId)=>{
-    try{
-       
-        const {error} = await supabase
-        .from('comments')
-        .delete()
-        .eq('id', commentId)
+// שליפת פוסט לפי מזהה
+export const fetchPostDetails = async (postId) => {
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        user: users (id, name, image),
+        postLikes (*),
+        comments (*, user: users(id, name, image))
+      `)
+      .eq('id', postId)
+      .order('created_at', { ascending: false, foreignTable: 'comments' })
+      .single();
 
-        if(error){
-            console.log('removeComment error: ', error)
-            return {success: false, msg: 'Could not remove the comment'}
-        }
-
-        return {success: true, data: {commentId}}
-
-    }catch(error){
-        console.log('postLike error: ', error)
-        return {success: false, msg: 'Could not remove the comment'}
+    if (error) {
+      console.error('fetchPostDetails error:', error);
+      return { success: false, msg: 'שליפת הפוסט נכשלה' };
     }
 
-}
+    return { success: true, data };
+  } catch (error) {
+    console.error('fetchPostDetails error:', error);
+    return { success: false, msg: 'שגיאה בשליפת פרטי הפוסט' };
+  }
+};
 
+// לייק לפוסט
+export const createPostLike = async (postLike) => {
+  try {
+    const { data, error } = await supabase
+      .from('postLikes')
+      .insert(postLike)
+      .select()
+      .single();
 
-export const removePost = async (postId)=>{
-    try{
-       
-        const {error} = await supabase
-        .from('posts')
-        .delete()
-        .eq('id', postId)
-
-        if(error){
-            console.log('removePost error: ', error)
-            return {success: false, msg: 'Could not remove the post'}
-        }
-
-        return {success: true, data: {postId}}
-
-    }catch(error){
-        console.log('removePost error: ', error)
-        return {success: false, msg: 'Could not remove the post'}
+    if (error) {
+      console.error('createPostLike error:', error);
+      return { success: false, msg: 'לא ניתן לעשות לייק' };
     }
 
-}
+    return { success: true, data };
+  } catch (error) {
+    console.error('createPostLike error:', error);
+    return { success: false, msg: 'שגיאה בלייק לפוסט' };
+  }
+};
+
+// הסרת לייק
+export const removePostLike = async (postId, userId) => {
+  try {
+    const { error } = await supabase
+      .from('postLikes')
+      .delete()
+      .eq('userId', userId)
+      .eq('postId', postId);
+
+    if (error) {
+      console.error('removePostLike error:', error);
+      return { success: false, msg: 'לא ניתן להסיר לייק' };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('removePostLike error:', error);
+    return { success: false, msg: 'שגיאה בהסרת לייק' };
+  }
+};
+
+// יצירת תגובה
+export const createComment = async (comment) => {
+  try {
+    const { data, error } = await supabase
+      .from('comments')
+      .insert(comment)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('createComment error:', error);
+      return { success: false, msg: 'לא ניתן לשלוח תגובה' };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('createComment error:', error);
+    return { success: false, msg: 'שגיאה בשליחת תגובה' };
+  }
+};
+
+// מחיקת תגובה
+export const removeComment = async (commentId) => {
+  try {
+    const { error } = await supabase
+      .from('comments')
+      .delete()
+      .eq('id', commentId);
+
+    if (error) {
+      console.error('removeComment error:', error);
+      return { success: false, msg: 'לא ניתן למחוק את התגובה' };
+    }
+
+    return { success: true, data: { commentId } };
+  } catch (error) {
+    console.error('removeComment error:', error);
+    return { success: false, msg: 'שגיאה במחיקת תגובה' };
+  }
+};
+
+// מחיקת פוסט
+export const removePost = async (postId) => {
+  try {
+    const { error } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', postId);
+
+    if (error) {
+      console.error('removePost error:', error);
+      return { success: false, msg: 'לא ניתן למחוק את הפוסט' };
+    }
+
+    return { success: true, data: { postId } };
+  } catch (error) {
+    console.error('removePost error:', error);
+    return { success: false, msg: 'שגיאה במחיקת פוסט' };
+  }
+};
