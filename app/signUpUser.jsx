@@ -28,7 +28,7 @@ export default function SignUpUser() {
   
     router.push({
       pathname: '/emailSignUp',
-      params: { name },
+      params: { fullName },
     });
   };
 
