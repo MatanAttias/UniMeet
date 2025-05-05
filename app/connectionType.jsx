@@ -28,7 +28,7 @@ const ConnectionType = () => {
   const goNext = () => {
     if (selectedTypes.length === 0) return;
     router.push({
-      pathname: '/getNotify',
+      pathname: '/profilePicture',
       params: {
         fullName,
         email,

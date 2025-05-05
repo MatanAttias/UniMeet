@@ -18,10 +18,13 @@ import Comment from './Comment'
 import Share from './Share'
 import Send from './Send'
 import Delete from './Delete'
-import Logout from './Logout';
+import Logout from './Logout'
 import Image from './Image'
 import Video from './Video'
 import Confirm from './Confirm'
+import Male from './Male'
+import Female from './female'
+import GenderNatural from './genderNatural' 
 
 const icons = {
   home: Home,
@@ -46,6 +49,10 @@ const icons = {
   image: Image,
   video: Video,
   confirm: Confirm,
+  location: Location,
+  male: Male,
+  female: Female,
+  genderNatural: GenderNatural,
 }
 
 const Icon = ({name, ...props}) => {
