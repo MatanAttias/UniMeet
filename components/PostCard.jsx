@@ -12,22 +12,23 @@ import { Video } from 'expo-av';
 import { createPostLike, removePostLike } from '../services/PostService';
 import { stripHtmlTags } from '../constants/helpers/common';
 import Loading from '../components/Loading';
+import PostOptions from './PostOptions';
 
 const textStyles = {
-  color: theme.colors.textSecondary,  // כאן צבע הפונט
+  color: theme.colors.textSecondary,
   fontSize: hp(1.75),
   lineHeight: hp(2.4),
 };
 
 const tagsStyles = {
-  div:            textStyles,
-  p:              textStyles,
-  ol:             textStyles,
-  ul:             textStyles,
-  li:             textStyles,
-  span:           textStyles,
-  h1:             { color: theme.colors.textSecondary, fontSize: hp(2.2) },
-  h4:             { color: theme.colors.textSecondary, fontSize: hp(1.9) },
+  div: textStyles,
+  p: textStyles,
+  ol: textStyles,
+  ul: textStyles,
+  li: textStyles,
+  span: textStyles,
+  h1: { color: theme.colors.textSecondary, fontSize: hp(2.2) },
+  h4: { color: theme.colors.textSecondary, fontSize: hp(1.9) },
 };
 
 const PostCard = ({
@@ -38,7 +39,7 @@ const PostCard = ({
   showMoreIcon = true,
   showDelete = false,
   onDelete = () => {},
-  onEdit = () => {}
+  onEdit = () => {},
 }) => {
   if (!item) {
     return (
@@ -50,6 +51,7 @@ const PostCard = ({
 
   const [likes, setLikes] = useState(item.postLikes || []);
   const [loading, setLoading] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
 
   useEffect(() => {
     setLikes(item.postLikes || []);
@@ -58,7 +60,7 @@ const PostCard = ({
   const createdAt = item.created_at
     ? moment(item.created_at).format('D MMM')
     : 'Unknown';
-  const liked = likes.some(l => l.userId === currentUser?.id);
+  const liked = likes.some((l) => l.userId === currentUser?.id);
 
   const openPostDetails = () => {
     if (!showMoreIcon) return;
@@ -69,14 +71,14 @@ const PostCard = ({
     if (!currentUser) return;
     const already = liked;
     if (already) {
-      setLikes(likes.filter(l => l.userId !== currentUser.id));
+      setLikes(likes.filter((l) => l.userId !== currentUser.id));
       const res = await removePostLike(item.id, currentUser.id);
       if (!res.success) Alert.alert('Post', 'Something went wrong!');
     } else {
       setLikes([...likes, { userId: currentUser.id }]);
       const res = await createPostLike({
         userId: currentUser.id,
-        postId: item.id
+        postId: item.id,
       });
       if (!res.success) Alert.alert('Post', 'Something went wrong!');
     }
@@ -90,7 +92,7 @@ const PostCard = ({
   const handleDelete = () => {
     Alert.alert('Confirm', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => onDelete(item) }
+      { text: 'Delete', style: 'destructive', onPress: () => onDelete(item) },
     ]);
   };
 
@@ -105,16 +107,14 @@ const PostCard = ({
             rounded={theme.radius.md}
           />
           <View style={styles.nameTime}>
-            <Text style={styles.username}>
-              {item.user?.name || 'Unknown User'}
-            </Text>
+            <Text style={styles.username}>{item.user?.name || 'Unknown User'}</Text>
             <Text style={styles.postTime}>{createdAt}</Text>
           </View>
         </View>
 
         <View style={styles.actionsRight}>
           {showMoreIcon && (
-            <TouchableOpacity onPress={openPostDetails}>
+            <TouchableOpacity onPress={() => setShowOptions(true)}>
               <Icon
                 name="threeDotsHorizontal"
                 size={hp(3.4)}
@@ -133,11 +133,7 @@ const PostCard = ({
                 />
               </TouchableOpacity>
               <TouchableOpacity onPress={handleDelete}>
-                <Icon
-                  name="delete"
-                  size={hp(2.5)}
-                  color={theme.colors.rose}
-                />
+                <Icon name="delete" size={hp(2.5)} color={theme.colors.rose} />
               </TouchableOpacity>
             </>
           )}
@@ -151,7 +147,7 @@ const PostCard = ({
             contentWidth={wp(100)}
             source={{ html: item.body }}
             tagsStyles={tagsStyles}
-            baseStyle={textStyles}          // <<< הוספנו baseStyle
+            baseStyle={textStyles}
             defaultTextProps={{ selectable: true }}
           />
         )}
@@ -190,15 +186,9 @@ const PostCard = ({
 
         <View style={styles.footerButton}>
           <TouchableOpacity onPress={openPostDetails}>
-            <Icon
-              name="comment"
-              size={24}
-              color={theme.colors.textLight}
-            />
+            <Icon name="comment" size={24} color={theme.colors.textLight} />
           </TouchableOpacity>
-          <Text style={styles.count}>
-            {item.comments?.[0]?.count || 0}
-          </Text>
+          <Text style={styles.count}>{item.comments?.[0]?.count || 0}</Text>
         </View>
 
         <View style={styles.footerButton}>
@@ -206,15 +196,18 @@ const PostCard = ({
             <Loading size="small" />
           ) : (
             <TouchableOpacity onPress={onShare}>
-              <Icon
-                name="share"
-                size={24}
-                color={theme.colors.textLight}
-              />
+              <Icon name="share" size={24} color={theme.colors.textLight} />
             </TouchableOpacity>
           )}
         </View>
       </View>
+
+      {/* Options Modal */}
+      <PostOptions
+        visible={showOptions}
+        onClose={() => setShowOptions(false)}
+        postId={item.id}
+      />
     </View>
   );
 };

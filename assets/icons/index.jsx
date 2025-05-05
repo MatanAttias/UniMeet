@@ -22,6 +22,7 @@ import Logout from './Logout';
 import Image from './Image'
 import Video from './Video'
 import Confirm from './Confirm'
+import BookMark from './BookMark'
 
 const icons = {
   home: Home,
@@ -46,6 +47,7 @@ const icons = {
   image: Image,
   video: Video,
   confirm: Confirm,
+  bookmark: BookMark,
 }
 
 const Icon = ({name, ...props}) => {

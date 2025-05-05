@@ -190,3 +190,35 @@ export const removePost = async (postId) => {
     return { success: false, msg: 'שגיאה במחיקת פוסט' };
   }
 };
+
+
+// שליפת פוסטים שמורים
+export const fetchSavedPosts = async (userId) => {
+  try {
+    const { data, error } = await supabase
+      .from('saved_posts')
+      .select(`
+        post: posts (
+          *,
+          user: users (id, name, image),
+          postLikes (*),
+          comments (count)
+        )
+      `)
+      .eq('userId', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('fetchSavedPosts error:', error);
+      return { success: false, msg: 'שליפת פוסטים שמורים נכשלה' };
+    }
+
+    // החזרת רק הפוסטים מתוך המערך
+    const posts = data.map((entry) => entry.post);
+
+    return { success: true, data: posts };
+  } catch (error) {
+    console.error('fetchSavedPosts error:', error);
+    return { success: false, msg: 'שגיאה בשליפת פוסטים שמורים' };
+  }
+};

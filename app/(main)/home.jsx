@@ -4,7 +4,6 @@ import {
     Pressable,
     StyleSheet,
     Text,
-    TextInput,
     View,
   } from 'react-native';
   import React, { useEffect, useState } from 'react';
@@ -110,12 +109,18 @@ import {
           <Text style={styles.title}>UniMeet</Text>
           <View style={styles.icons}>
             <Pressable onPress={() => { setNotificationCount(0); router.push('notifications'); }}>
-              <Icon name="heart" size={hp(4)} strokeWidth={2} color={theme.colors.primary} />
+              <Icon name="heart" size={hp(4)} color={theme.colors.primary} />
               {notificationCount > 0 && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>{notificationCount}</Text>
                 </View>
               )}
+            </Pressable>
+            <Pressable onPress={() => router.push('savedPosts')}>
+              <Icon name="bookmark" size={hp(4)} color={theme.colors.primary} />
+            </Pressable>
+            <Pressable onPress={() => router.push('Search')}>
+              <Icon name="search" size={hp(4)} color={theme.colors.primary} />
             </Pressable>
             <Pressable onPress={() => router.push('newPost')}>
               <Icon name="plus" size={hp(4)} strokeWidth={2} color={theme.colors.primary} />
@@ -150,13 +155,13 @@ import {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.list}
             ListHeaderComponent={
-                <Pressable style={styles.fakeInput} onPress={() => router.push('newPost')}>
-                  <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: wp(2) }}>
-                    <Avatar uri={user?.image} size={hp(4)} rounded={theme.radius.md} />
-                    <Text style={styles.fakeInputText}>מה אתה מרגיש?</Text>
-                  </View>
-                </Pressable>
-              }              
+              <Pressable style={styles.fakeInput} onPress={() => router.push('newPost')}>
+                <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: wp(2) }}>
+                  <Avatar uri={user?.image} size={hp(4)} rounded={theme.radius.md} />
+                  <Text style={styles.fakeInputText}>מה אתה מרגיש?</Text>
+                </View>
+              </Pressable>
+            }
             keyExtractor={(item) => `post-${item.id}`}
             renderItem={({ item }) => (
               <PostCard item={item} currentUser={user} router={router} />
@@ -183,7 +188,7 @@ import {
   
   const styles = StyleSheet.create({
     header: {
-      flexDirection: 'row-reverse',
+      flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingHorizontal: wp(4),
@@ -252,19 +257,6 @@ import {
       paddingHorizontal: wp(4),
       paddingBottom: hp(2),
     },
-    inputWrapper: {
-      paddingBottom: hp(1.5),
-      paddingTop: hp(1),
-    },
-    input: {
-      backgroundColor: theme.colors.card,
-      borderRadius: theme.radius.lg,
-      paddingVertical: hp(1.5),
-      paddingHorizontal: wp(4),
-      fontSize: hp(1.9),
-      color: theme.colors.textPrimary,
-      textAlign: 'right',
-    },
     noMore: {
       textAlign: 'center',
       color: theme.colors.textLight,
@@ -294,19 +286,19 @@ import {
       fontWeight: theme.fonts.semibold,
     },
     fakeInput: {
-        backgroundColor: theme.colors.card,
-        borderRadius: theme.radius.lg,
-        paddingVertical: hp(1.5),
-        paddingHorizontal: wp(4),
-        marginBottom: hp(2),
-        marginTop: hp(1),
-        marginHorizontal: wp(0.5),
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-      },
-      fakeInputText: {
-        color: theme.colors.textSecondary,
-        fontSize: hp(1.9),
-      },      
+      backgroundColor: theme.colors.card,
+      borderRadius: theme.radius.lg,
+      paddingVertical: hp(1.5),
+      paddingHorizontal: wp(4),
+      marginBottom: hp(2),
+      marginTop: hp(1),
+      marginHorizontal: wp(0.5),
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    fakeInputText: {
+      color: theme.colors.textSecondary,
+      fontSize: hp(1.9),
+    },
   });
   
