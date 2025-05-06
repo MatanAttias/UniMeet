@@ -1,27 +1,3 @@
-import React from 'react';
-import Home from './Home';
-import { theme } from '../../constants/theme';
-import Mail from './Mail';
-import Lock from './Lock';
-import User from './User';
-import Heart from './Heart';
-import Plus from './Plus';
-import Search from './Search';
-import Location from './Location';
-import Call from './Call';
-import Camera from './Camera';
-import Edit from './Edit';
-import ArrowLeft from './ArrowLeft';
-import ThreeDotsCircle from './ThreeDotsCircle';
-import ThreeDotsHorizontal from './ThreeDotsHorizontal';
-import Comment from './Comment';
-import Share from './Share';
-import Send from './Send';
-import Delete from './Delete';
-import Logout from './Logout';
-import Image from './Image';
-import Video from './Video';
-import Confirm from './Confirm';
 import BookMark from './BookMark';
 import React from 'react'
 import Home from './Home'
@@ -75,12 +51,11 @@ const icons = {
   video: Video,
   confirm: Confirm,
   bookmark: BookMark,
-};
   location: Location,
   male: Male,
   female: Female,
   genderNatural: GenderNatural,
-}
+};
 
 const Icon = ({ name, size = 24, strokeWidth = 1.9, color, ...props }) => {
   const IconComponent = icons[name];
