@@ -10,9 +10,19 @@ import Icon from '../assets/icons';
 
 const ProfilePicture = () => {
   const router = useRouter();
-  const { fullName, email, birthdate, connectionType } = useLocalSearchParams();
+  const {
+    fullName,
+    email,
+    birth_date,
+    wantsNotifications,
+    connectionTypes,
+  } = useLocalSearchParams();
+
   const [image, setImage] = useState(null);
 
+  const goToPreviousStep = () => {
+    router.back();
+  };
   const onPickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -32,21 +42,24 @@ const ProfilePicture = () => {
       return;
     }
 
-    // שליחת כל המידע (כולל תמונה) לדף הבא
     router.push({
       pathname: '/getLocation',
       params: {
         fullName,
         email,
-        birthdate,
-        connectionType,
-        imageUri: image.uri, // שולחים את ה-URI של התמונה
+        birth_date,
+        wantsNotifications: wantsNotifications === 'true', // שמירה כ-boolean
+        connectionTypes,
+        image: image.uri,
       },
     });
   };
 
   return (
     <View style={styles.container}>
+      <Pressable style={styles.backToWelcomeButton} onPress={goToPreviousStep}>
+              <Text style={styles.backToWelcomeText}>חזור</Text>
+            </Pressable>
       <Animated.Text entering={FadeInUp} style={styles.title}>
         הגיע הזמן להכיר אותך!
       </Animated.Text>
@@ -56,7 +69,7 @@ const ProfilePicture = () => {
 
       <Pressable style={styles.imageWrapper} onPress={onPickImage}>
         {image ? (
-          <Image source={image.uri} style={styles.image} />
+          <Image source={{ uri: image.uri }} style={styles.image} />
         ) : (
           <View style={styles.placeholder}>
             <Icon name="camera" size={40} color="#aaa" />
@@ -90,7 +103,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: hp(2.2),
-    color: 'rgba(224, 212, 212, 0.85)', // לבן קצת כהה
+    color: 'rgba(224, 212, 212, 0.85)',
     textAlign: 'center',
     marginVertical: hp(3),
   },
@@ -128,6 +141,27 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontSize: hp(2.5),
+    fontWeight: theme.fonts.semibold,
+  },
+  backToWelcomeButton: {
+    position: 'absolute',
+    top: hp(8),
+    right: hp(4),
+    width: '14%',
+    backgroundColor: theme.colors.card,
+    paddingVertical: hp(1.0),
+    borderRadius: theme.radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  backToWelcomeText: {
+    color: theme.colors.primary,
+    fontSize: hp(2),
     fontWeight: theme.fonts.semibold,
   },
 });

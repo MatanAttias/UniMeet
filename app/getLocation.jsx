@@ -1,31 +1,81 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, Pressable, Alert } from 'react-native';
 import * as Location from 'expo-location';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import Button from '../components/Button';
 import { hp, wp } from '../constants/helpers/common';
 import { theme } from '../constants/theme';
 
 const LocationPermission = () => {
   const router = useRouter();
+  const {
+    fullName,
+    email,
+    birth_date,
+    connectionTypes,
+    image,
+    wantsNotifications = 'false', // טיפול במידה ולא הגיע מהעמוד הקודם
+  } = useLocalSearchParams();
 
   const handleLocationPermission = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
+
     if (status === 'granted') {
-      // אפשר לשמור את המיקום כאן בעתיד
-      router.push('/genderSignUp');
+      try {
+        // ⬇️ זה מה שגורם לפופאפ של אפל לקפוץ אם זו הפעם הראשונה
+        const locationData = await Location.getCurrentPositionAsync({});
+  
+
+        const params = {
+          fullName,
+          email,
+          birth_date,
+          wantsNotifications: wantsNotifications === 'true',
+          connectionTypes,
+          image,
+          location: true,
+        };
+
+        router.push({ pathname: '/genderSignUp', params });
+      } catch (error) {
+        Alert.alert('שגיאה', 'לא הצלחנו לקבל את המיקום שלך');
+      }
     } else {
       Alert.alert('שים לב', 'לא נוכל להציע לך חווית משתמש מלאה ללא מיקום');
-      router.push('/genderSignUp');
+
+      const params = {
+        fullName,
+        email,
+        birth_date,
+        wantsNotifications: wantsNotifications === 'true',
+        connectionTypes,
+        image,
+        location: false,
+      };
+
+      router.push({ pathname: '/genderSignUp', params });
     }
   };
 
   const goBack = () => router.back();
 
+  const handleSkip = () => {
+    const params = {
+      fullName,
+      email,
+      birth_date,
+      wantsNotifications: wantsNotifications === 'true',
+      connectionTypes,
+      image,
+      location: false,
+    };
+    router.push({ pathname: '/genderSignUp', params });
+  };
+
   return (
     <View style={styles.container}>
       <Image
-        source={require('../assets/images/location.png')} // ודא שהתמונה קיימת בתקיית assets
+        source={require('../assets/images/location.png')}
         style={styles.image}
         resizeMode="contain"
       />
@@ -48,7 +98,7 @@ const LocationPermission = () => {
 
       <Button
         title="לא עכשיו"
-        onPress={() => router.push('/genderSignUp')}
+        onPress={handleSkip}
         buttonStyle={[styles.button, styles.secondaryButton]}
         textStyle={[styles.buttonText, { color: theme.colors.textPrimary }]}
       />

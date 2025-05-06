@@ -6,17 +6,19 @@ import { hp, wp } from '../constants/helpers/common';
 import { theme } from '../constants/theme';
 import Button from '../components/Button';
 
-
-
 const ConnectionType = () => {
   const router = useRouter();
-  const { fullName, email, birthdate } = useLocalSearchParams();
+  const { fullName, email, birth_date, wantsNotifications } = useLocalSearchParams();
+
+  // המרה של wantsNotifications מ-string ל-boolean
+  const wantsNotificationsBool = wantsNotifications === 'true';
+
   const [selectedTypes, setSelectedTypes] = useState([]);
 
   const goToPreviousStep = () => {
     router.back();
   };
-  
+
   const toggleSelection = (type) => {
     if (selectedTypes.includes(type)) {
       setSelectedTypes(selectedTypes.filter((t) => t !== type));
@@ -32,7 +34,8 @@ const ConnectionType = () => {
       params: {
         fullName,
         email,
-        birthdate,
+        birth_date,
+        wantsNotifications: wantsNotificationsBool, // מועבר כערך בוליאני
         connectionTypes: selectedTypes.join(','),
       },
     });
@@ -40,9 +43,10 @@ const ConnectionType = () => {
 
   return (
     <View style={styles.container}>
-        <Pressable style={styles.backToWelcomeButton} onPress={goToPreviousStep}>
+      <Pressable style={styles.backToWelcomeButton} onPress={goToPreviousStep}>
         <Text style={styles.backToWelcomeText}>חזור</Text>
-        </Pressable>
+      </Pressable>
+
       <View style={styles.header}>
         <Text style={styles.title}>איזה קשר אתה מחפש?</Text>
         <Text style={styles.punchline}>אנו ניצור תור התאמה שיתאים להעדפותיך</Text>

@@ -21,7 +21,7 @@ const BirthSignUp = () => {
       params: {
         fullName,
         email,
-        birthdate: date.toISOString(), // תאריך לידה כ־string
+        birth_date: date.toISOString(), // תאריך לידה כ־string
       },
     });
   };

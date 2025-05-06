@@ -1,35 +1,51 @@
 import React from 'react';
 import { View, Text, StyleSheet, Alert, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import Button from '../components/Button';
 import { hp, wp } from '../constants/helpers/common';
 import { theme } from '../constants/theme';
 
 const GetNotify = () => {
-
   const router = useRouter();
+  const { fullName, email, birth_date } = useLocalSearchParams();
 
   const goToPreviousStep = () => {
     router.back();
   };
+
+  const goToNextStep = (wantsNotifications) => {
+    router.push({
+      pathname: '/connectionType',
+      params: {
+        fullName,
+        email,
+        birth_date,
+        wantsNotifications,
+      },
+    });
+  };
+
   const handlePermissionRequest = async () => {
     const { status } = await Notifications.requestPermissionsAsync();
-    if (status === 'granted') {
-      router.push('/connectionType'); // שנה למסך הבא שלך
-    } else {
+    if (status !== 'granted') {
       Alert.alert('שים לב', 'לא תוכל לקבל עידכונים בזמן אמת');
-      router.push('/connectionType'); // גם במקרה של סירוב, ממשיכים הלאה
+      goToNextStep(false); // המשתמש לא אישר
+    } else {
+      goToNextStep(true); // המשתמש אישר
     }
   };
 
   return (
     <View style={styles.container}>
-        <Pressable style={styles.backToWelcomeButton} onPress={goToPreviousStep}>
-                <Text style={styles.backToWelcomeText}>חזור</Text>
-        </Pressable>
+      <Pressable style={styles.backToWelcomeButton} onPress={goToPreviousStep}>
+        <Text style={styles.backToWelcomeText}>חזור</Text>
+      </Pressable>
+
       <Text style={styles.title}>רוצה לקבל עידכונים לטלפון?</Text>
-      <Text style={styles.description}>הפעל התראות ולעולם לא תפספס אף התראה - אנו נעדכן אותך ברגע שיעשו לך לייק  או ישלחו הודעה!</Text>
+      <Text style={styles.description}>
+        הפעל התראות ולעולם לא תפספס אף התראה - אנו נעדכן אותך ברגע שיעשו לך לייק או ישלחו הודעה!
+      </Text>
 
       <Button
         title="כן, שלחו לי עידכונים"
@@ -40,7 +56,7 @@ const GetNotify = () => {
 
       <Button
         title="לא עכשיו"
-        onPress={() => router.push('/connectionType')}
+        onPress={() => goToNextStep(false)}
         buttonStyle={[styles.button, styles.secondaryButton]}
         textStyle={[styles.buttonText, { color: theme.colors.textPrimary }]}
       />
@@ -50,6 +66,7 @@ const GetNotify = () => {
 
 export default GetNotify;
 
+// styles (נשארו אותו דבר)
 const styles = StyleSheet.create({
   container: {
     flex: 1,

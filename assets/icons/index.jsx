@@ -56,7 +56,13 @@ const icons = {
 }
 
 const Icon = ({name, ...props}) => {
-    const IconComponent = icons[name];  
+    const IconComponent = icons[name]; 
+    
+    
+  if (!IconComponent) {
+    console.warn(`Icon "${name}" does not exist in icons map.`);
+    return null; // או איזשהו fallback
+  }
   return (
     <IconComponent
         height={props.size || 24}
