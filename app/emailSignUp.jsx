@@ -1,16 +1,21 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, Alert, StyleSheet, Pressable } from 'react-native';
+import { StyleSheet, Text, View, Pressable, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import Input from '../components/input';
-import Button from '../components/Button';
+import ScreenWrapper from '../components/ScreenWrapper';
+import Icon from '../assets/icons';
+import { StatusBar } from 'expo-status-bar';
+import CustomBackButton from '../components/CustomBackButton';
 import { hp, wp } from '../constants/helpers/common';
 import { theme } from '../constants/theme';
+import Input from '../components/input';
+import Button from '../components/Button';
+import { supabase } from '../lib/supabase';
 
 const EmailSignUp = () => {
   const router = useRouter();
   const emailRef = useRef('');
   const [loading, setLoading] = useState(false);
-  const { name } = useLocalSearchParams();
+  const { fullName } = useLocalSearchParams();
 
   const goToPreviousStep = () => {
     router.back();
@@ -25,7 +30,7 @@ const EmailSignUp = () => {
 
     router.push({
       pathname: '/birthSignUp',
-      params: { email },
+      params: { email, fullName },
     });
   };
 
@@ -36,7 +41,7 @@ const EmailSignUp = () => {
       </Pressable>
 
       <View style={styles.container}>
-        <Text style={styles.title}>ברוך הבא {name}! מה האימייל שלך?</Text>
+        <Text style={styles.title}>ברוך הבא {fullName}! מה האימייל שלך?</Text>
         <Text style={styles.punchline}>כך שתמיד תוכל לגשת לחשבון שלך</Text>
 
         <Input

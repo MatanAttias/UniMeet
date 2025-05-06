@@ -7,7 +7,10 @@
     <list default="true" id="d6cf3e7e-5322-47d9-8727-85b6214d5147" name="Changes" comment="">
       <change afterPath="$PROJECT_DIR$/.idea/deviceManager.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/connectionType.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/connectionType.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/icons/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/assets/icons/index.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -36,8 +39,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "UI2"
+    "git-widget-placeholder": "Edit-profile-page"
   }
 }]]></component>
   <component name="SharedIndexes">
