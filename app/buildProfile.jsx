@@ -1,27 +1,36 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { hp, wp } from '../constants/helpers/common';
 import { theme } from '../constants/theme';
 
 const BuildProfile = () => {
   const router = useRouter();
+  const params = useLocalSearchParams();
 
   const onNext = () => {
-    router.push('/yourNextStep'); // שנה לשם הדף הבא
+    router.push({
+      pathname: '/topTraits',
+      params: {
+        ...params, // מעביר את כל הפרמטרים שהגיעו עד עכשיו
+      },
+    });
   };
+
   const goBack = () => router.back();
 
   return (
     <View style={styles.container}>
-         <Pressable style={styles.backButton} onPress={goBack}>
-                      <Text style={styles.backText}>חזור</Text>
-         </Pressable>
+      <Pressable style={styles.backButton} onPress={goBack}>
+        <Text style={styles.backText}>חזור</Text>
+      </Pressable>
+
       <Image
-        source={require('../assets/images/profile-illustration.png')} // החלף לתמונה הרצויה שלך
+        source={require('../assets/images/profile-illustration.png')}
         style={styles.image}
         resizeMode="contain"
       />
+
       <Text style={styles.title}>עכשיו הגיע הזמן לבנות את הפרופיל שלך!</Text>
       <Text style={styles.description}>
         זוהי ההזדמנות שלך להראות לעולם מי אתה ואיך אתה רוצה להתחבר לאחרים. השאלות שנציג בפניך יעזרו לך להעמיק בדברים שבאמת חשובים כשמכירים מישהו חדש – כמו סגנון התקשורת שלך, הצרכים הרגשיים שלך, והתחומים שמעניינים אותך באמת.
@@ -41,7 +50,7 @@ export default BuildProfile;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F4FF', // צבע רקע מרגיע
+    backgroundColor: '#F2F4FF',
     alignItems: 'center',
     paddingHorizontal: wp(6),
     paddingTop: hp(6),

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Alert, TextInput } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { hp, wp } from '../constants/helpers/common';
 import { theme } from '../constants/theme';
 import Icon from '../assets/icons';
+import { supabase } from '../lib/supabase';
 
 const MatchSignUp = () => {
   const router = useRouter();
@@ -17,32 +18,76 @@ const MatchSignUp = () => {
     image,
     wantsNotifications = 'false',
     location = 'false',
+
   } = useLocalSearchParams();
 
   const [preferredMatch, setPreferredMatch] = useState(null);
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const goBack = () => router.back();
 
-  const onNext = () => {
+  const onNext = async () => {
     if (!preferredMatch) {
       Alert.alert('שגיאה', 'אנא בחר/י העדפה להמשך');
       return;
     }
 
-    router.push({
-      pathname: '/buildProfile',
-      params: {
-        fullName,
+    if (!password || password.length < 6) {
+      Alert.alert('שגיאה', 'נא להזין סיסמה בת 6 תווים לפחות');
+      return;
+    }
+
+    if (!email || !fullName || !birth_date || !gender) {
+      Alert.alert('שגיאה', 'פרטי משתמש חסרים');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      console.log('Signing up with:', { email, password, fullName, gender, birth_date });
+
+      const { data, error } = await supabase.auth.signUp({
         email,
-        birth_date,
-        gender,
-        connectionTypes: preferredMatch,
-        image,
-        wantsNotifications,
-        location,
-        preferredMatch,
-      },
-    });
+        password,
+        options: {
+          data: {
+            name: fullName,
+            role: 'user',
+          },
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.user) throw new Error('User not returned from signUp');
+
+      const { error: upsertError } = await supabase
+        .from('users')
+        .upsert([
+            {
+            id: data.user.id,
+            email,
+            name: fullName,
+            birth_date,
+            gender,
+            connectionTypes: preferredMatch,
+            wantsNotifications: wantsNotifications === 'true',
+            image,
+            location: location === 'true',
+            },
+        ]);
+
+        if (upsertError) throw upsertError;
+
+
+      Alert.alert('הצלחה', 'נרשמת בהצלחה!');
+      router.push('/home'); // שנה לנתיב הנכון לאפליקציה שלך
+    } catch (error) {
+      console.error('SignUp Error:', error);
+      Alert.alert('שגיאה', 'הרישום נכשל, אנא נסה שוב');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -80,8 +125,17 @@ const MatchSignUp = () => {
         </Pressable>
       </View>
 
-      <Pressable style={styles.nextButton} onPress={onNext}>
-        <Text style={styles.nextButtonText}>המשך</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="הזן סיסמה"
+        placeholderTextColor="#ccc"
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+      />
+
+      <Pressable style={styles.nextButton} onPress={onNext} disabled={loading}>
+        <Text style={styles.nextButtonText}>{loading ? 'טוען...' : 'המשך'}</Text>
       </Pressable>
     </View>
   );
@@ -144,6 +198,17 @@ const styles = StyleSheet.create({
   },
   selectedText: {
     color: theme.colors.white,
+  },
+  input: {
+    width: '100%',
+    height: hp(6),
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: theme.radius.md,
+    paddingHorizontal: wp(4),
+    fontSize: hp(2),
+    marginTop: hp(1),
+    backgroundColor: 'white',
   },
   nextButton: {
     backgroundColor: theme.colors.primary,
