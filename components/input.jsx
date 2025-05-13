@@ -3,7 +3,7 @@ import React from 'react'
 import { theme } from '../constants/theme'
 import { hp } from '../constants/helpers/common'
 
-const Input = ({ icon, iconPosition = 'left', containerStyle, inputRef, ...props }) => {
+const Input = ({ icon, iconPosition = 'left', containerStyle, inputRef, inputStyle, ...props }) => {
   return (
     <View
       style={[
@@ -14,7 +14,7 @@ const Input = ({ icon, iconPosition = 'left', containerStyle, inputRef, ...props
     >
       {icon && icon}
       <TextInput
-        style={{ flex: 1, color: theme.colors.textPrimary }}
+        style={[styles.input, inputStyle]} // שימוש בסטייל של input בצורה נקייה
         placeholderTextColor={theme.colors.textLight}
         ref={inputRef}
         {...props}
@@ -43,6 +43,8 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: theme.colors.text, // צבע טקסט ברירת מחדל
+    color: theme.colors.text,
+    textAlign: 'right',            // כיווניות טקסט
+    writingDirection: 'rtl',       // תוודא שהתווים מימין לשמאל
   },
 })

@@ -1,3 +1,4 @@
+import BookMark from './BookMark';
 import React from 'react'
 import Home from './Home'
 import { theme } from '../../constants/theme'
@@ -18,11 +19,13 @@ import Comment from './Comment'
 import Share from './Share'
 import Send from './Send'
 import Delete from './Delete'
-import Logout from './Logout';
+import Logout from './Logout'
 import Image from './Image'
 import Video from './Video'
 import Confirm from './Confirm'
-import BookMark from './BookMark'
+import Male from './Male'
+import Female from './female'
+import GenderNatural from './genderNatural' 
 
 const icons = {
   home: Home,
@@ -48,21 +51,29 @@ const icons = {
   video: Video,
   confirm: Confirm,
   bookmark: BookMark,
-}
+  location: Location,
+  male: Male,
+  female: Female,
+  genderNatural: GenderNatural,
+};
 
-const Icon = ({name, ...props}) => {
-    const IconComponent = icons[name];  
+const Icon = ({ name, size = 24, strokeWidth = 1.9, color, ...props }) => {
+  const IconComponent = icons[name];
+
+  if (!IconComponent) {
+    console.warn(`Icon "${name}" not found`);
+    return null;
+  }
+
   return (
     <IconComponent
-        height={props.size || 24}
-        width={props.size || 24}
-        strokeWidth={props.strokeWidth || 1.9}
-        color={theme.colors.textLight}
-        {...props}
-        
-    />    
-  )
-}
+      height={size}
+      width={size}
+      strokeWidth={strokeWidth}
+      color={color || theme.colors.textLight}
+      {...props}
+    />
+  );
+};
 
-export default Icon
-
+export default Icon;

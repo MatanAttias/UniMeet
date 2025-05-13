@@ -16,7 +16,14 @@ const BirthSignUp = () => {
   };
 
   const onNext = () => {
-    Alert.alert('נשמר תאריך לידה', date.toDateString());
+    router.push({
+      pathname: '/getNotify',
+      params: {
+        fullName,
+        email,
+        birth_date: date.toISOString(), // תאריך לידה כ־string
+      },
+    });
   };
 
   return (
