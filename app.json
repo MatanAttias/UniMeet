@@ -10,7 +10,8 @@
     "newArchEnabled": false,
     "jsEngine": "jsc",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.UniMeet"
     },
     "android": {
       "adaptiveIcon": {
