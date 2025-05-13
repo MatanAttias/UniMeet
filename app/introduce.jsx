@@ -62,7 +62,7 @@ const Introduce = () => {
         <Text style={styles.counter}>{text.length} / 3000 תווים</Text>
 
         <Pressable style={styles.saveButton} onPress={goToNextStep}>
-          <Text style={styles.saveText}>דלגו כעת</Text>
+          <Text style={styles.saveText}>המשך</Text>
         </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -109,10 +109,10 @@ const styles = StyleSheet.create({
     fontSize: hp(2),
   },
   description: {
+    marginTop: hp(7),
     fontSize: hp(2),
     color: theme.colors.textSecondary,
     textAlign: 'right',
-    marginBottom: hp(2),
   },
   textArea: {
     backgroundColor: theme.colors.surface,
@@ -123,6 +123,7 @@ const styles = StyleSheet.create({
     fontSize: hp(2.2),
     borderWidth: 1,
     borderColor: theme.colors.border,
+    marginTop: hp(3),
   },
   counter: {
     textAlign: 'right',
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
     marginTop: hp(1),
   },
   saveButton: {
-    marginTop: hp(4),
+    marginTop: hp(22),
     backgroundColor: theme.colors.primary,
     paddingVertical: hp(1.5),
     borderRadius: theme.radius.lg,
