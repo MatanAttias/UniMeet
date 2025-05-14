@@ -8,7 +8,7 @@ import { theme } from '../constants/theme';
 
 const BirthSignUp = () => {
   const router = useRouter();
-  const { fullName, email } = useLocalSearchParams();
+  const { fullName, email,  password} = useLocalSearchParams();
   const [date, setDate] = useState(new Date());
 
   const goToPreviousStep = () => {
@@ -21,6 +21,7 @@ const BirthSignUp = () => {
       params: {
         fullName,
         email,
+        password,
         birth_date: date.toISOString(), // תאריך לידה כ־string
       },
     });

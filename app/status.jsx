@@ -8,7 +8,28 @@ const STATUS_OPTIONS = ['רווק/ה', 'בזוגיות', 'לא בלעדי'];
 
 const Status = () => {
   const router = useRouter();
-  const params = useLocalSearchParams();
+  const {
+        fullName,
+        email,
+        password,
+        birth_date,
+        gender,
+        connectionTypes,
+        image,
+        wantsNotifications = 'false',
+        location = 'false',
+        preferredMatch,
+        traits,
+        showTraits = 'false',
+        hobbies,
+        showHobbies = 'false',
+        identities,
+        showIdentities = 'false',
+        supportNeeds,
+        showSupportNeeds = 'false',
+        introduction,
+        audio,
+    } = useLocalSearchParams();
 
   const [selected, setSelected] = useState(null);
   const [customText, setCustomText] = useState('');
@@ -17,10 +38,33 @@ const Status = () => {
   const goBack = () => router.back();
 
   const handleNext = () => {
+    
     const status = selected !== null ? STATUS_OPTIONS[selected] : customText.trim();
     router.push({
-      pathname: '/nextStep',
-      params: { ...params, status },
+      pathname: '/finalStep',
+      params: {
+        fullName,
+        email,
+        password,
+        birth_date,
+        gender,
+        connectionTypes,
+        image,
+        wantsNotifications,
+        location,
+        preferredMatch,
+        traits,
+        showTraits,
+        hobbies,
+        showHobbies,
+        identities,
+        showIdentities,
+        supportNeeds,
+        showSupportNeeds,
+        introduction,
+        audio,
+        status,
+      },
     });
   };
 

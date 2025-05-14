@@ -6,6 +6,7 @@ import { hp, wp } from '../constants/helpers/common';
 import { Ionicons, Entypo } from '@expo/vector-icons';
 import PromptModal from '../components/PromptModal';
 
+
 const PromptCard = ({ icon, onPress }) => (
   <Pressable style={styles.card} onPress={onPress}>
     <View style={styles.icon}>{icon}</View>
@@ -19,7 +20,28 @@ const PromptCard = ({ icon, onPress }) => (
 
 const Prompts = () => {
   const router = useRouter();
-  const params = useLocalSearchParams();
+  const {
+      fullName,
+      email,
+      password,
+      birth_date,
+      gender,
+      connectionTypes,
+      image,
+      wantsNotifications = 'false',
+      location = 'false',
+      preferredMatch,
+      traits,
+      showTraits = 'false',
+      hobbies,
+      showHobbies = 'false',
+      identities,
+      showIdentities = 'false',
+      supportNeeds,
+      showSupportNeeds = 'false',
+      introduction,
+    } = useLocalSearchParams();
+  
   const [modalVisible, setModalVisible] = useState(false);
 
   const goBack = () => router.back();
@@ -27,14 +49,58 @@ const Prompts = () => {
   const skipForNow = () => {
     router.push({
       pathname: '/status',
-      params,
+      params: {
+        fullName,
+          email,
+          password,
+          birth_date,
+          gender,
+          connectionTypes,
+          image,
+          wantsNotifications,
+          location,
+          preferredMatch,
+          traits,
+          showTraits,
+          hobbies,
+          showHobbies,
+          identities,
+          showIdentities,
+          supportNeeds,
+          showSupportNeeds,
+          introduction,
+      }
     });
   };
 
   const handlePromptSelected = (prompt) => {
+   
     setModalVisible(false);
-    router.push({ pathname: '/recordPrompt', params: { ...params, prompt } });
-  };
+    router.push({
+      pathname: '/recordPrompt',
+      params: {
+          fullName,
+          email,
+          password,
+          birth_date,
+          gender,
+          connectionTypes,
+          image,
+          wantsNotifications,
+          location,
+          preferredMatch,
+          traits,
+          showTraits,
+          hobbies,
+          showHobbies,
+          identities,
+          showIdentities,
+          supportNeeds,
+          showSupportNeeds,
+          introduction,
+          prompt,
+      }
+    });  };
 
   return (
     <ScrollView style={styles.container}>

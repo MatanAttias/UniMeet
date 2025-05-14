@@ -30,7 +30,20 @@ const Hobbies = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showOnProfile, setShowOnProfile] = useState(true);
   const router = useRouter();
-  const params = useLocalSearchParams();
+  const {
+        fullName,
+        email,
+        password,
+        birth_date,
+        gender,
+        connectionTypes,
+        image,
+        wantsNotifications = 'false',
+        location = 'false',
+        preferredMatch,
+        traits,
+        showTraits = 'false',
+   } = useLocalSearchParams();
 
   const animationRefs = useRef(
     HOBBIES.reduce((acc, hobby) => {
@@ -68,10 +81,22 @@ const Hobbies = () => {
   );
 
   const goToNextStep = () => {
+   
     router.push({
       pathname: '/identify',
       params: {
-        ...params,
+        fullName,
+        email,
+        password,
+        birth_date,
+        gender,
+        connectionTypes,
+        image,
+        wantsNotifications,
+        location,
+        preferredMatch,
+        traits,
+        showTraits,
         hobbies: JSON.stringify(selectedHobbies),
         showHobbies: showOnProfile,
       },

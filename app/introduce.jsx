@@ -16,13 +16,50 @@ import { hp, wp } from '../constants/helpers/common';
 const Introduce = () => {
   const [text, setText] = useState('');
   const router = useRouter();
-  const params = useLocalSearchParams();
+  const {
+        fullName,
+        email,
+        password,
+        birth_date,
+        gender,
+        connectionTypes,
+        image,
+        wantsNotifications = 'false',
+        location = 'false',
+        preferredMatch,
+        traits,
+        showTraits = 'false',
+        hobbies,
+        showHobbies = 'false',
+        identities,
+        showIdentities = 'false',
+        supportNeeds,
+        showSupportNeeds = 'false',
+        introduction,
+    } = useLocalSearchParams();
 
   const goToNextStep = () => {
     router.push({
-      pathname: '/prompts', // שנה בהתאם לנתיב הבא שלך
+      pathname: '/prompts', 
       params: {
-        ...params,
+        fullName,
+        email,
+        password,
+        birth_date,
+        gender,
+        connectionTypes,
+        image,
+        wantsNotifications,
+        location,
+        preferredMatch,
+        traits,
+        showTraits,
+        hobbies,
+        showHobbies,
+        identities,
+        showIdentities,
+        supportNeeds,
+        showSupportNeeds,
         introduction: text,
       },
     });

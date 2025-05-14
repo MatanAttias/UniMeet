@@ -6,13 +6,34 @@ import { theme } from '../constants/theme';
 
 const BuildProfile = () => {
   const router = useRouter();
-  const params = useLocalSearchParams();
+  const {
+     fullName,
+     email,
+     password,
+     birth_date,
+     gender,
+     connectionTypes,
+     image,
+     wantsNotifications = 'false',
+     location = 'false',
+     preferredMatch,
+   } = useLocalSearchParams()
 
   const onNext = () => {
-    router.push({
+
+     router.push({
       pathname: '/topTraits',
       params: {
-        ...params, // מעביר את כל הפרמטרים שהגיעו עד עכשיו
+        fullName,
+        email,
+        password,
+        birth_date,
+        gender,
+        connectionTypes,
+        image,
+        wantsNotifications,
+        location,
+        preferredMatch,
       },
     });
   };

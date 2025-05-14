@@ -8,7 +8,7 @@ import Button from '../components/Button';
 
 const ConnectionType = () => {
   const router = useRouter();
-  const { fullName, email, birth_date, wantsNotifications } = useLocalSearchParams();
+  const { fullName, email, password, birth_date, wantsNotifications } = useLocalSearchParams();
 
   // המרה של wantsNotifications מ-string ל-boolean
   const wantsNotificationsBool = wantsNotifications === 'true';
@@ -28,12 +28,14 @@ const ConnectionType = () => {
   };
 
   const goNext = () => {
+
     if (selectedTypes.length === 0) return;
     router.push({
       pathname: '/profilePicture',
       params: {
         fullName,
         email,
+        password,
         birth_date,
         wantsNotifications: wantsNotificationsBool, // מועבר כערך בוליאני
         connectionTypes: selectedTypes.join(','),

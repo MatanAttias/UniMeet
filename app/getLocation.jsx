@@ -11,6 +11,7 @@ const LocationPermission = () => {
   const {
     fullName,
     email,
+    password,
     birth_date,
     connectionTypes,
     image,
@@ -18,6 +19,8 @@ const LocationPermission = () => {
   } = useLocalSearchParams();
 
   const handleLocationPermission = async () => {
+
+
     const { status } = await Location.requestForegroundPermissionsAsync();
 
     if (status === 'granted') {
@@ -29,6 +32,7 @@ const LocationPermission = () => {
         const params = {
           fullName,
           email,
+          password,
           birth_date,
           wantsNotifications: wantsNotifications === 'true',
           connectionTypes,
@@ -60,9 +64,12 @@ const LocationPermission = () => {
   const goBack = () => router.back();
 
   const handleSkip = () => {
+    console.log('password:', password);
+
     const params = {
       fullName,
       email,
+      password,
       birth_date,
       wantsNotifications: wantsNotifications === 'true',
       connectionTypes,

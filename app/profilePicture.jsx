@@ -13,6 +13,7 @@ const ProfilePicture = () => {
   const {
     fullName,
     email,
+    password,
     birth_date,
     wantsNotifications,
     connectionTypes,
@@ -37,6 +38,7 @@ const ProfilePicture = () => {
   };
 
   const onNext = () => {
+
     if (!image) {
       Alert.alert('נא להוסיף תמונה', 'אנא בחר/י תמונת פרופיל להמשך');
       return;
@@ -47,6 +49,7 @@ const ProfilePicture = () => {
       params: {
         fullName,
         email,
+        password,
         birth_date,
         wantsNotifications: wantsNotifications === 'true', // שמירה כ-boolean
         connectionTypes,

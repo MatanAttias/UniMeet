@@ -27,7 +27,18 @@ const TopTraits = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showOnProfile, setShowOnProfile] = useState(true);
   const router = useRouter();
-  const params = useLocalSearchParams();
+  const {
+       fullName,
+       email,
+       password,
+       birth_date,
+       gender,
+       connectionTypes,
+       image,
+       wantsNotifications = 'false',
+       location = 'false',
+       preferredMatch,
+  } = useLocalSearchParams();
 
   const animationRefs = useRef(
     TRAITS.reduce((acc, trait) => {
@@ -65,10 +76,20 @@ const TopTraits = () => {
   );
 
   const goToNextStep = () => {
+  
     router.push({
       pathname: '/hobbies',
       params: {
-        ...params,
+        fullName,
+        email,
+        password,
+        birth_date,
+        gender,
+        connectionTypes,
+        image,
+        wantsNotifications,
+        location,
+        preferredMatch,
         traits: JSON.stringify(selectedTraits),
         showTraits: showOnProfile,
       },

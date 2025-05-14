@@ -1,36 +1,50 @@
 import React, { useRef, useState } from 'react';
 import { StyleSheet, Text, View, Pressable, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import ScreenWrapper from '../components/ScreenWrapper';
-import Icon from '../assets/icons';
-import { StatusBar } from 'expo-status-bar';
-import CustomBackButton from '../components/CustomBackButton';
 import { hp, wp } from '../constants/helpers/common';
 import { theme } from '../constants/theme';
 import Input from '../components/input';
 import Button from '../components/Button';
-import { supabase } from '../lib/supabase';
 
-const EmailSignUp = () => {
+const PassSignUp = () => {
   const router = useRouter();
-  const emailRef = useRef('');
+  const { fullName, email } = useLocalSearchParams();
+
+  const [password, setPassword] = useState(''); // שינוי מ-useRef ל-useState
+  const [confirmPassword, setConfirmPassword] = useState(''); // שינוי מ-useRef ל-useState
   const [loading, setLoading] = useState(false);
-  const { fullName } = useLocalSearchParams();
 
   const goToPreviousStep = () => {
     router.back();
   };
 
   const goToNextStep = () => {
-    const email = emailRef.current.trim();
+    console.log('password:', password);
 
-    if (!email) {
-      return Alert.alert('שגיאה', 'אנא הכנס אימייל');
+    // משתמשים בערכים ישירות מה-state במקום מה-ref
+    const trimmedPassword = password.trim();
+    const trimmedConfirm = confirmPassword.trim();
+
+    if (!trimmedPassword || !trimmedConfirm) {
+      return Alert.alert('שגיאה', 'נא למלא את שני השדות');
     }
 
+    if (trimmedPassword.length < 6) {
+      return Alert.alert('שגיאה', 'הסיסמה צריכה להכיל לפחות 6 תווים');
+    }
+
+    if (trimmedPassword !== trimmedConfirm) {
+      return Alert.alert('שגיאה', 'הסיסמאות לא תואמות');
+    }
+
+    // מעבר לדף הבא עם כל הפרמטרים
     router.push({
-      pathname: '/passSignUp',
-      params: { email, fullName },
+      pathname: '/birthSignUp',
+      params: { 
+        fullName, 
+        email, 
+        password: trimmedPassword // שימוש בערך מה-state
+      },
     });
   };
 
@@ -41,22 +55,27 @@ const EmailSignUp = () => {
       </Pressable>
 
       <View style={styles.container}>
-        <Text style={styles.title}>ברוך הבא {fullName}! מה האימייל שלך?</Text>
-        <Text style={styles.punchline}>כך שתמיד תוכל לגשת לחשבון שלך</Text>
+        <Text style={styles.title}>צור סיסמה חדשה</Text>
+        <Text style={styles.punchline}>אנחנו ממליצים על סיסמה חזקה</Text>
 
         <Input
-          placeholder="אימייל"
-          keyboardType="email-address"
-          onChangeText={(text) => (emailRef.current = text)}
-          containerStyle={{
-            borderColor: 'white',
-            borderWidth: 1,
-          }}
-          inputStyle={{
-            color: 'white',
-            textAlign: 'right',
-          }}
+          placeholder="סיסמה"
+          secureTextEntry
+          onChangeText={(text) => setPassword(text)} // שימוש ב-setState במקום ref
+          containerStyle={styles.inputContainer}
+          inputStyle={styles.inputText}
           placeholderTextColor="white"
+          value={password} // הוספת ערך מקושר ל-state
+        />
+
+        <Input
+          placeholder="אימות סיסמה"
+          secureTextEntry
+          onChangeText={(text) => setConfirmPassword(text)} // שימוש ב-setState במקום ref
+          containerStyle={styles.inputContainer}
+          inputStyle={styles.inputText}
+          placeholderTextColor="white"
+          value={confirmPassword} // הוספת ערך מקושר ל-state
         />
       </View>
 
@@ -71,7 +90,7 @@ const EmailSignUp = () => {
   );
 };
 
-export default EmailSignUp;
+export default PassSignUp;
 
 const styles = StyleSheet.create({
   safe: {
@@ -112,13 +131,21 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.bold,
     color: theme.colors.primary,
     textAlign: 'center',
-    marginTop: hp(-12),
+    marginTop: hp(-10),
   },
   punchline: {
     textAlign: 'center',
     paddingHorizontal: wp(6),
     fontSize: hp(1.8),
     color: theme.colors.textPrimary,
+  },
+  inputContainer: {
+    borderColor: 'white',
+    borderWidth: 1,
+  },
+  inputText: {
+    color: 'white',
+    textAlign: 'right',
   },
   btnText: {
     color: theme.colors.primary,

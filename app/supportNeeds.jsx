@@ -41,8 +41,25 @@ const SupportNeeds = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showOnProfile, setShowOnProfile] = useState(true);
   const router = useRouter();
-  const params = useLocalSearchParams();
-
+  const {
+      fullName,
+      email,
+      password,
+      birth_date,
+      gender,
+      connectionTypes,
+      image,
+      wantsNotifications = 'false',
+      location = 'false',
+      preferredMatch,
+      traits,
+      showTraits = 'false',
+      hobbies,
+      showHobbies = 'false',
+      identities,
+      showIdentities = 'false',
+  } = useLocalSearchParams();
+  
   const animationRefs = useRef(
     SUPPORT_NEEDS.reduce((acc, need) => {
       acc[need] = new Animated.Value(1);
@@ -79,10 +96,26 @@ const SupportNeeds = () => {
   );
 
   const goToNextStep = () => {
+
     router.push({
       pathname: '/introduce',
       params: {
-        ...params,
+        fullName,
+        email,
+        password,
+        birth_date,
+        gender,
+        connectionTypes,
+        image,
+        wantsNotifications,
+        location,
+        preferredMatch,
+        traits,
+        showTraits,
+        hobbies,
+        showHobbies,
+        identities,
+        showIdentities,
         supportNeeds: JSON.stringify(selectedNeeds),
         showSupportNeeds: showOnProfile,
       },

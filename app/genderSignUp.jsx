@@ -12,12 +12,15 @@ const GenderSignUp = () => {
   const {
       fullName,
       email,
+      password,
       birth_date,
       connectionTypes,
       image,
       wantsNotifications = 'false', // טיפול במידה ולא הגיע מהעמוד הקודם
     } = useLocalSearchParams();
+
     const onNext = () => {
+
     if (!selectedGender) {
       Alert.alert('שגיאה', 'אנא בחר/י מין להמשך');
       return;
@@ -28,6 +31,7 @@ const GenderSignUp = () => {
       params: {
         fullName,
         email,
+        password,
         birth_date,
         wantsNotifications: wantsNotifications === 'true',
         connectionTypes,

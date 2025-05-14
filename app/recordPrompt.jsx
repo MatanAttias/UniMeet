@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext'; // עדכן את הנתיב לפי מיקום הקובץ האמיתי
+import { uploadAudioFile } from '../services/audioServices';
 import {
   View,
   Text,
   Pressable,
   StyleSheet,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { Audio } from 'expo-av';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -16,7 +18,29 @@ import { hp, wp } from '../constants/helpers/common';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function RecordPrompt() {
-  const { prompt } = useLocalSearchParams();
+  const {
+    fullName,
+    email,
+    password,
+    birth_date,
+    gender,
+    connectionTypes,
+    image,
+    wantsNotifications = 'false',
+    location = 'false',
+    preferredMatch,
+    traits,
+    showTraits = 'false',
+    hobbies,
+    showHobbies = 'false',
+    identities,
+    showIdentities = 'false',
+    supportNeeds,
+    showSupportNeeds = 'false',
+    introduction,
+    prompt,
+  } = useLocalSearchParams();
+
   const router = useRouter();
 
   const [recording, setRecording] = useState(null);
@@ -27,11 +51,20 @@ export default function RecordPrompt() {
 
   useEffect(() => {
     (async () => {
-      await Audio.requestPermissionsAsync();
+      const { granted } = await Audio.requestPermissionsAsync();
+      if (!granted) {
+        Alert.alert('אין הרשאה', 'יש לאפשר הרשאה למיקרופון כדי להקליט');
+        return;
+      }
+
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
         staysActiveInBackground: false,
+        interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
+        interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
       });
     })();
 
@@ -43,14 +76,33 @@ export default function RecordPrompt() {
   }, []);
 
   const startRecording = async () => {
+    
+    if (isRecording) return;
+
     try {
+      console.log('Starting recording...');
       setIsRecording(true);
+
+      const permission = await Audio.getPermissionsAsync();
+      if (!permission.granted) {
+        console.warn('Permission to record audio not granted');
+        setIsRecording(false);
+        return;
+      }
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
       const { recording } = await Audio.Recording.createAsync(
         Audio.RecordingOptionsPresets.HIGH_QUALITY
       );
       setRecording(recording);
+      console.log('Recording started');
     } catch (err) {
       console.error('Failed to start recording', err);
+      setIsRecording(false);
     }
   };
 
@@ -61,6 +113,7 @@ export default function RecordPrompt() {
       const uri = recording.getURI();
       setRecordedUri(uri);
       setRecording(null);
+      console.log('Recording stopped, saved at:', uri);
     } catch (err) {
       console.error('Failed to stop recording', err);
     }
@@ -86,11 +139,55 @@ export default function RecordPrompt() {
     }
   };
 
-  const saveAndContinue = () => {
-    router.push({
-      pathname: '/prompts',
-      params: { prompt, audio: recordedUri },
-    });
+  const { setUserData } = useAuth(); // הוסף את זה בתוך הקומפוננטה
+
+  const saveAndContinue = async () => {
+    
+    if (!recordedUri) return;
+  
+    try {
+      const result = await uploadAudioFile(recordedUri);
+  
+      if (result.success) {
+        const publicUrl = result.data;
+  
+        // 👇 כאן אתה שומר את הקישור של האודיו לזיכרון (Context)
+        setUserData({ audioUrl: publicUrl });
+  
+        // ממשיכים לדף הבא
+        router.push({
+          pathname: '/status',
+          params: {
+            fullName,
+            email,
+            password,
+            birth_date,
+            gender,
+            connectionTypes,
+            image,
+            wantsNotifications,
+            location,
+            preferredMatch,
+            traits,
+            showTraits,
+            hobbies,
+            showHobbies,
+            identities,
+            showIdentities,
+            supportNeeds,
+            showSupportNeeds,
+            introduction,
+            audio: publicUrl, // 👈 גם כאן תעביר את הקישור האמיתי
+            prompt,
+          },
+        });
+      } else {
+        Alert.alert('שגיאה', 'לא הצלחנו להעלות את ההקלטה');
+      }
+    } catch (err) {
+      console.error('Failed to upload audio', err);
+      Alert.alert('שגיאה', 'לא הצלחנו להעלות את ההקלטה');
+    }
   };
 
   return (
@@ -206,16 +303,16 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   recordButton: {
-    backgroundColor: '#9b59b6', // סגול בהיר
+    backgroundColor: '#9b59b6',
   },
   stopButton: {
-    backgroundColor: '#8e44ad', // סגול בינוני
+    backgroundColor: '#8e44ad',
   },
   playButton: {
-    backgroundColor: '#7d3c98', // סגול כהה
+    backgroundColor: '#7d3c98',
   },
   saveButton: {
-    backgroundColor: '#6c3483', // סגול כהה יותר
+    backgroundColor: '#6c3483',
   },
   buttonText: {
     color: '#fff',

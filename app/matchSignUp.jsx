@@ -11,6 +11,7 @@ const MatchSignUp = () => {
   const {
     fullName,
     email,
+    password,
     birth_date,
     gender,
     connectionTypes,
@@ -34,13 +35,14 @@ const MatchSignUp = () => {
       params: {
         fullName,
         email,
+        password,
         birth_date,
         gender,
-        connectionTypes: preferredMatch,
+        connectionTypes,
         image,
         wantsNotifications,
         location,
-        preferredMatch,
+        preferredMatch, // העברה נכונה
       },
     });
   };
