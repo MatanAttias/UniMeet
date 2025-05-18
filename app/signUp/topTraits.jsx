@@ -11,8 +11,8 @@ import {
   Animated,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme } from '../constants/theme';
-import { hp, wp } from '../constants/helpers/common';
+import { theme } from '../../constants/theme';
+import { hp, wp } from '../../constants/helpers/common';
 
 const TRAITS = [
   'תמיד מאחר/ת', 'חושב/ת מלמטה למעלה', 'יצירתי/ת', 'שוכח/ת', 'מקשיב/ה טוב',
@@ -27,7 +27,18 @@ const TopTraits = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showOnProfile, setShowOnProfile] = useState(true);
   const router = useRouter();
-  const params = useLocalSearchParams();
+  const {
+       fullName,
+       email,
+       password,
+       birth_date,
+       gender,
+       connectionTypes,
+       image,
+       wantsNotifications = 'false',
+       location = 'false',
+       preferredMatch,
+  } = useLocalSearchParams();
 
   const animationRefs = useRef(
     TRAITS.reduce((acc, trait) => {
@@ -65,10 +76,20 @@ const TopTraits = () => {
   );
 
   const goToNextStep = () => {
+  
     router.push({
-      pathname: '/hobbies',
+      pathname: '/signUp/hobbies',
       params: {
-        ...params,
+        fullName,
+        email,
+        password,
+        birth_date,
+        gender,
+        connectionTypes,
+        image,
+        wantsNotifications,
+        location,
+        preferredMatch,
         traits: JSON.stringify(selectedTraits),
         showTraits: showOnProfile,
       },

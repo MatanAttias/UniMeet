@@ -13,7 +13,7 @@ export default function SelectType() {
   }
 
   const handleSelectUser = () => {
-    router.push('/signUpUser')
+    router.push('/signUp/signUpUser')
   }
 
   const handleBack = () => {

@@ -1,15 +1,15 @@
 import React, { useRef, useState } from 'react';
 import { StyleSheet, Text, View, Pressable, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import ScreenWrapper from '../components/ScreenWrapper';
-import Icon from '../assets/icons';
+import ScreenWrapper from '../../components/ScreenWrapper';
+import Icon from '../../assets/icons';
 import { StatusBar } from 'expo-status-bar';
-import CustomBackButton from '../components/CustomBackButton';
-import { hp, wp } from '../constants/helpers/common';
-import { theme } from '../constants/theme';
-import Input from '../components/input';
-import Button from '../components/Button';
-import { supabase } from '../lib/supabase';
+import CustomBackButton from '../../components/CustomBackButton';
+import { hp, wp } from '../../constants/helpers/common';
+import { theme } from '../../constants/theme';
+import Input from '../../components/input';
+import Button from '../../components/Button';
+import { supabase } from '../../lib/supabase';
 
 const EmailSignUp = () => {
   const router = useRouter();
@@ -29,7 +29,7 @@ const EmailSignUp = () => {
     }
 
     router.push({
-      pathname: '/birthSignUp',
+      pathname: '/signUp/passSignUp',
       params: { email, fullName },
     });
   };

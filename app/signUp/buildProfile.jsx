@@ -1,18 +1,39 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { hp, wp } from '../constants/helpers/common';
-import { theme } from '../constants/theme';
+import { hp, wp } from '../../constants/helpers/common';
+import { theme } from '../../constants/theme';
 
 const BuildProfile = () => {
   const router = useRouter();
-  const params = useLocalSearchParams();
+  const {
+     fullName,
+     email,
+     password,
+     birth_date,
+     gender,
+     connectionTypes,
+     image,
+     wantsNotifications = 'false',
+     location = 'false',
+     preferredMatch,
+   } = useLocalSearchParams()
 
   const onNext = () => {
-    router.push({
-      pathname: '/topTraits',
+
+     router.push({
+      pathname: '/signUp/topTraits',
       params: {
-        ...params, // מעביר את כל הפרמטרים שהגיעו עד עכשיו
+        fullName,
+        email,
+        password,
+        birth_date,
+        gender,
+        connectionTypes,
+        image,
+        wantsNotifications,
+        location,
+        preferredMatch,
       },
     });
   };
@@ -25,8 +46,8 @@ const BuildProfile = () => {
         <Text style={styles.backText}>חזור</Text>
       </Pressable>
 
-      <Image
-        source={require('../assets/images/profile-illustration.png')}
+      <Image 
+        source={require('../../assets/images/profile-illustration.png')}
         style={styles.image}
         resizeMode="contain"
       />

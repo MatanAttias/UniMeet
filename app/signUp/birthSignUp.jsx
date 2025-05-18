@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import Button from '../components/Button';
-import { hp, wp } from '../constants/helpers/common';
-import { theme } from '../constants/theme';
+import Button from '../../components/Button';
+import { hp, wp } from '../../constants/helpers/common';
+import { theme } from '../../constants/theme';
 
 const BirthSignUp = () => {
   const router = useRouter();
-  const { fullName, email } = useLocalSearchParams();
+  const { fullName, email,  password} = useLocalSearchParams();
   const [date, setDate] = useState(new Date());
 
   const goToPreviousStep = () => {
@@ -17,10 +17,11 @@ const BirthSignUp = () => {
 
   const onNext = () => {
     router.push({
-      pathname: '/getNotify',
+      pathname: '/signUp/getNotify',
       params: {
         fullName,
         email,
+        password,
         birth_date: date.toISOString(), // תאריך לידה כ־string
       },
     });

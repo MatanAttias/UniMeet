@@ -1,3 +1,5 @@
+// Hobbies.jsx
+
 import React, { useState, useRef } from 'react';
 import {
   View,
@@ -11,80 +13,92 @@ import {
   Animated,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme } from '../constants/theme';
-import { hp, wp } from '../constants/helpers/common';
+import { theme } from '../../constants/theme';
+import { hp, wp } from '../../constants/helpers/common';
 
-const SUPPORT_NEEDS = [
-    'עזרי תקשורת',
-    'עזרה בריכוז וקשב',
-    'תמיכה בנוכחות מלווה',
-    'סיוע ממטפל אישי',
-    'התמודדות עם כאב מתמשך',
-    'שמירה על סדר ויציבות',
-    'סביבה מתחשבת בבריאות',
-    'קושי בקבלת החלטות',
-    'מגע מרגיע וחיבוק עמוק',
-    'הגנה מרעשים חזקים',
-    'עזרי ויסות חושי',
-    'תמיכה בהליכה או תנועה',
-    'תקשורת אחד על אחד',
-    'מרחבים שקטים ונינוחים',
-    'שמירה על שגרה קבועה',
-    'גישה לשפת סימנים',
-    'העדפה להודעות כתובות',
-    'הגנה מטריגרים רגשיים',
-    'תכנון חזותי של היום',
-  ];
+const HOBBIES = [
+  'כדורגל', 'כדורסל', 'מוזיקה', 'ריקוד', 'צילום', 'טיולים', 'קריאה', 'בישול',
+  'אפייה', 'ציור', 'ספורט', 'ריצה', 'כתיבה', 'שחייה', 'משחקי וידאו',
+  'יוגה', 'מדיטציה', 'גינון', 'סדרה טובה', 'בינג\' בנטפליקס', 'עיצוב פנים',
+  'סנובורד', 'גלישה', 'טניס', 'אופניים', 'תכנות', 'השקעות', 'סטארטאפים',
+  'לימוד שפות', 'פודקאסטים', 'גיטרה', 'תופים', 'איפור', 'קוסמטיקה',
+  'אמנות', 'שירה', 'סקסולוגיה', 'אסטרונומיה', 'שחמט',
+];
 
-const SupportNeeds = () => {
-  const [selectedNeeds, setSelectedNeeds] = useState([]);
+const Hobbies = () => {
+  const [selectedHobbies, setSelectedHobbies] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showOnProfile, setShowOnProfile] = useState(true);
   const router = useRouter();
-  const params = useLocalSearchParams();
+  const {
+        fullName,
+        email,
+        password,
+        birth_date,
+        gender,
+        connectionTypes,
+        image,
+        wantsNotifications = 'false',
+        location = 'false',
+        preferredMatch,
+        traits,
+        showTraits = 'false',
+   } = useLocalSearchParams();
 
   const animationRefs = useRef(
-    SUPPORT_NEEDS.reduce((acc, need) => {
-      acc[need] = new Animated.Value(1);
+    HOBBIES.reduce((acc, hobby) => {
+      acc[hobby] = new Animated.Value(1);
       return acc;
     }, {})
   );
 
-  const toggleNeed = (need) => {
-    if (selectedNeeds.includes(need)) {
-      setSelectedNeeds(selectedNeeds.filter(n => n !== need));
-    } else if (selectedNeeds.length < 5) {
-      setSelectedNeeds([...selectedNeeds, need]);
+  const toggleHobby = (hobby) => {
+    if (selectedHobbies.includes(hobby)) {
+      setSelectedHobbies(selectedHobbies.filter(h => h !== hobby));
+    } else if (selectedHobbies.length < 5) {
+      setSelectedHobbies([...selectedHobbies, hobby]);
     } else {
-      Alert.alert('מקסימום בחירות', 'ניתן לבחור עד 5 צרכים בלבד');
+      Alert.alert('מקסימום תחביבים', 'ניתן לבחור עד 5 תחביבים בלבד');
     }
   };
 
-  const animatePress = (need) => {
+  const animatePress = (hobby) => {
     Animated.sequence([
-      Animated.timing(animationRefs.current[need], {
+      Animated.timing(animationRefs.current[hobby], {
         toValue: 0.95,
         duration: 100,
         useNativeDriver: true,
       }),
-      Animated.spring(animationRefs.current[need], {
+      Animated.spring(animationRefs.current[hobby], {
         toValue: 1,
         useNativeDriver: true,
       }),
     ]).start();
   };
 
-  const filteredNeeds = SUPPORT_NEEDS.filter(need =>
-    need.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredHobbies = HOBBIES.filter(hobby =>
+    hobby.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const goToNextStep = () => {
+   
     router.push({
-      pathname: '/introduce',
+      pathname: '/signUp/identify',
       params: {
-        ...params,
-        supportNeeds: JSON.stringify(selectedNeeds),
-        showSupportNeeds: showOnProfile,
+        fullName,
+        email,
+        password,
+        birth_date,
+        gender,
+        connectionTypes,
+        image,
+        wantsNotifications,
+        location,
+        preferredMatch,
+        traits,
+        showTraits,
+        hobbies: JSON.stringify(selectedHobbies),
+        showHobbies: showOnProfile,
       },
     });
   };
@@ -97,11 +111,11 @@ const SupportNeeds = () => {
         <Pressable onPress={goBack} style={styles.backButton}>
           <Text style={styles.backText}>חזור</Text>
         </Pressable>
-        <Text style={styles.title}>איך אפשר לתמוך בך</Text>
+        <Text style={styles.title}>תחביבים</Text>
       </View>
 
       <TextInput
-        placeholder="חפש או כתוב בעצמך..."
+        placeholder="חפש תחביב או כתוב בעצמך..."
         placeholderTextColor={theme.colors.textSecondary}
         style={styles.input}
         value={searchTerm}
@@ -110,32 +124,32 @@ const SupportNeeds = () => {
       />
 
       <Text style={styles.counterText}>
-        {selectedNeeds.length} / 5 צרכים נבחרו
+        {selectedHobbies.length} / 5 תחביבים נבחרו
       </Text>
 
       <ScrollView contentContainerStyle={styles.traitsContainer}>
-        {filteredNeeds.map((need) => (
+        {filteredHobbies.map((hobby) => (
           <Animated.View
-            key={need}
+            key={hobby}
             style={[
               styles.trait,
-              selectedNeeds.includes(need) && styles.traitSelected,
-              { transform: [{ scale: animationRefs.current[need] }] },
+              selectedHobbies.includes(hobby) && styles.traitSelected,
+              { transform: [{ scale: animationRefs.current[hobby] }] },
             ]}
           >
             <Pressable
               onPress={() => {
-                animatePress(need);
-                toggleNeed(need);
+                animatePress(hobby);
+                toggleHobby(hobby);
               }}
             >
               <Text
                 style={[
                   styles.traitText,
-                  selectedNeeds.includes(need) && styles.traitTextSelected,
+                  selectedHobbies.includes(hobby) && styles.traitTextSelected,
                 ]}
               >
-                {need}
+                {hobby}
               </Text>
             </Pressable>
           </Animated.View>
@@ -161,7 +175,7 @@ const SupportNeeds = () => {
   );
 };
 
-export default SupportNeeds;
+export default Hobbies;
 
 const styles = StyleSheet.create({
   container: {
@@ -196,14 +210,15 @@ const styles = StyleSheet.create({
   backText: {
     color: '#fff',
     fontSize: hp(2),
+    fontWeight: theme.fonts.bold,
   },
   input: {
     backgroundColor: theme.colors.surface,
-    color: theme.colors.text,
     borderRadius: theme.radius.md,
     padding: wp(3),
     fontSize: hp(2.2),
     marginBottom: hp(1),
+    color: theme.colors.text,
   },
   counterText: {
     fontSize: hp(1.8),
@@ -216,6 +231,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
     gap: wp(2),
+    paddingBottom: hp(2),
   },
   trait: {
     backgroundColor: theme.colors.surface,

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { hp, wp } from '../constants/helpers/common';
-import { theme } from '../constants/theme';
-import Icon from '../assets/icons';
+import { hp, wp } from '../../constants/helpers/common';
+import { theme } from '../../constants/theme';
+import Icon from '../../assets/icons';
 
 const MatchSignUp = () => {
   const router = useRouter();
@@ -11,6 +11,7 @@ const MatchSignUp = () => {
   const {
     fullName,
     email,
+    password,
     birth_date,
     gender,
     connectionTypes,
@@ -18,6 +19,8 @@ const MatchSignUp = () => {
     wantsNotifications = 'false',
     location = 'false',
   } = useLocalSearchParams();
+  const wantsNotificationsBool = wantsNotifications === 'true';
+  const locationBool = location === 'true';
 
   const [preferredMatch, setPreferredMatch] = useState(null);
 
@@ -30,17 +33,18 @@ const MatchSignUp = () => {
     }
 
     router.push({
-      pathname: '/buildProfile',
+      pathname: '/signUp/buildProfile',
       params: {
         fullName,
         email,
+        password,
         birth_date,
         gender,
-        connectionTypes: preferredMatch,
+        connectionTypes,
         image,
-        wantsNotifications,
-        location,
-        preferredMatch,
+        wantsNotificationsBool,
+        locationBool,
+        preferredMatch, // העברה נכונה
       },
     });
   };
@@ -55,29 +59,30 @@ const MatchSignUp = () => {
       <Text style={styles.subtitle}>אנא בחר/י את האנשים שאתה רוצה להתאים אליהם</Text>
 
       <View style={styles.buttonsContainer}>
-        <Pressable
-          style={[
-            styles.button,
-            preferredMatch === 'female' && styles.selectedButton,
-            styles.genderButton,
-          ]}
-          onPress={() => setPreferredMatch('female')}
-        >
-          <Icon name="female" size={26} strokeWidth={1.6} color={theme.colors.textLight} />
-          <Text style={[styles.buttonText, preferredMatch === 'female' && styles.selectedText]}>נשים</Text>
-        </Pressable>
+      // שינוי ההגדרה
+      <Pressable
+      style={[
+        styles.button,
+        preferredMatch === 'נשים' && styles.selectedButton,
+        styles.genderButton,
+      ]}
+      onPress={() => setPreferredMatch('נשים')}
+    >
+      <Icon name="female" size={26} strokeWidth={1.6} color={theme.colors.textLight} />
+      <Text style={[styles.buttonText, preferredMatch === 'נשים' && styles.selectedText]}>נשים</Text>
+    </Pressable>
 
-        <Pressable
-          style={[
-            styles.button,
-            preferredMatch === 'male' && styles.selectedButton,
-            styles.genderButton,
-          ]}
-          onPress={() => setPreferredMatch('male')}
-        >
-          <Icon name="male" size={26} strokeWidth={1.6} color={theme.colors.textLight} />
-          <Text style={[styles.buttonText, preferredMatch === 'male' && styles.selectedText]}>גברים</Text>
-        </Pressable>
+    <Pressable
+      style={[
+        styles.button,
+        preferredMatch === 'גברים' && styles.selectedButton,
+        styles.genderButton,
+      ]}
+      onPress={() => setPreferredMatch('גברים')}
+    >
+      <Icon name="male" size={26} strokeWidth={1.6} color={theme.colors.textLight} />
+      <Text style={[styles.buttonText, preferredMatch === 'גברים' && styles.selectedText]}>גברים</Text>
+    </Pressable>
       </View>
 
       <Pressable style={styles.nextButton} onPress={onNext}>

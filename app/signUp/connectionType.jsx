@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
-import { hp, wp } from '../constants/helpers/common';
-import { theme } from '../constants/theme';
-import Button from '../components/Button';
+import { hp, wp } from '../../constants/helpers/common';
+import { theme } from '../../constants/theme';
+import Button from '../../components/Button';
 
 const ConnectionType = () => {
   const router = useRouter();
-  const { fullName, email, birth_date, wantsNotifications } = useLocalSearchParams();
+  const { fullName, email, password, birth_date, wantsNotifications } = useLocalSearchParams();
 
   // המרה של wantsNotifications מ-string ל-boolean
   const wantsNotificationsBool = wantsNotifications === 'true';
@@ -28,12 +28,14 @@ const ConnectionType = () => {
   };
 
   const goNext = () => {
+
     if (selectedTypes.length === 0) return;
     router.push({
-      pathname: '/profilePicture',
+      pathname: '/signUp/profilePicture',
       params: {
         fullName,
         email,
+        password,
         birth_date,
         wantsNotifications: wantsNotificationsBool, // מועבר כערך בוליאני
         connectionTypes: selectedTypes.join(','),

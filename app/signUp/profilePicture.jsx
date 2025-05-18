@@ -4,15 +4,16 @@ import { Image } from 'expo-image';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { hp, wp } from '../constants/helpers/common';
-import { theme } from '../constants/theme';
-import Icon from '../assets/icons';
+import { hp, wp } from '../../constants/helpers/common';
+import { theme } from '../../constants/theme';
+import Icon from '../../assets/icons';
 
 const ProfilePicture = () => {
   const router = useRouter();
   const {
     fullName,
     email,
+    password,
     birth_date,
     wantsNotifications,
     connectionTypes,
@@ -37,16 +38,18 @@ const ProfilePicture = () => {
   };
 
   const onNext = () => {
+
     if (!image) {
       Alert.alert('נא להוסיף תמונה', 'אנא בחר/י תמונת פרופיל להמשך');
       return;
     }
 
     router.push({
-      pathname: '/getLocation',
+      pathname: '/signUp/getLocation',
       params: {
         fullName,
         email,
+        password,
         birth_date,
         wantsNotifications: wantsNotifications === 'true', // שמירה כ-boolean
         connectionTypes,

@@ -27,6 +27,10 @@ import Male from './Male'
 import Female from './female'
 import GenderNatural from './genderNatural' 
 import ChatIcon from './ChatIcon'
+import Play from './Play'
+import Pause from './Pause'
+
+
 
 const icons = {
   home: Home,
@@ -57,6 +61,8 @@ const icons = {
   female: Female,
   genderNatural: GenderNatural,
   chat: ChatIcon,
+  play: Play, // ⬅️ חדש
+  pause: Pause, 
 };
 
 const Icon = ({ name, size = 24, strokeWidth = 1.9, color, ...props }) => {

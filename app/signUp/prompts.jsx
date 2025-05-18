@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme } from '../constants/theme';
-import { hp, wp } from '../constants/helpers/common';
-import { Ionicons, Entypo, MaterialIcons } from '@expo/vector-icons';
-import PromptModal from '../components/PromptModal';
+import { theme } from '../../constants/theme';
+import { hp, wp } from '../../constants/helpers/common';
+import { Ionicons, Entypo } from '@expo/vector-icons';
+import PromptModal from '../../components/PromptModal';
+
 
 const PromptCard = ({ icon, onPress }) => (
   <Pressable style={styles.card} onPress={onPress}>
@@ -19,23 +20,87 @@ const PromptCard = ({ icon, onPress }) => (
 
 const Prompts = () => {
   const router = useRouter();
-  const params = useLocalSearchParams();
-
+  const {
+      fullName,
+      email,
+      password,
+      birth_date,
+      gender,
+      connectionTypes,
+      image,
+      wantsNotifications = 'false',
+      location = 'false',
+      preferredMatch,
+      traits,
+      showTraits = 'false',
+      hobbies,
+      showHobbies = 'false',
+      identities,
+      showIdentities = 'false',
+      supportNeeds,
+      showSupportNeeds = 'false',
+      introduction,
+    } = useLocalSearchParams();
+  
   const [modalVisible, setModalVisible] = useState(false);
 
   const goBack = () => router.back();
 
   const skipForNow = () => {
     router.push({
-      pathname: '/nextStep',
-      params,
+      pathname: '/signUp/status',
+      params: {
+        fullName,
+          email,
+          password,
+          birth_date,
+          gender,
+          connectionTypes,
+          image,
+          wantsNotifications,
+          location,
+          preferredMatch,
+          traits,
+          showTraits,
+          hobbies,
+          showHobbies,
+          identities,
+          showIdentities,
+          supportNeeds,
+          showSupportNeeds,
+          introduction,
+      }
     });
   };
 
   const handlePromptSelected = (prompt) => {
+   
     setModalVisible(false);
-    router.push({ pathname: '/recordPrompt', params: { ...params, prompt } });
-  };
+    router.push({
+      pathname: '/signUp/recordPrompt',
+      params: {
+          fullName,
+          email,
+          password,
+          birth_date,
+          gender,
+          connectionTypes,
+          image,
+          wantsNotifications,
+          location,
+          preferredMatch,
+          traits,
+          showTraits,
+          hobbies,
+          showHobbies,
+          identities,
+          showIdentities,
+          supportNeeds,
+          showSupportNeeds,
+          introduction,
+          prompt,
+      }
+    });  };
 
   return (
     <ScrollView style={styles.container}>
@@ -56,20 +121,8 @@ const Prompts = () => {
         onPress={() => setModalVisible(true)}
       />
 
-      <Text style={styles.sectionTitle}>פרומפט וידאו</Text>
-      <PromptCard
-        icon={<MaterialIcons name="videocam" size={24} color="white" />}
-        onPress={() => setModalVisible(true)}
-      />
-
-      <Text style={styles.sectionTitle}>פרומפטים בטקסט</Text>
-      <PromptCard
-        icon={<MaterialIcons name="edit" size={24} color="white" />}
-        onPress={() => setModalVisible(true)}
-      />
-
       <Pressable style={styles.skipButton} onPress={skipForNow}>
-        <Text style={styles.skipText}>דלגו כעת</Text>
+        <Text style={styles.skipText}>המשך</Text>
       </Pressable>
 
       <PromptModal
@@ -104,7 +157,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginRight: wp(6),
     marginTop: wp(10),
-
   },
   backButton: {
     backgroundColor: theme.colors.primary,
@@ -112,7 +164,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(3),
     borderRadius: theme.radius.md,
     marginTop: wp(10),
-
   },
   backText: {
     color: '#fff',
@@ -161,7 +212,7 @@ const styles = StyleSheet.create({
     marginLeft: wp(2),
   },
   skipButton: {
-    marginTop: hp(3),
+    marginTop: hp(40),
     backgroundColor: theme.colors.primary,
     paddingVertical: hp(1.5),
     borderRadius: theme.radius.lg,

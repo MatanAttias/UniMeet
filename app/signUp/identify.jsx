@@ -12,8 +12,8 @@ import {
   Animated,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme } from '../constants/theme';
-import { hp, wp } from '../constants/helpers/common';
+import { theme } from '../../constants/theme';
+import { hp, wp } from '../../constants/helpers/common';
 
 const IDENTITY_TRAITS = [
   'ADHD', 'ARFID', 'טראומת התקשרות', 'אוטיזם', 'הפרעה דו-קוטבית',
@@ -29,7 +29,22 @@ const Identify = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showOnProfile, setShowOnProfile] = useState(true);
   const router = useRouter();
-  const params = useLocalSearchParams();
+  const {
+      fullName,
+      email,
+      password,
+      birth_date,
+      gender,
+      connectionTypes,
+      image,
+      wantsNotifications = 'false',
+      location = 'false',
+      preferredMatch,
+      traits,
+      showTraits = 'false',
+      hobbies,
+      showHobbies = 'false',
+  } = useLocalSearchParams();
 
   const animationRefs = useRef(
     IDENTITY_TRAITS.reduce((acc, trait) => {
@@ -67,10 +82,24 @@ const Identify = () => {
   );
 
   const goToNextStep = () => {
+    
     router.push({
-      pathname: '/supportNeeds',
+      pathname: '/signUp/supportNeeds',
       params: {
-        ...params,
+        fullName,
+        email,
+        password,
+        birth_date,
+        gender,
+        connectionTypes,
+        image,
+        wantsNotifications,
+        location,
+        preferredMatch,
+        traits,
+        showTraits,
+        hobbies,
+        showHobbies,
         identities: JSON.stringify(selectedTraits),
         showIdentities: showOnProfile,
       },
