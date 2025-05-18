@@ -1,4 +1,3 @@
-import { View, Text } from 'react-native';
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
@@ -6,6 +5,14 @@ import { supabase } from '../lib/supabase';
 import { useRouter } from 'expo-router';
 import { getUserData } from '../services/userService';
 import { LogBox } from 'react-native';
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_700Bold,
+  Poppins_600SemiBold,
+} from '@expo-google-fonts/poppins';
+import AppLoading from 'expo-app-loading';
 
 LogBox.ignoreLogs([
   'Warning: TNodeChildrenRenderer',
@@ -13,19 +20,27 @@ LogBox.ignoreLogs([
   'Warning: TRenderEngineProvider',
 ]);
 
-const _layout = () => {
-  return (
-    <AuthProvider>
-      <MainLayout />
-    </AuthProvider>
-  );
-};
+const _layout = () => (
+  <AuthProvider>
+    <MainLayout />
+  </AuthProvider>
+);
 
 const MainLayout = () => {
+  // כל ה-hooks בראש
+  const [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_700Bold,
+    Poppins_600SemiBold,
+  });
   const { setAuth, setUserData } = useAuth();
   const router = useRouter();
 
+  // useEffect תמיד קיים! בודק בתוך ה-hook אם יש פונטים
   useEffect(() => {
+    if (!fontsLoaded) return; // כלום עד שהפונטים נטענים
+
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       console.log('Initial session user:', session?.user?.id);
@@ -59,12 +74,16 @@ const MainLayout = () => {
     return () => {
       listener.subscription?.unsubscribe();
     };
-  }, []);
+    // eslint-disable-next-line
+  }, [fontsLoaded]); // תלוי גם ב-fontsLoaded
 
   const updateUserData = async (user, email) => {
     let res = await getUserData(user?.id);
     if (res?.success) setUserData({ ...res.data, email });
   };
+
+  // עכשיו אפשר להחזיר AppLoading אם הפונטים לא נטענו
+  if (!fontsLoaded) return <AppLoading />;
 
   return (
     <Stack
@@ -81,5 +100,6 @@ const MainLayout = () => {
     </Stack>
   );
 };
+
 
 export default _layout;

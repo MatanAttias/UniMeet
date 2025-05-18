@@ -7,6 +7,7 @@ export const theme = {
     surface: '#3A3A3C',        // גבולות, אזורים מודגשים
     border: '#3A3A3C',         
     shadow: '#00000066',
+    rose: '#FF4F93',
 
     // טקסטים
     text: '#FFFFFF',           // טקסט עיקרי – ניגוד גבוה

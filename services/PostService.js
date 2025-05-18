@@ -40,7 +40,7 @@ export const fetchPosts = async (limit = 15, userId) => {
         *,
         user: users (id, name, image),
         postLikes (*),
-        comments (count)
+        comments(count)
       `)
       .order('created_at', { ascending: false })
       .limit(limit);

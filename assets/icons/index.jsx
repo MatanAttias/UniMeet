@@ -26,6 +26,7 @@ import Confirm from './Confirm'
 import Male from './Male'
 import Female from './female'
 import GenderNatural from './genderNatural' 
+import ChatIcon from './ChatIcon'
 
 const icons = {
   home: Home,
@@ -55,6 +56,7 @@ const icons = {
   male: Male,
   female: Female,
   genderNatural: GenderNatural,
+  chat: ChatIcon,
 };
 
 const Icon = ({ name, size = 24, strokeWidth = 1.9, color, ...props }) => {
