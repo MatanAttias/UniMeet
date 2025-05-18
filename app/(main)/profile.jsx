@@ -26,6 +26,7 @@ import { Audio } from 'expo-av';
 import { AnimatePresence, MotiView } from 'moti';
 
 
+
 var limit = 0;
 const Profile = () => {
   const { user, setUserData, setAuth } = useAuth();
@@ -34,6 +35,7 @@ const Profile = () => {
   const [posts, setPosts] = useState([]);
   const [hasMore, setHasMore] = useState(true);
   const [showPosts, setShowPosts] = useState(false);
+  const [activeTab, setActiveTab] = useState('profile'); // או 'posts'
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -106,51 +108,63 @@ const Profile = () => {
   return (
     
     <ScreenWrapper bg="black">
-      <FlatList
-        style={{ flex: 1 }} // זה קריטי
-
-        data={showPosts ? posts : []}
-        ListHeaderComponent={
-          <>
-            <UserHeader user={user} router={router} handleLogout={handleLogout} />
-            {!showPosts && (
-              <TouchableOpacity
-                style={styles.showPostsBtn}
-                onPress={() => {
-                  setShowPosts(true);
-                  getPosts();
-                }}
-              >
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>Show Posts</Text>
-              </TouchableOpacity>
-            )}
-          </>
-        }
-        ListHeaderComponentStyle={{ marginBottom: 30 }}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listStyle}
-        keyExtractor={(item, index) => (item.id ? `post-${item.id}` : `default-${index}`)}
-        renderItem={({ item }) => (
-          <PostCard item={item} currentUser={user} router={router} />
-        )}
-        onEndReached={() => {
-          if (showPosts) getPosts();
+      <View style={styles.tabsContainer}>
+      <TouchableOpacity
+        style={[styles.tab, activeTab === 'profile' && styles.activeTab]}
+        onPress={() => setActiveTab('profile')}
+      >
+        <Text style={[styles.tabText, activeTab === 'profile' && styles.activeTabText]}>פרופיל</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.tab, activeTab === 'posts' && styles.activeTab]}
+        onPress={() => {
+          setActiveTab('posts');
+          if (!showPosts) {
+            setShowPosts(true);
+            getPosts();
+          }
         }}
-        onEndReachedThreshold={0}
-        ListFooterComponent={
-          showPosts ? (
-            hasMore ? (
-              <View style={{ marginVertical: posts.length === 0 ? 100 : 30 }}>
-                <Loading />
-              </View>
-            ) : (
-              <View style={{ marginVertical: 30 }}>
-                <Text style={styles.noPosts}>No more posts</Text>
-              </View>
-            )
-          ) : null
-        }
-      />
+      >
+        <Text style={[styles.tabText, activeTab === 'posts' && styles.activeTabText]}>פוסטים</Text>
+      </TouchableOpacity>
+    </View>
+        <FlatList
+      style={{ flex: 1 }}
+      data={activeTab === 'posts' && showPosts ? posts : []}
+      ListHeaderComponent={
+        <>
+          {activeTab === 'profile' && (
+            <UserHeader user={user} router={router} handleLogout={handleLogout} />
+          )}
+        </>
+      }
+      ListHeaderComponentStyle={{ marginBottom: 30 }}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.listStyle}
+      keyExtractor={(item, index) => (item.id ? `post-${item.id}` : `default-${index}`)}
+      renderItem={({ item }) =>
+        activeTab === 'posts' ? (
+          <PostCard item={item} currentUser={user} router={router} />
+        ) : null
+      }
+      onEndReached={() => {
+        if (activeTab === 'posts' && showPosts) getPosts();
+      }}
+      onEndReachedThreshold={0}
+      ListFooterComponent={
+        activeTab === 'posts' && showPosts ? (
+          hasMore ? (
+            <View style={{ marginVertical: posts.length === 0 ? 100 : 30 }}>
+              <Loading />
+            </View>
+          ) : (
+            <View style={{ marginVertical: 30 }}>
+              <Text style={styles.noPosts}>No more posts</Text>
+            </View>
+          )
+        ) : null
+      }
+    />
     </ScreenWrapper>
   );
 };
@@ -621,11 +635,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginLeft: 8,
   },
-  tagText: {
-    color: 'white',
-    fontSize: 13,
-    textAlign: 'right',
-  },
+
   subSectionTitle: {
     fontSize: 16,
     fontWeight: '600',
@@ -633,5 +643,27 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     marginTop: 10,
     textAlign: 'right',
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginVertical: 20,
+  },
+  tab: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+    marginHorizontal: 10,
+  },
+  activeTab: {
+    borderBottomColor: theme.colors.primary,
+  },
+  tabText: {
+    color: 'gray',
+    fontWeight: '600',
+  },
+  activeTabText: {
+    color: theme.colors.primary,
   },
 });
