@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme } from '../constants/theme';
-import { hp, wp } from '../constants/helpers/common';
+import { theme } from '../../constants/theme';
+import { hp, wp } from '../../constants/helpers/common';
 
 const STATUS_OPTIONS = ['רווק/ה', 'בזוגיות', 'לא בלעדי'];
 
@@ -28,6 +28,7 @@ const Status = () => {
         supportNeeds,
         showSupportNeeds = 'false',
         introduction,
+        prompt,
         audio,
     } = useLocalSearchParams();
 
@@ -41,7 +42,7 @@ const Status = () => {
     
     const status = selected !== null ? STATUS_OPTIONS[selected] : customText.trim();
     router.push({
-      pathname: '/finalStep',
+      pathname: '/signUp/finalStep',
       params: {
         fullName,
         email,
@@ -63,6 +64,7 @@ const Status = () => {
         showSupportNeeds,
         introduction,
         audio,
+        prompt,
         status,
       },
     });

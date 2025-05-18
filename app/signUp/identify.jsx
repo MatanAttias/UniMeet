@@ -1,4 +1,3 @@
-// Hobbies.jsx
 
 import React, { useState, useRef } from 'react';
 import {
@@ -13,77 +12,79 @@ import {
   Animated,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme } from '../constants/theme';
-import { hp, wp } from '../constants/helpers/common';
+import { theme } from '../../constants/theme';
+import { hp, wp } from '../../constants/helpers/common';
 
-const HOBBIES = [
-  'כדורגל', 'כדורסל', 'מוזיקה', 'ריקוד', 'צילום', 'טיולים', 'קריאה', 'בישול',
-  'אפייה', 'ציור', 'ספורט', 'ריצה', 'כתיבה', 'שחייה', 'משחקי וידאו',
-  'יוגה', 'מדיטציה', 'גינון', 'סדרה טובה', 'בינג\' בנטפליקס', 'עיצוב פנים',
-  'סנובורד', 'גלישה', 'טניס', 'אופניים', 'תכנות', 'השקעות', 'סטארטאפים',
-  'לימוד שפות', 'פודקאסטים', 'גיטרה', 'תופים', 'איפור', 'קוסמטיקה',
-  'אמנות', 'שירה', 'סקסולוגיה', 'אסטרונומיה', 'שחמט',
+const IDENTITY_TRAITS = [
+  'ADHD', 'ARFID', 'טראומת התקשרות', 'אוטיזם', 'הפרעה דו-קוטבית',
+  'שיתוק מוחין', 'דיכאון', 'תסמונת דאון', 'DPD',
+  'דיסלקציה', 'דיספרקסיה', 'הזיות',
+  'אדם רגיש מאוד', 'מוגבלות שכלית', 'שינויים במצבי רוח',
+  'OCD', 'מרצה בהחלמה', 'הימנעות חברתית',
+  'גמגום', 'תסמונת טורט',
 ];
 
-const Hobbies = () => {
-  const [selectedHobbies, setSelectedHobbies] = useState([]);
+const Identify = () => {
+  const [selectedTraits, setSelectedTraits] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showOnProfile, setShowOnProfile] = useState(true);
   const router = useRouter();
   const {
-        fullName,
-        email,
-        password,
-        birth_date,
-        gender,
-        connectionTypes,
-        image,
-        wantsNotifications = 'false',
-        location = 'false',
-        preferredMatch,
-        traits,
-        showTraits = 'false',
-   } = useLocalSearchParams();
+      fullName,
+      email,
+      password,
+      birth_date,
+      gender,
+      connectionTypes,
+      image,
+      wantsNotifications = 'false',
+      location = 'false',
+      preferredMatch,
+      traits,
+      showTraits = 'false',
+      hobbies,
+      showHobbies = 'false',
+  } = useLocalSearchParams();
 
   const animationRefs = useRef(
-    HOBBIES.reduce((acc, hobby) => {
-      acc[hobby] = new Animated.Value(1);
+    IDENTITY_TRAITS.reduce((acc, trait) => {
+      acc[trait] = new Animated.Value(1);
       return acc;
     }, {})
   );
 
-  const toggleHobby = (hobby) => {
-    if (selectedHobbies.includes(hobby)) {
-      setSelectedHobbies(selectedHobbies.filter(h => h !== hobby));
-    } else if (selectedHobbies.length < 5) {
-      setSelectedHobbies([...selectedHobbies, hobby]);
+  const toggleTrait = (trait) => {
+    if (selectedTraits.includes(trait)) {
+      setSelectedTraits(selectedTraits.filter(t => t !== trait));
+    } else if (selectedTraits.length < 5) {
+      setSelectedTraits([...selectedTraits, trait]);
     } else {
-      Alert.alert('מקסימום תחביבים', 'ניתן לבחור עד 5 תחביבים בלבד');
+      Alert.alert('מקסימום תוויות', 'ניתן לבחור עד 5 תוויות זהות בלבד');
     }
   };
 
-  const animatePress = (hobby) => {
+  const animatePress = (trait) => {
     Animated.sequence([
-      Animated.timing(animationRefs.current[hobby], {
+      Animated.timing(animationRefs.current[trait], {
         toValue: 0.95,
         duration: 100,
         useNativeDriver: true,
       }),
-      Animated.spring(animationRefs.current[hobby], {
+      Animated.spring(animationRefs.current[trait], {
         toValue: 1,
         useNativeDriver: true,
       }),
     ]).start();
   };
 
-  const filteredHobbies = HOBBIES.filter(hobby =>
-    hobby.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredTraits = IDENTITY_TRAITS.filter(trait =>
+    trait.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const goToNextStep = () => {
-   
+    
     router.push({
-      pathname: '/identify',
+      pathname: '/signUp/supportNeeds',
       params: {
         fullName,
         email,
@@ -97,8 +98,10 @@ const Hobbies = () => {
         preferredMatch,
         traits,
         showTraits,
-        hobbies: JSON.stringify(selectedHobbies),
-        showHobbies: showOnProfile,
+        hobbies,
+        showHobbies,
+        identities: JSON.stringify(selectedTraits),
+        showIdentities: showOnProfile,
       },
     });
   };
@@ -111,11 +114,11 @@ const Hobbies = () => {
         <Pressable onPress={goBack} style={styles.backButton}>
           <Text style={styles.backText}>חזור</Text>
         </Pressable>
-        <Text style={styles.title}>תחביבים</Text>
+        <Text style={styles.title}>הזדהות עם תוויות</Text>
       </View>
 
       <TextInput
-        placeholder="חפש תחביב או כתוב בעצמך..."
+        placeholder="חפש או כתוב בעצמך..."
         placeholderTextColor={theme.colors.textSecondary}
         style={styles.input}
         value={searchTerm}
@@ -124,32 +127,32 @@ const Hobbies = () => {
       />
 
       <Text style={styles.counterText}>
-        {selectedHobbies.length} / 5 תחביבים נבחרו
+        {selectedTraits.length} / 5 תוויות נבחרו
       </Text>
 
       <ScrollView contentContainerStyle={styles.traitsContainer}>
-        {filteredHobbies.map((hobby) => (
+        {filteredTraits.map((trait) => (
           <Animated.View
-            key={hobby}
+            key={trait}
             style={[
               styles.trait,
-              selectedHobbies.includes(hobby) && styles.traitSelected,
-              { transform: [{ scale: animationRefs.current[hobby] }] },
+              selectedTraits.includes(trait) && styles.traitSelected,
+              { transform: [{ scale: animationRefs.current[trait] }] },
             ]}
           >
             <Pressable
               onPress={() => {
-                animatePress(hobby);
-                toggleHobby(hobby);
+                animatePress(trait);
+                toggleTrait(trait);
               }}
             >
               <Text
                 style={[
                   styles.traitText,
-                  selectedHobbies.includes(hobby) && styles.traitTextSelected,
+                  selectedTraits.includes(trait) && styles.traitTextSelected,
                 ]}
               >
-                {hobby}
+                {trait}
               </Text>
             </Pressable>
           </Animated.View>
@@ -175,7 +178,7 @@ const Hobbies = () => {
   );
 };
 
-export default Hobbies;
+export default Identify;
 
 const styles = StyleSheet.create({
   container: {
@@ -210,15 +213,14 @@ const styles = StyleSheet.create({
   backText: {
     color: '#fff',
     fontSize: hp(2),
-    fontWeight: theme.fonts.bold,
   },
   input: {
     backgroundColor: theme.colors.surface,
+    color: theme.colors.text,
     borderRadius: theme.radius.md,
     padding: wp(3),
     fontSize: hp(2.2),
     marginBottom: hp(1),
-    color: theme.colors.text,
   },
   counterText: {
     fontSize: hp(1.8),
@@ -231,7 +233,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
     gap: wp(2),
-    paddingBottom: hp(2),
   },
   trait: {
     backgroundColor: theme.colors.surface,

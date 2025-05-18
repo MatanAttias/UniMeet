@@ -4,9 +4,9 @@ import { Image } from 'expo-image';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import Animated, { FadeInUp } from 'react-native-reanimated';
-import { hp, wp } from '../constants/helpers/common';
-import { theme } from '../constants/theme';
-import Icon from '../assets/icons';
+import { hp, wp } from '../../constants/helpers/common';
+import { theme } from '../../constants/theme';
+import Icon from '../../assets/icons';
 
 const ProfilePicture = () => {
   const router = useRouter();
@@ -45,7 +45,7 @@ const ProfilePicture = () => {
     }
 
     router.push({
-      pathname: '/getLocation',
+      pathname: '/signUp/getLocation',
       params: {
         fullName,
         email,

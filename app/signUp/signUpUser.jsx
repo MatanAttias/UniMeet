@@ -1,10 +1,10 @@
 import React, { useRef } from 'react'
 import { View, Text, Alert, StyleSheet, Pressable } from 'react-native'
 import { useRouter } from 'expo-router'
-import Input from '../components/input'
-import Button from '../components/Button'
-import { hp, wp } from '../constants/helpers/common'
-import { theme } from '../constants/theme'
+import Input from '../../components/input'
+import Button from '../../components/Button'
+import { hp, wp } from '../../constants/helpers/common'
+import { theme } from '../../constants/theme'
 
 export default function SignUpUser() {
   const router = useRouter()
@@ -27,7 +27,7 @@ export default function SignUpUser() {
     const fullName = `${name} ${lastName}`;
   
     router.push({
-      pathname: '/emailSignUp',
+      pathname: '/signUp/emailSignUp',
       params: { fullName },
     });
   };

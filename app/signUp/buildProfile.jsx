@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { hp, wp } from '../constants/helpers/common';
-import { theme } from '../constants/theme';
+import { hp, wp } from '../../constants/helpers/common';
+import { theme } from '../../constants/theme';
 
 const BuildProfile = () => {
   const router = useRouter();
@@ -22,7 +22,7 @@ const BuildProfile = () => {
   const onNext = () => {
 
      router.push({
-      pathname: '/topTraits',
+      pathname: '/signUp/topTraits',
       params: {
         fullName,
         email,
@@ -46,8 +46,8 @@ const BuildProfile = () => {
         <Text style={styles.backText}>חזור</Text>
       </Pressable>
 
-      <Image
-        source={require('../assets/images/profile-illustration.png')}
+      <Image 
+        source={require('../../assets/images/profile-illustration.png')}
         style={styles.image}
         resizeMode="contain"
       />

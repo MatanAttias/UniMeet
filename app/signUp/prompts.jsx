@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme } from '../constants/theme';
-import { hp, wp } from '../constants/helpers/common';
+import { theme } from '../../constants/theme';
+import { hp, wp } from '../../constants/helpers/common';
 import { Ionicons, Entypo } from '@expo/vector-icons';
-import PromptModal from '../components/PromptModal';
+import PromptModal from '../../components/PromptModal';
 
 
 const PromptCard = ({ icon, onPress }) => (
@@ -48,7 +48,7 @@ const Prompts = () => {
 
   const skipForNow = () => {
     router.push({
-      pathname: '/status',
+      pathname: '/signUp/status',
       params: {
         fullName,
           email,
@@ -77,7 +77,7 @@ const Prompts = () => {
    
     setModalVisible(false);
     router.push({
-      pathname: '/recordPrompt',
+      pathname: '/signUp/recordPrompt',
       params: {
           fullName,
           email,

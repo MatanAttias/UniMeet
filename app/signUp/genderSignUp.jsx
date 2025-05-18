@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { hp, wp } from '../constants/helpers/common';
-import { theme } from '../constants/theme';
-import Icon from '../assets/icons';
+import { hp, wp } from '../../constants/helpers/common';
+import { theme } from '../../constants/theme';
+import Icon from '../../assets/icons';
 import { useLocalSearchParams } from 'expo-router';
 
 const GenderSignUp = () => {
@@ -27,7 +27,7 @@ const GenderSignUp = () => {
     }
 
     router.push({
-      pathname: '/matchSignUp',
+      pathname: '/signUp/matchSignUp',
       params: {
         fullName,
         email,
@@ -55,27 +55,26 @@ const GenderSignUp = () => {
       <Pressable
         style={[
           styles.button,
-          selectedGender === 'female' && styles.selectedButton,
+          selectedGender === 'נקבה' && styles.selectedButton,
           styles.genderButton,
         ]}
-        onPress={() => setSelectedGender('female')}
+        onPress={() => setSelectedGender('נקבה')}
       >
         <Icon name="female" size={26} strokeWidth={1.6} color={theme.colors.textLight} />
-        <Text style={[styles.buttonText, selectedGender === 'female' && styles.selectedText]}>נקבה</Text>
+        <Text style={[styles.buttonText, selectedGender === 'נקבה' && styles.selectedText]}>נקבה</Text>
       </Pressable>
 
-      {/* זכר – ימין */}
       <Pressable
         style={[
           styles.button,
-          selectedGender === 'male' && styles.selectedButton,
+          selectedGender === 'זכר' && styles.selectedButton,
           styles.genderButton,
         ]}
-        onPress={() => setSelectedGender('male')}
+        onPress={() => setSelectedGender('זכר')}
       >
         <Icon name="male" size={26} strokeWidth={1.6} color={theme.colors.textLight} />
-        <Text style={[styles.buttonText, selectedGender === 'male' && styles.selectedText]}>זכר</Text>
-    </Pressable>
+        <Text style={[styles.buttonText, selectedGender === 'זכר' && styles.selectedText]}>זכר</Text>
+      </Pressable>
       </View>
 
       <Pressable style={styles.nextButton} onPress={onNext}>

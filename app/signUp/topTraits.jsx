@@ -11,8 +11,8 @@ import {
   Animated,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme } from '../constants/theme';
-import { hp, wp } from '../constants/helpers/common';
+import { theme } from '../../constants/theme';
+import { hp, wp } from '../../constants/helpers/common';
 
 const TRAITS = [
   'תמיד מאחר/ת', 'חושב/ת מלמטה למעלה', 'יצירתי/ת', 'שוכח/ת', 'מקשיב/ה טוב',
@@ -78,7 +78,7 @@ const TopTraits = () => {
   const goToNextStep = () => {
   
     router.push({
-      pathname: '/hobbies',
+      pathname: '/signUp/hobbies',
       params: {
         fullName,
         email,

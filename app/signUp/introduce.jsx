@@ -10,8 +10,8 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme } from '../constants/theme';
-import { hp, wp } from '../constants/helpers/common';
+import { theme } from '../../constants/theme';
+import { hp, wp } from '../../constants/helpers/common';
 
 const Introduce = () => {
   const [text, setText] = useState('');
@@ -40,7 +40,7 @@ const Introduce = () => {
 
   const goToNextStep = () => {
     router.push({
-      pathname: '/prompts', 
+      pathname: '/signUp/prompts', 
       params: {
         fullName,
         email,

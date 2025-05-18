@@ -76,7 +76,7 @@ const Login = () => {
         <View style={styles.footer}>
           <Text style={styles.footerText}>אין לך חשבון?</Text>
           <Text
-            onPress={() => router.push('signUp')}
+            onPress={() => router.push('selectType')}
             style={styles.signupText}
           >
             הירשם

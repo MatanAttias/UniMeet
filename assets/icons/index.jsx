@@ -26,6 +26,10 @@ import Confirm from './Confirm'
 import Male from './Male'
 import Female from './female'
 import GenderNatural from './genderNatural' 
+import Play from './Play'
+import Pause from './Pause'
+
+
 
 const icons = {
   home: Home,
@@ -55,6 +59,8 @@ const icons = {
   male: Male,
   female: Female,
   genderNatural: GenderNatural,
+  play: Play, // ⬅️ חדש
+  pause: Pause, 
 };
 
 const Icon = ({ name, size = 24, strokeWidth = 1.9, color, ...props }) => {

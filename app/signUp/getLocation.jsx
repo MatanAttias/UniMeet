@@ -2,9 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, Pressable, Alert } from 'react-native';
 import * as Location from 'expo-location';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import Button from '../components/Button';
-import { hp, wp } from '../constants/helpers/common';
-import { theme } from '../constants/theme';
+import Button from '../../components/Button';
+import { hp, wp } from '../../constants/helpers/common';
+import { theme } from '../../constants/theme';
 
 const LocationPermission = () => {
   const router = useRouter();
@@ -40,7 +40,7 @@ const LocationPermission = () => {
           location: true,
         };
 
-        router.push({ pathname: '/genderSignUp', params });
+        router.push({ pathname: '/signUp/genderSignUp', params });
       } catch (error) {
         Alert.alert('שגיאה', 'לא הצלחנו לקבל את המיקום שלך');
       }
@@ -57,7 +57,7 @@ const LocationPermission = () => {
         location: false,
       };
 
-      router.push({ pathname: '/genderSignUp', params });
+      router.push({ pathname: '/signUp/genderSignUp', params });
     }
   };
 
@@ -76,13 +76,13 @@ const LocationPermission = () => {
       image,
       location: false,
     };
-    router.push({ pathname: '/genderSignUp', params });
+    router.push({ pathname: '/signUp/genderSignUp', params });
   };
 
   return (
     <View style={styles.container}>
       <Image
-        source={require('../assets/images/location.png')}
+        source={require('../../assets/images/location.png')}
         style={styles.image}
         resizeMode="contain"
       />

@@ -1,10 +1,10 @@
 import React, { useRef, useState } from 'react';
 import { StyleSheet, Text, View, Pressable, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { hp, wp } from '../constants/helpers/common';
-import { theme } from '../constants/theme';
-import Input from '../components/input';
-import Button from '../components/Button';
+import { hp, wp } from '../../constants/helpers/common';
+import { theme } from '../../constants/theme';
+import Input from '../../components/input';
+import Button from '../../components/Button';
 
 const PassSignUp = () => {
   const router = useRouter();
@@ -39,7 +39,7 @@ const PassSignUp = () => {
 
     // מעבר לדף הבא עם כל הפרמטרים
     router.push({
-      pathname: '/birthSignUp',
+      pathname: '/signUp/birthSignUp',
       params: { 
         fullName, 
         email, 

@@ -9,10 +9,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { hp, wp } from '../constants/helpers/common';
-import { theme } from '../constants/theme';
+import { hp, wp } from '../../constants/helpers/common';
+import { theme } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 const FinalStep = () => {
   const router = useRouter();
@@ -29,6 +29,7 @@ const FinalStep = () => {
       image,
       wantsNotifications,
       location,
+      preferredMatch,
       traits,
       showTraits,
       hobbies,
@@ -39,6 +40,7 @@ const FinalStep = () => {
       showSupportNeeds,
       introduction,
       audio,
+      prompt,
       status,
     },
     setParams
@@ -63,6 +65,7 @@ const FinalStep = () => {
       image: rawParams.image ?? '',
       wantsNotifications: parseBool(rawParams.wantsNotifications),
       location: parseBool(rawParams.location),
+      preferredMatch: rawParams.preferredMatch ?? '',
       traits: parseJson(rawParams.traits),
       showTraits: parseBool(rawParams.showTraits),
       hobbies: parseJson(rawParams.hobbies),
@@ -73,6 +76,7 @@ const FinalStep = () => {
       showSupportNeeds: parseBool(rawParams.showSupportNeeds),
       introduction: rawParams.introduction ?? '',
       audio: rawParams.audio ?? '',
+      prompt: rawParams.prompt ?? '',
       status: rawParams.status ?? '',
     };
   });
@@ -123,6 +127,7 @@ const FinalStep = () => {
             image,
             wantsNotifications,
             location,
+            preferredMatch,
             traits,
             showTraits,
             hobbies,
@@ -133,6 +138,7 @@ const FinalStep = () => {
             showSupportNeeds,
             introduction,
             audio,
+            prompt,
             status,
           },
         ]);
@@ -140,7 +146,7 @@ const FinalStep = () => {
       if (upsertError) throw upsertError;
 
       Alert.alert('הצלחה', 'נרשמת בהצלחה!');
-      router.push('/home');
+      router.push('/(main)/profile');
     } catch (err) {
       console.error('Sign up error:', err);
       Alert.alert('שגיאה', 'הרישום נכשל, אנא נסה שוב');

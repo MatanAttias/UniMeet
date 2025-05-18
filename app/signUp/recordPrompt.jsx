@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext'; // עדכן את הנתיב לפי מיקום הקובץ האמיתי
-import { uploadAudioFile } from '../services/audioServices';
+import { useAuth } from '../../contexts/AuthContext'; // עדכן את הנתיב לפי מיקום הקובץ האמיתי
+import { uploadAudioFile } from '../../services/audioServices';
 import {
   View,
   Text,
@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { Audio } from 'expo-av';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { theme } from '../constants/theme';
-import { hp, wp } from '../constants/helpers/common';
+import { theme } from '../../constants/theme';
+import { hp, wp } from '../../constants/helpers/common';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function RecordPrompt() {
@@ -40,6 +40,7 @@ export default function RecordPrompt() {
     introduction,
     prompt,
   } = useLocalSearchParams();
+  const decodedPrompt = decodeURIComponent(prompt || '');
 
   const router = useRouter();
 
@@ -156,7 +157,7 @@ export default function RecordPrompt() {
   
         // ממשיכים לדף הבא
         router.push({
-          pathname: '/status',
+          pathname: '/signUp/status',
           params: {
             fullName,
             email,

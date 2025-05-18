@@ -2,9 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, Alert, Pressable } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Notifications from 'expo-notifications';
-import Button from '../components/Button';
-import { hp, wp } from '../constants/helpers/common';
-import { theme } from '../constants/theme';
+import Button from '../../components/Button';
+import { hp, wp } from '../../constants/helpers/common';
+import { theme } from '../../constants/theme';
 
 const GetNotify = () => {
   const router = useRouter();
@@ -16,7 +16,7 @@ const GetNotify = () => {
 
   const goToNextStep = (wantsNotifications) => {
     router.push({
-      pathname: '/connectionType',
+      pathname: '/signUp/connectionType',
       params: {
         fullName,
         email,

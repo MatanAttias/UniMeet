@@ -11,8 +11,8 @@ import {
   Animated,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme } from '../constants/theme';
-import { hp, wp } from '../constants/helpers/common';
+import { theme } from '../../constants/theme';
+import { hp, wp } from '../../constants/helpers/common';
 
 const SUPPORT_NEEDS = [
     'עזרי תקשורת',
@@ -98,7 +98,7 @@ const SupportNeeds = () => {
   const goToNextStep = () => {
 
     router.push({
-      pathname: '/introduce',
+      pathname: '/signUp/introduce',
       params: {
         fullName,
         email,

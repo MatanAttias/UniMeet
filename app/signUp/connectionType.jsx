@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
-import { hp, wp } from '../constants/helpers/common';
-import { theme } from '../constants/theme';
-import Button from '../components/Button';
+import { hp, wp } from '../../constants/helpers/common';
+import { theme } from '../../constants/theme';
+import Button from '../../components/Button';
 
 const ConnectionType = () => {
   const router = useRouter();
@@ -31,7 +31,7 @@ const ConnectionType = () => {
 
     if (selectedTypes.length === 0) return;
     router.push({
-      pathname: '/profilePicture',
+      pathname: '/signUp/profilePicture',
       params: {
         fullName,
         email,
