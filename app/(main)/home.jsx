@@ -39,6 +39,9 @@ export default function Home() {
   });
 
   useEffect(() => {
+    // אם אין user, לא מנויים בכלל
+    if (!user?.id) return;
+
     console.log('Setting up realtime channels:', { userId: user.id });
 
     const postChannel = supabase
@@ -48,8 +51,9 @@ export default function Home() {
         { event: '*', schema: 'public', table: 'posts' },
         handlePostEvent
       )
-      .subscribe(status => {
-        console.log('postChannel status', status);
+      .subscribe(({ status, error }) => {
+        if (error) console.error('postChannel error', error);
+        else console.log('postChannel status', status);
       });
 
     const notificationChannel = supabase
@@ -64,8 +68,9 @@ export default function Home() {
         },
         handleNewNotification
       )
-      .subscribe(status => {
-        console.log('notificationChannel status', status);
+      .subscribe(({ status, error }) => {
+        if (error) console.error('notificationChannel error', error);
+        else console.log('notificationChannel status', status);
       });
 
     const commentsChannel = supabase
@@ -75,8 +80,9 @@ export default function Home() {
         { event: '*', schema: 'public', table: 'comments' },
         handleCommentEvent
       )
-      .subscribe(status => {
-        console.log('commentsChannel status', status);
+      .subscribe(({ status, error }) => {
+        if (error) console.error('commentsChannel error', error);
+        else console.log('commentsChannel status', status);
       });
 
     return () => {
@@ -84,20 +90,22 @@ export default function Home() {
       supabase.removeChannel(notificationChannel);
       supabase.removeChannel(commentsChannel);
     };
-  }, [user.id]);
+    // נסנכרן רק כש־user.id משתנה
+  }, [user?.id]);
 
   async function handlePostEvent(payload) {
-    console.log('Realtime post event', payload);
     if (payload.eventType === 'INSERT' && payload.new?.id) {
       let newPost = { ...payload.new, postLikes: [], comments: [{ count: 0 }] };
       const res = await getUserData(newPost.userId);
       newPost.user = res.success ? res.data : {};
-      setPosts(prev => [newPost, ...prev]);
-    } else if (payload.eventType === 'DELETE' && payload.old?.id) {
-      setPosts(prev => prev.filter(p => p.id !== payload.old.id));
-    } else if (payload.eventType === 'UPDATE' && payload.new?.id) {
-      setPosts(prev =>
-        prev.map(p =>
+      setPosts((prev) => [newPost, ...prev]);
+    }
+    if (payload.eventType === 'DELETE' && payload.old?.id) {
+      setPosts((prev) => prev.filter((p) => p.id !== payload.old.id));
+    }
+    if (payload.eventType === 'UPDATE' && payload.new?.id) {
+      setPosts((prev) =>
+        prev.map((p) =>
           p.id === payload.new.id
             ? { ...p, body: payload.new.body, file: payload.new.file }
             : p
@@ -107,14 +115,13 @@ export default function Home() {
   }
 
   function handleNewNotification(payload) {
-    console.log('Realtime notification event', payload);
     if (payload.eventType === 'INSERT' && payload.new?.id) {
-      setNotificationCount(n => n + 1);
+      setNotificationCount((n) => n + 1);
     }
   }
 
   function handleCommentEvent(payload) {
-    console.log('Realtime comment event', payload);
+    // שינוי בתגובות – רענון מונה
     refreshPosts();
   }
 
@@ -124,9 +131,9 @@ export default function Home() {
     const res = await fetchPosts(limit);
     if (res.success) {
       if (res.data.length === posts.length) setHasMore(false);
-      setPosts(prev => {
-        const ids = new Set(prev.map(p => p.id));
-        const uniq = res.data.filter(p => !ids.has(p.id));
+      setPosts((prev) => {
+        const ids = new Set(prev.map((p) => p.id));
+        const uniq = res.data.filter((p) => !ids.has(p.id));
         return [...prev, ...uniq];
       });
     }
@@ -134,10 +141,7 @@ export default function Home() {
 
   const refreshPosts = async () => {
     setRefreshing(true);
-    console.log('Refreshing posts (limit:', limit, ')');
-    const fetchLimit = limit || 10;
-    const res = await fetchPosts(fetchLimit);
-    console.log('Fetched posts:', res);
+    const res = await fetchPosts(limit || 10);
     if (res.success) {
       limit = res.data.length;
       setHasMore(true);
@@ -146,7 +150,9 @@ export default function Home() {
     setRefreshing(false);
   };
 
-  if (!fontsLoaded) return <AppLoading />;
+  if (!fontsLoaded) {
+    return <AppLoading />;
+  }
 
   return (
     <ScreenWrapper bg={theme.colors.background}>
