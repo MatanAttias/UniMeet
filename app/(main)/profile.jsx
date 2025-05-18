@@ -635,7 +635,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginLeft: 8,
   },
-
+  tagText: {
+    color: 'white',
+    fontSize: 13,
+    textAlign: 'right',
+  },
   subSectionTitle: {
     fontSize: 16,
     fontWeight: '600',
@@ -658,10 +662,6 @@ const styles = StyleSheet.create({
   },
   activeTab: {
     borderBottomColor: theme.colors.primary,
-  },
-  tabText: {
-    color: 'gray',
-    fontWeight: '600',
   },
   activeTabText: {
     color: theme.colors.primary,
