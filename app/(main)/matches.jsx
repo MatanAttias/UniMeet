@@ -72,9 +72,11 @@ export default function Matches() {
           <View style={styles.card}>
             <Avatar uri={item.image} size={hp(8)} rounded={theme.radius.md} />
             <View style={styles.info}>
-              <Text style={styles.name}>{item.name}, {item.age}</Text>
+              <Text style={styles.name}>
+                {item.name}, {item.age}
+              </Text>
               <Text style={styles.sub}>
-                {item.location} • {item.commonConnections} תחומי עניין משותפים
+                {item.location} • {item.commonConnectionsCount} תחומי עניין משותפים
               </Text>
             </View>
           </View>

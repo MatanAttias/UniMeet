@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable, Alert, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -20,25 +20,56 @@ const ProfilePicture = () => {
   } = useLocalSearchParams();
 
   const [image, setImage] = useState(null);
+  
+  // בדיקת הרשאות בעת טעינת המסך
+  useEffect(() => {
+    (async () => {
+      if (Platform.OS !== 'web') {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('שגיאה', 'צריך הרשאה לגישה לגלריה כדי לאפשר בחירת תמונה');
+        }
+      }
+    })();
+  }, []);
 
   const goToPreviousStep = () => {
     router.back();
   };
-  const onPickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
 
-    if (!result.canceled) {
-      setImage(result.assets[0]);
+  const onPickImage = async () => {
+    try {
+      console.log('ניסיון לפתוח את בורר התמונות');
+      
+      // בדיקת הרשאה לגישה לגלריה
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('שגיאה', 'לא קיבלנו הרשאה לגישה לגלריה');
+        return;
+      }
+
+      // פתיחת הגלריה
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+      });
+
+      console.log('תוצאת בחירת התמונה:', result);
+
+      // בדיקה האם המשתמש בחר תמונה
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        console.log('תמונה נבחרה:', result.assets[0].uri);
+        setImage(result.assets[0]);
+      }
+    } catch (error) {
+      console.error('שגיאה בבחירת תמונה:', error);
+      Alert.alert('שגיאה', 'אירעה שגיאה בעת בחירת התמונה: ' + error.message);
     }
   };
 
   const onNext = () => {
-
     if (!image) {
       Alert.alert('נא להוסיף תמונה', 'אנא בחר/י תמונת פרופיל להמשך');
       return;
@@ -51,7 +82,7 @@ const ProfilePicture = () => {
         email,
         password,
         birth_date,
-        wantsNotifications: wantsNotifications === 'true', // שמירה כ-boolean
+        wantsNotifications: wantsNotifications === 'true',
         connectionTypes,
         image: image.uri,
       },
@@ -61,8 +92,9 @@ const ProfilePicture = () => {
   return (
     <View style={styles.container}>
       <Pressable style={styles.backToWelcomeButton} onPress={goToPreviousStep}>
-              <Text style={styles.backToWelcomeText}>חזור</Text>
-            </Pressable>
+        <Text style={styles.backToWelcomeText}>חזור</Text>
+      </Pressable>
+
       <Animated.Text entering={FadeInUp} style={styles.title}>
         הגיע הזמן להכיר אותך!
       </Animated.Text>
@@ -70,9 +102,19 @@ const ProfilePicture = () => {
         בחר/י תמונת פרופיל שכולם יראו כשיפגשו אותך
       </Animated.Text>
 
-      <Pressable style={styles.imageWrapper} onPress={onPickImage}>
+      <Pressable 
+        style={styles.imageWrapper} 
+        onPress={onPickImage}
+        accessibilityLabel="הוסף תמונת פרופיל"
+        accessibilityHint="לחץ כדי לבחור תמונת פרופיל מהגלריה שלך"
+      >
         {image ? (
-          <Image source={{ uri: image.uri }} style={styles.image} />
+          <Image 
+            source={{ uri: image.uri }} 
+            style={styles.image}
+            contentFit="cover"
+            transition={300}
+          />
         ) : (
           <View style={styles.placeholder}>
             <Icon name="camera" size={40} color="#aaa" />
@@ -81,7 +123,11 @@ const ProfilePicture = () => {
         )}
       </Pressable>
 
-      <Pressable style={styles.button} onPress={onNext}>
+      <Pressable 
+        style={styles.button} 
+        onPress={onNext}
+        accessibilityLabel="כפתור המשך"
+      >
         <Text style={styles.buttonText}>המשך</Text>
       </Pressable>
     </View>

@@ -41,7 +41,7 @@ const NewPost = () => {
   const onPick=async (isImage)=>{
 
     let mediaConfig = {
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          mediaTypes: ImagePicker.MediaType.Images,
           allowsEditing: true,
           aspect: [4,3],
           quality: 0.7,
@@ -50,7 +50,7 @@ const NewPost = () => {
     }
     if(!isImage){
         mediaConfig={
-          mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+          mediaTypes: ImagePicker.MediaType.Videos,
           allowsEditing: true
         }
     }
