@@ -14,27 +14,8 @@ const Header = ({ title = 'UniMeet', showBackButton = false, mb = 10 }) => {
   const router = useRouter();
 
   return (
-    <View style={[styles.container, { marginBottom: mb }]}>
-      {showBackButton ? (
-        <View style={styles.left}>
-          <BackButton router={router} />
-        </View>
-      ) : (
-        <View style={styles.rightIcons}>
-          <Pressable onPress={() => router.push('/BookMark')}>
-            <BookMark stroke={theme.colors.pink} width={26} height={26} />
-          </Pressable>
-          <Pressable onPress={() => router.push('/Search')}>
-            <Search stroke={theme.colors.pink} width={26} height={26} style={{ marginHorizontal: wp(2) }} />
-          </Pressable>
-          <Pressable onPress={() => router.push('/profile')}>
-            <Avatar size={32} />
-          </Pressable>
-        </View>
-      )}
-
+  
       <Text style={styles.title}>{title}</Text>
-    </View>
   );
 };
 

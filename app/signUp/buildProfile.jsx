@@ -15,11 +15,12 @@ const BuildProfile = () => {
      connectionTypes,
      image,
      wantsNotifications = 'false',
-     location = 'false',
+     location,
      preferredMatch,
    } = useLocalSearchParams()
 
   const onNext = () => {
+    console.log('location before upsert:', location);
 
      router.push({
       pathname: '/signUp/topTraits',

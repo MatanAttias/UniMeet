@@ -39,7 +39,7 @@ const Hobbies = () => {
         connectionTypes,
         image,
         wantsNotifications = 'false',
-        location = 'false',
+        location,
         preferredMatch,
         traits,
         showTraits = 'false',
@@ -81,7 +81,6 @@ const Hobbies = () => {
   );
 
   const goToNextStep = () => {
-   
     router.push({
       pathname: '/signUp/identify',
       params: {

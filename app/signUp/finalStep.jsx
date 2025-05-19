@@ -49,9 +49,9 @@ const FinalStep = () => {
     const parseBool = (val) => val === 'true';
     const parseJson = (val) => {
       try {
-        return typeof val === 'string' ? JSON.parse(val) : val || [];
+        return typeof val === 'string' ? JSON.parse(val) : val;
       } catch (e) {
-        return [];
+        return null;
       }
     };
 
@@ -64,7 +64,7 @@ const FinalStep = () => {
       connectionTypes: rawParams.connectionTypes ?? '',
       image: rawParams.image ?? '',
       wantsNotifications: parseBool(rawParams.wantsNotifications),
-      location: parseBool(rawParams.location),
+      location: parseJson(rawParams.location), 
       preferredMatch: rawParams.preferredMatch ?? '',
       traits: parseJson(rawParams.traits),
       showTraits: parseBool(rawParams.showTraits),
@@ -91,15 +91,15 @@ const FinalStep = () => {
       !fullName ||
       !birth_date ||
       !gender ||
-      !connectionTypes 
+      !connectionTypes
     ) {
       Alert.alert('שגיאה', 'נא לוודא שכל שדות החובה מולאו');
       return;
     }
-
+  
     try {
       setLoading(true);
-
+  
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -110,10 +110,31 @@ const FinalStep = () => {
           },
         },
       });
-
+  
       if (error) throw error;
       if (!data?.user) throw new Error('User not returned from signUp');
-
+  
+      // 🧠 טיפול בפרמטר מיקום שמגיע כמחרוזת JSON
+      let parsedLocation = null;
+      if (location) {
+        try {
+          parsedLocation =
+            typeof location === 'string' ? JSON.parse(location) : location;
+  
+          if (
+            typeof parsedLocation !== 'object' ||
+            parsedLocation.latitude == null ||
+            parsedLocation.longitude == null
+          ) {
+            console.warn('Invalid location structure:', parsedLocation);
+            parsedLocation = null;
+          }
+        } catch (parseErr) {
+          console.warn('Failed to parse location JSON:', parseErr);
+          parsedLocation = null;
+        }
+      }
+  
       const { error: upsertError } = await supabase
         .from('users')
         .upsert([
@@ -126,7 +147,7 @@ const FinalStep = () => {
             connectionTypes,
             image,
             wantsNotifications,
-            location,
+            location: parsedLocation, // 👈 בדיוק כמו שביקשת - נשמר כ-jsonb רגיל
             preferredMatch,
             traits,
             showTraits,
@@ -142,9 +163,9 @@ const FinalStep = () => {
             status,
           },
         ]);
-
+  
       if (upsertError) throw upsertError;
-
+  
       Alert.alert('הצלחה', 'נרשמת בהצלחה!');
       router.push('/(main)/profile');
     } catch (err) {

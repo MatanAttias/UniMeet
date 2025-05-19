@@ -19,16 +19,12 @@ const LocationPermission = () => {
   } = useLocalSearchParams();
 
   const handleLocationPermission = async () => {
-
-
     const { status } = await Location.requestForegroundPermissionsAsync();
-
+  
     if (status === 'granted') {
       try {
-        // ⬇️ זה מה שגורם לפופאפ של אפל לקפוץ אם זו הפעם הראשונה
         const locationData = await Location.getCurrentPositionAsync({});
   
-
         const params = {
           fullName,
           email,
@@ -37,26 +33,30 @@ const LocationPermission = () => {
           wantsNotifications: wantsNotifications === 'true',
           connectionTypes,
           image,
-          location: true,
+          location: JSON.stringify({
+            latitude: locationData.coords.latitude,
+            longitude: locationData.coords.longitude,
+          }),
         };
-
+  
         router.push({ pathname: '/signUp/genderSignUp', params });
       } catch (error) {
         Alert.alert('שגיאה', 'לא הצלחנו לקבל את המיקום שלך');
       }
     } else {
       Alert.alert('שים לב', 'לא נוכל להציע לך חווית משתמש מלאה ללא מיקום');
-
+  
       const params = {
         fullName,
         email,
+        password,
         birth_date,
         wantsNotifications: wantsNotifications === 'true',
         connectionTypes,
         image,
-        location: false,
+        location: null,
       };
-
+  
       router.push({ pathname: '/signUp/genderSignUp', params });
     }
   };
@@ -74,7 +74,7 @@ const LocationPermission = () => {
       wantsNotifications: wantsNotifications === 'true',
       connectionTypes,
       image,
-      location: false,
+      location: null
     };
     router.push({ pathname: '/signUp/genderSignUp', params });
   };

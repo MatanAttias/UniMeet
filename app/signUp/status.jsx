@@ -17,7 +17,7 @@ const Status = () => {
         connectionTypes,
         image,
         wantsNotifications = 'false',
-        location = 'false',
+        location,
         preferredMatch,
         traits,
         showTraits = 'false',

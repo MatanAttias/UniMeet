@@ -38,7 +38,7 @@ const Identify = () => {
       connectionTypes,
       image,
       wantsNotifications = 'false',
-      location = 'false',
+      location,
       preferredMatch,
       traits,
       showTraits = 'false',
@@ -82,7 +82,7 @@ const Identify = () => {
   );
 
   const goToNextStep = () => {
-    
+
     router.push({
       pathname: '/signUp/supportNeeds',
       params: {
