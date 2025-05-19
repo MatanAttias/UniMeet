@@ -91,14 +91,14 @@ const Profile = () => {
   }
 
   const handleLogout = async () => {
-    Alert.alert('Confirm', 'Are you sure you want to log out?', [
+    Alert.alert('אישור', 'אתה בטוח שאתה רוצה להתנתק?', [
       {
-        text: 'Cancel',
+        text: 'ביטול',
         onPress: () => console.log('modal cancelled'),
         styles: 'cancel',
       },
       {
-        text: 'Logout',
+        text: 'התנתק',
         onPress: () => onLogout(),
         style: 'destructive',
       },
@@ -116,7 +116,8 @@ const Profile = () => {
                 <Text style={styles.backToWelcomeText}>חזור</Text>
               </Pressable>
               <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Icon name="logout" color={theme.colors.rose} />
+          <MaterialCommunityIcons name="logout" size={20} color={theme.colors.rose} />
+          <Text style={styles.logoutText}>התנתק</Text>
         </TouchableOpacity>
       <View style={styles.tabsContainer}>
         
@@ -699,5 +700,21 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontSize: hp(2),
     fontWeight: theme.fonts.semibold,
+  },
+  logoutButton: {
+    position: 'absolute',
+    top: hp(7), // או מספר אחר שמתאים למסך שלך
+    left: wp(4),
+    padding: 8,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 50,
+    zIndex: 10,
+  },
+  logoutText: {
+    color: theme.colors.primary,
+    fontSize: hp(2),
+    fontWeight: theme.fonts.semibold,
+    marginLeft: 8,
+    fontSize: 16,
   },
 });
