@@ -462,7 +462,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '##CDB0AA', // אפור רגוע
-    backgroundColor: '##CDB0AA', // אפור רגוע
   },
   avatarContainer: {
     height: hp(12),
@@ -509,8 +508,6 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     position: 'absolute',
-    left: 30,             // במקום right: 0
-    top: 75,             // מרחק מלמעלה – אפשר להתאים לפי הצורך
     left: 30,             // במקום right: 0
     top: 75,             // מרחק מלמעלה – אפשר להתאים לפי הצורך
     padding: 5,
@@ -682,33 +679,9 @@ const styles = StyleSheet.create({
   tabText: {
     color: theme.colors.textLight,
   },
-  tabText: {
-    color: theme.colors.textLight,
-  },
   activeTabText: {
     color: theme.colors.primary,
   },
-  backToWelcomeButton: {
-    position: 'absolute',
-    top: hp(8),
-    right: hp(4),
-    width: '14%',
-    backgroundColor: theme.colors.card,
-    paddingVertical: hp(1.0),
-    borderRadius: theme.radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  backToWelcomeText: {
-    color: theme.colors.primary,
-    fontSize: hp(2),
-    fontWeight: theme.fonts.semibold,
-  },
   backToWelcomeButton: {
     position: 'absolute',
     top: hp(8),
