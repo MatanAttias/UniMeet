@@ -17,7 +17,7 @@ const MatchSignUp = () => {
     connectionTypes,
     image,
     wantsNotifications = 'false',
-    location = 'false',
+    location,
   } = useLocalSearchParams();
   const wantsNotificationsBool = wantsNotifications === 'true';
   const locationBool = location === 'true';
@@ -27,6 +27,7 @@ const MatchSignUp = () => {
   const goBack = () => router.back();
 
   const onNext = () => {
+
     if (!preferredMatch) {
       Alert.alert('שגיאה', 'אנא בחר/י העדפה להמשך');
       return;
@@ -43,7 +44,7 @@ const MatchSignUp = () => {
         connectionTypes,
         image,
         wantsNotificationsBool,
-        locationBool,
+        location,
         preferredMatch, // העברה נכונה
       },
     });
@@ -59,7 +60,6 @@ const MatchSignUp = () => {
       <Text style={styles.subtitle}>אנא בחר/י את האנשים שאתה רוצה להתאים אליהם</Text>
 
       <View style={styles.buttonsContainer}>
-      // שינוי ההגדרה
       <Pressable
       style={[
         styles.button,

@@ -15,11 +15,13 @@ const GenderSignUp = () => {
       password,
       birth_date,
       connectionTypes,
+      location,
       image,
       wantsNotifications = 'false', // טיפול במידה ולא הגיע מהעמוד הקודם
     } = useLocalSearchParams();
 
     const onNext = () => {
+      console.log('location before upsert:', location);
 
     if (!selectedGender) {
       Alert.alert('שגיאה', 'אנא בחר/י מין להמשך');
@@ -36,7 +38,7 @@ const GenderSignUp = () => {
         wantsNotifications: wantsNotifications === 'true',
         connectionTypes,
         image,
-        location: true,
+        location,
         gender: selectedGender,
       },
     });

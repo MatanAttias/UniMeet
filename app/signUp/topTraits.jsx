@@ -36,7 +36,7 @@ const TopTraits = () => {
        connectionTypes,
        image,
        wantsNotifications = 'false',
-       location = 'false',
+       location,
        preferredMatch,
   } = useLocalSearchParams();
 

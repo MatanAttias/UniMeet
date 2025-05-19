@@ -91,14 +91,14 @@ const Profile = () => {
   }
 
   const handleLogout = async () => {
-    Alert.alert('Confirm', 'Are you sure you want to log out?', [
+    Alert.alert('אישור', 'אתה בטוח שאתה רוצה להתנתק?', [
       {
-        text: 'Cancel',
+        text: 'ביטול',
         onPress: () => console.log('modal cancelled'),
         styles: 'cancel',
       },
       {
-        text: 'Logout',
+        text: 'התנתק',
         onPress: () => onLogout(),
         style: 'destructive',
       },
@@ -116,9 +116,11 @@ const Profile = () => {
                 <Text style={styles.backToWelcomeText}>חזור</Text>
               </Pressable>
               <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Icon name="logout" color={theme.colors.rose} />
+          <MaterialCommunityIcons name="logout" size={20} color={theme.colors.rose} />
+          <Text style={styles.logoutText}>התנתק</Text>
         </TouchableOpacity>
       <View style={styles.tabsContainer}>
+        
         
       <TouchableOpacity
         style={[styles.tab, activeTab === 'profile' && styles.activeTab]}
@@ -284,6 +286,7 @@ const UserHeader = ({ user, router, handleLogout }) => {
     <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingHorizontal: wp(4) }}>
       <View>
         <Header title="Profile" mb={30} />
+       
        
       </View>
 
@@ -459,6 +462,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '##CDB0AA', // אפור רגוע
+    backgroundColor: '##CDB0AA', // אפור רגוע
   },
   avatarContainer: {
     height: hp(12),
@@ -505,6 +509,8 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     position: 'absolute',
+    left: 30,             // במקום right: 0
+    top: 75,             // מרחק מלמעלה – אפשר להתאים לפי הצורך
     left: 30,             // במקום right: 0
     top: 75,             // מרחק מלמעלה – אפשר להתאים לפי הצורך
     padding: 5,
@@ -676,6 +682,9 @@ const styles = StyleSheet.create({
   tabText: {
     color: theme.colors.textLight,
   },
+  tabText: {
+    color: theme.colors.textLight,
+  },
   activeTabText: {
     color: theme.colors.primary,
   },
@@ -700,4 +709,41 @@ const styles = StyleSheet.create({
     fontSize: hp(2),
     fontWeight: theme.fonts.semibold,
   },
+  backToWelcomeButton: {
+    position: 'absolute',
+    top: hp(8),
+    right: hp(4),
+    width: '14%',
+    backgroundColor: theme.colors.card,
+    paddingVertical: hp(1.0),
+    borderRadius: theme.radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  backToWelcomeText: {
+    color: theme.colors.primary,
+    fontSize: hp(2),
+    fontWeight: theme.fonts.semibold,
+  },
+  logoutButton: {
+    position: 'absolute',
+    top: hp(7), // או מספר אחר שמתאים למסך שלך
+    left: wp(4),
+    padding: 8,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 50,
+    zIndex: 10,
+  },
+  logoutText: {
+    color: theme.colors.primary,
+    fontSize: hp(2),
+    fontWeight: theme.fonts.semibold,
+    marginLeft: 8,
+    fontSize: 16,
+  },
 });

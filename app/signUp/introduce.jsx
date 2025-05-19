@@ -25,7 +25,7 @@ const Introduce = () => {
         connectionTypes,
         image,
         wantsNotifications = 'false',
-        location = 'false',
+        location,
         preferredMatch,
         traits,
         showTraits = 'false',
@@ -35,7 +35,6 @@ const Introduce = () => {
         showIdentities = 'false',
         supportNeeds,
         showSupportNeeds = 'false',
-        introduction,
     } = useLocalSearchParams();
 
   const goToNextStep = () => {
