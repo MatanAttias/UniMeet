@@ -1,52 +1,76 @@
+// app/(main)/matches.jsx
 import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  FlatList,
+  Alert,
   Pressable,
   StyleSheet,
+  Text,
+  View,
   ActivityIndicator,
+  FlatList,
+  Dimensions,
+  Image,
 } from 'react-native';
 import ScreenWrapper from '../../components/ScreenWrapper';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
-import { fetchAttributeMatches } from '../../services/matchService';
+import { supabase } from '../../lib/supabase';
 import { hp, wp } from '../../constants/helpers/common';
 import { theme } from '../../constants/theme';
 import Avatar from '../../components/Avatar';
+import Header from '../../components/Header';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { Audio } from 'expo-av';
+import { MotiView } from 'moti';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function Matches() {
   const { user } = useAuth();
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
   const [matches, setMatches] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [isPlayingMap, setIsPlayingMap] = useState({});
+  const [soundObjects, setSoundObjects] = useState({});
 
-  console.log('👤 MatchesScreen loaded for user:', user?.id, user?.name);
-
-  // הפונקציה שמביאה את ההתאמות
-  const loadMatches = async () => {
-    setLoading(true);
-    console.log('🔄 Loading matches for user id:', user.id);
-    try {
-      const res = await fetchAttributeMatches(user.id);
-      console.log('🔍 fetchAttributeMatches response:', res);
-      if (res.success) {
-        setMatches(res.data || []);
+  // fetch matches list
+  useEffect(() => {
+    async function fetchMatches() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .neq('id', user.id);
+      if (error) {
+        Alert.alert('שגיאה', 'לא ניתן לטעון התאמות');
       } else {
-        console.warn('⚠️ Failed to fetch matches:', res.msg);
-        setMatches([]);
+        setMatches(data || []);
       }
-    } catch (err) {
-      console.error('❗ loadMatches error:', err);
-      setMatches([]);
+      setLoading(false);
     }
-    setLoading(false);
+    if (user?.id) fetchMatches();
+  }, [user?.id]);
+
+  // play / pause per user
+  const onPlayAudio = async (id, uri) => {
+    if (!uri) return;
+    const current = soundObjects[id];
+    if (current) {
+      await current.unloadAsync();
+      setSoundObjects(prev => ({ ...prev, [id]: null }));
+      setIsPlayingMap(prev => ({ ...prev, [id]: false }));
+      return;
+    }
+    const { sound } = await Audio.Sound.createAsync({ uri });
+    setSoundObjects(prev => ({ ...prev, [id]: sound }));
+    await sound.playAsync();
+    setIsPlayingMap(prev => ({ ...prev, [id]: true }));
+    sound.setOnPlaybackStatusUpdate(status => {
+      if (status.didJustFinish) onPlayAudio(id, uri);
+      setIsPlayingMap(prev => ({ ...prev, [id]: status.isPlaying }));
+    });
   };
 
-  // טען אוטומטית בהכנסה למסך
-  useEffect(() => {
-    loadMatches();
-  }, []);
-
-  // מצב של טעינה
   if (loading) {
     return (
       <ScreenWrapper>
@@ -57,89 +81,97 @@ export default function Matches() {
     );
   }
 
-  // מצב שאין התאמות
-  if (matches.length === 0) {
+  const renderItem = ({ item }) => {
+    const age = item.birth_date
+      ? new Date().getFullYear() - new Date(item.birth_date).getFullYear()
+      : null;
     return (
-      <ScreenWrapper>
-        <View style={styles.center}>
-          <Text style={styles.emptyText}>אין עדיין התאמות להצגה</Text>
-          <Pressable style={styles.button} onPress={loadMatches}>
-            <Text style={styles.buttonText}>∞ מצא התאמות</Text>
+      <View style={styles.card}>
+        <Image source={{ uri: item.image }} style={styles.image} />
+        <View style={styles.overlay}>
+          <Text style={styles.name}>
+            {item.name}{age ? `, ${age}` : ''}
+          </Text>
+        </View>
+        <View style={styles.actions}>
+          {/* friendly */}
+          <Pressable
+            style={styles.btnFriendly}
+            onPress={() => {/* handle friendly */}}
+          >
+            <MaterialCommunityIcons
+              name="happy-outline"
+              size={hp(4)}
+              color={theme.colors.primaryLight}
+            />
+          </Pressable>
+          {/* like */}
+          <Pressable
+            style={styles.btnLike}
+            onPress={() => {/* handle like */}}
+          >
+            <MaterialCommunityIcons
+              name="heart"
+              size={hp(4)}
+              color={theme.colors.primary}
+            />
           </Pressable>
         </View>
-      </ScreenWrapper>
+      </View>
     );
-  }
+  };
 
-  // רשימת התאמות
   return (
     <ScreenWrapper>
+      <Header title="התאמות" />
       <FlatList
         data={matches}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Avatar uri={item.image} size={hp(8)} rounded={theme.radius.md} />
-            <View style={styles.info}>
-              <Text style={styles.name}>
-                {item.name}, {item.age}
-              </Text>
-              <Text style={styles.sub}>
-                {item.location} • {item.commonConnectionsCount} תחומי עניין משותפים
-              </Text>
-            </View>
-          </View>
-        )}
+        keyExtractor={item => item.id.toString()}
+        horizontal
+        pagingEnabled
+        renderItem={renderItem}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: wp(4) }}
       />
     </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyText: {
-    fontSize: hp(2),
-    color: theme.colors.textSecondary,
-    marginBottom: hp(2),
-  },
-  button: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: hp(1.2),
-    paddingHorizontal: wp(6),
-    borderRadius: theme.radius.md,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: hp(1.9),
-    fontFamily: 'Poppins_600SemiBold',
-  },
-  list: {
-    padding: wp(4),
-  },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: hp(2),
-    marginBottom: hp(2),
-    backgroundColor: theme.colors.card,
+    width: SCREEN_WIDTH - wp(8),
+    height: hp(60),
+    marginHorizontal: wp(4),
     borderRadius: theme.radius.xl,
+    overflow: 'hidden',
   },
-  info: {
-    marginLeft: wp(4),
+  image: { width: '100%', height: '100%' },
+  overlay: {
+    position: 'absolute',
+    bottom: hp(20),
+    left: wp(4),
   },
   name: {
-    fontSize: hp(2),
-    fontFamily: 'Poppins_700Bold',
-    color: theme.colors.textPrimary,
+    color: '#fff',
+    fontSize: hp(3),
+    fontWeight: 'bold',
   },
-  sub: {
-    fontSize: hp(1.6),
-    color: theme.colors.textSecondary,
-    marginTop: hp(0.5),
+  actions: {
+    position: 'absolute',
+    bottom: hp(4),
+    left: wp(4),
+    flexDirection: 'row',
+  },
+  btnFriendly: {
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    padding: hp(1),
+    marginRight: wp(2),
+    borderRadius: theme.radius.md,
+  },
+  btnLike: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: hp(1),
+    borderRadius: theme.radius.md,
   },
 });
