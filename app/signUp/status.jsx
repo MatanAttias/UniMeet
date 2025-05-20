@@ -39,6 +39,8 @@ const Status = () => {
   const goBack = () => router.back();
 
   const handleNext = () => {
+              console.log('location before upsert:', location)
+
     
     const status = selected !== null ? STATUS_OPTIONS[selected] : customText.trim();
     router.push({

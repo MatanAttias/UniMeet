@@ -19,14 +19,24 @@ export default function Matches() {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  console.log('👤 MatchesScreen loaded for user:', user?.id, user?.name);
+
   // הפונקציה שמביאה את ההתאמות
   const loadMatches = async () => {
     setLoading(true);
-    const res = await fetchAttributeMatches(user.id);
-    if (res.success) {
-      setMatches(res.data);
-    } else {
-      console.warn('Failed to fetch matches:', res.msg);
+    console.log('🔄 Loading matches for user id:', user.id);
+    try {
+      const res = await fetchAttributeMatches(user.id);
+      console.log('🔍 fetchAttributeMatches response:', res);
+      if (res.success) {
+        setMatches(res.data || []);
+      } else {
+        console.warn('⚠️ Failed to fetch matches:', res.msg);
+        setMatches([]);
+      }
+    } catch (err) {
+      console.error('❗ loadMatches error:', err);
+      setMatches([]);
     }
     setLoading(false);
   };
@@ -66,7 +76,7 @@ export default function Matches() {
     <ScreenWrapper>
       <FlatList
         data={matches}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
           <View style={styles.card}>
