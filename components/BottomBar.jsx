@@ -6,6 +6,7 @@ import Avatar from './Avatar';
 import { theme } from '../constants/theme';
 import { hp, wp } from '../constants/helpers/common';
 
+
 // באדג' לכמות הודעות לא נקראות
 const ChatTabIcon = ({ color, size, unreadCount }) => (
   <View style={{ width: size, height: size }}>
@@ -47,12 +48,15 @@ export default function BottomBar({ currentUser, selected, unreadMessages = 0, u
       {/* התאמות */}
       <Pressable style={styles.tab} onPress={() => router.push('/matches')}>
         <Icon
-          name="heart"
+          name="match"
           size={hp(3)}
           color={selected === 'matches' ? theme.colors.primary : theme.colors.textSecondary}
         />
-        <Text style={[styles.label, selected === 'matches' && styles.selectedLabel]}>התאמות</Text>
+        <Text style={[styles.label, selected === 'matches' && styles.selectedLabel]}>
+          התאמות
+        </Text>
       </Pressable>
+
 
       {/* לייקים */}
       <Pressable style={styles.tab} onPress={() => router.push('/likes')}>

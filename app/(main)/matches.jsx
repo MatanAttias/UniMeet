@@ -1,75 +1,53 @@
-// app/(main)/matches.jsx
 import React, { useEffect, useState } from 'react';
-import {
-  Alert,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  ActivityIndicator,
-  FlatList,
-  Dimensions,
-  Image,
-} from 'react-native';
+import { ActivityIndicator, Dimensions, Pressable, StyleSheet, Text, View, Alert } from 'react-native';
+import { Image } from 'expo-image';
 import ScreenWrapper from '../../components/ScreenWrapper';
-import { useRouter } from 'expo-router';
+import Header from '../../components/Header';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
 import { hp, wp } from '../../constants/helpers/common';
 import { theme } from '../../constants/theme';
-import Avatar from '../../components/Avatar';
-import Header from '../../components/Header';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Audio } from 'expo-av';
-import { MotiView } from 'moti';
+import { fetchAttributeMatches, likeUser, friendUser, rejectUser } from '../../services/matchService';
+import BottomBar from '../../components/BottomBar';
+import Profile from '../(main)/profile'
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_WIDTH = SCREEN_WIDTH - wp(1);
+
+// גובה של תמונה + שורה של כפתורים
+const IMAGE_HEIGHT = hp(40);
+const BUTTON_ROW_HEIGHT = hp(30);
+const CARD_HEIGHT = IMAGE_HEIGHT + BUTTON_ROW_HEIGHT;
+
+const BTN_SIZE = hp(4.5);
 
 export default function Matches() {
   const { user } = useAuth();
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [matches, setMatches] = useState([]);
-  const [isPlayingMap, setIsPlayingMap] = useState({});
-  const [soundObjects, setSoundObjects] = useState({});
+  const [index, setIndex] = useState(0);
+  const [imgLoading, setImgLoading] = useState(false);
 
-  // fetch matches list
+  // Fetch + prefetch
   useEffect(() => {
-    async function fetchMatches() {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .neq('id', user.id);
-      if (error) {
-        Alert.alert('שגיאה', 'לא ניתן לטעון התאמות');
-      } else {
+    if (!user?.id) return;
+    setLoading(true);
+    fetchAttributeMatches(user.id)
+      .then(data => {
         setMatches(data || []);
-      }
-      setLoading(false);
-    }
-    if (user?.id) fetchMatches();
+        data.forEach(u => u.image && Image.prefetch(u.image));
+      })
+      .catch(() => Alert.alert('שגיאה', 'לא ניתן לטעון התאמות'))
+      .finally(() => setLoading(false));
   }, [user?.id]);
 
-  // play / pause per user
-  const onPlayAudio = async (id, uri) => {
-    if (!uri) return;
-    const current = soundObjects[id];
-    if (current) {
-      await current.unloadAsync();
-      setSoundObjects(prev => ({ ...prev, [id]: null }));
-      setIsPlayingMap(prev => ({ ...prev, [id]: false }));
-      return;
-    }
-    const { sound } = await Audio.Sound.createAsync({ uri });
-    setSoundObjects(prev => ({ ...prev, [id]: sound }));
-    await sound.playAsync();
-    setIsPlayingMap(prev => ({ ...prev, [id]: true }));
-    sound.setOnPlaybackStatusUpdate(status => {
-      if (status.didJustFinish) onPlayAudio(id, uri);
-      setIsPlayingMap(prev => ({ ...prev, [id]: status.isPlaying }));
+  // prefetch next two
+  useEffect(() => {
+    [matches[index + 1], matches[index + 2]].forEach(u => {
+      if (u?.image) Image.prefetch(u.image);
     });
-  };
+  }, [index, matches]);
 
   if (loading) {
     return (
@@ -81,97 +59,175 @@ export default function Matches() {
     );
   }
 
-  const renderItem = ({ item }) => {
-    const age = item.birth_date
-      ? new Date().getFullYear() - new Date(item.birth_date).getFullYear()
-      : null;
+  if (index >= matches.length) {
     return (
-      <View style={styles.card}>
-        <Image source={{ uri: item.image }} style={styles.image} />
-        <View style={styles.overlay}>
-          <Text style={styles.name}>
-            {item.name}{age ? `, ${age}` : ''}
-          </Text>
+      <ScreenWrapper>
+        <Header title="התאמות" />
+        <View style={styles.center}>
+          <Text style={styles.noMore}>אין עוד התאמות כרגע</Text>
         </View>
-        <View style={styles.actions}>
-          {/* friendly */}
-          <Pressable
-            style={styles.btnFriendly}
-            onPress={() => {/* handle friendly */}}
-          >
-            <MaterialCommunityIcons
-              name="happy-outline"
-              size={hp(4)}
-              color={theme.colors.primaryLight}
-            />
-          </Pressable>
-          {/* like */}
-          <Pressable
-            style={styles.btnLike}
-            onPress={() => {/* handle like */}}
-          >
-            <MaterialCommunityIcons
-              name="heart"
-              size={hp(4)}
+        <BottomBar selected="matches" /> {/* תמיד בתחתית */}
+      </ScreenWrapper>
+    );
+  }
+
+  const current = matches[index];
+  const age = current.birth_date
+    ? new Date().getFullYear() - new Date(current.birth_date).getFullYear()
+    : null;
+
+  const nextCard = () => setIndex(i => i + 1);
+  const handleReject = async () => { await rejectUser(user.id, current.id); nextCard(); };
+  const handleFriend = async () => { await friendUser(user.id, current.id); };
+  const handleLike   = async () => { await likeUser(user.id, current.id); };
+
+  return (
+    <ScreenWrapper contentContainerStyle={[styles.container, { paddingTop: hp(10) }]}>
+      <Header title="התאמות" />
+
+      <View style={styles.cardContainer}>
+        {/* 1. השם מעל התמונה */}
+        <Text style={styles.nameTop}>
+          {current.name}
+          {age ? `, ${age}` : ''}
+        </Text>
+
+        {/* 2. התמונה + overlay של כפתורי 😀 ו־❤️ */}
+        <View style={styles.imageWrapper}>
+          {imgLoading && (
+            <ActivityIndicator
+              style={styles.loader}
+              size="large"
               color={theme.colors.primary}
             />
+          )}
+          <Image
+            source={{ uri: current.image }}
+            style={styles.image}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={250}
+            onLoadStart={() => setImgLoading(true)}
+            onLoadEnd={() => setImgLoading(false)}
+          />
+          <View style={styles.overlayActions}>
+            <Pressable style={styles.actionBtn} onPress={handleFriend}>
+              <MaterialCommunityIcons
+                name="emoticon-happy-outline"
+                size={hp(3.5)}
+                color={theme.colors.primary}
+              />
+            </Pressable>
+            <Pressable style={styles.actionBtn} onPress={handleLike}>
+              <MaterialCommunityIcons
+                name="heart"
+                size={hp(3.5)}
+                color={theme.colors.primary}
+              />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* 3. שורת כפתור ❌ מתחת לתמונה */}
+        <View style={styles.buttonRow}>
+          <Pressable style={styles.btn} onPress={handleReject}>
+            <MaterialCommunityIcons name="close" size={hp(3.8)} color="#fff" />
           </Pressable>
         </View>
       </View>
-    );
-  };
-
-  return (
-    <ScreenWrapper>
-      <Header title="התאמות" />
-      <FlatList
-        data={matches}
-        keyExtractor={item => item.id.toString()}
-        horizontal
-        pagingEnabled
-        renderItem={renderItem}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: wp(4) }}
-      />
+      
+      {/*  ה־BottomBar תמיד בתחתית */}
+      <BottomBar selected="matches" />
     </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  card: {
-    width: SCREEN_WIDTH - wp(8),
-    height: hp(60),
-    marginHorizontal: wp(4),
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.background,
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noMore: {
+    color: '#888',
+    fontSize: hp(2.5),
+  },
+
+  cardContainer: {
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT + hp(4), // מרווח קטן מתחת
+    alignItems: 'center',
+    marginBottom: hp(12),
+  },
+
+  nameTop: {
+    color: '#fff',
+    fontSize: hp(3.1),
+    fontWeight: 'bold',
+    marginBottom: hp(1),
+    alignSelf: 'flex-start',
+    paddingHorizontal: wp(2),
+  },
+
+  imageWrapper: {
+    width: '99%',
+    height: IMAGE_HEIGHT,
     borderRadius: theme.radius.xl,
     overflow: 'hidden',
+    backgroundColor: theme.colors.card,
+    position: 'relative',
   },
-  image: { width: '100%', height: '100%' },
-  overlay: {
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  loader: {
     position: 'absolute',
-    bottom: hp(20),
-    left: wp(4),
+    top: IMAGE_HEIGHT / 2 - hp(2),
+    left: CARD_WIDTH / 2 - hp(2),
+    zIndex: 1,
   },
-  name: {
-    color: '#fff',
-    fontSize: hp(3),
-    fontWeight: 'bold',
-  },
-  actions: {
+
+  // overlay actions inside image
+  overlayActions: {
     position: 'absolute',
-    bottom: hp(4),
-    left: wp(4),
+    bottom: hp(1.2),
+    width: '100%',
     flexDirection: 'row',
+    justifyContent: 'flex-end',
+    
   },
-  btnFriendly: {
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    padding: hp(1),
-    marginRight: wp(2),
-    borderRadius: theme.radius.md,
-  },
-  btnLike: {
+  actionBtn: {
     backgroundColor: 'rgba(0,0,0,0.6)',
-    padding: hp(1),
-    borderRadius: theme.radius.md,
+    width: 50,
+    height: 50,
+    borderRadius: BTN_SIZE / 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: wp(1),
+  },
+
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    width: '100%',
+    height: BUTTON_ROW_HEIGHT,
+    alignItems: 'center',
+    marginTop: hp(10),
+    paddingHorizontal: wp(2),
+  },
+  btn: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    width: BTN_SIZE,
+    height: BTN_SIZE,
+    borderRadius: BTN_SIZE / 3.5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
