@@ -22,19 +22,19 @@ const HomeHeader = ({ activeTab, onTabChange }) => {
 
         {/* שורת אייקונים מימין */}
         <View style={styles.iconRow}>
-          <Pressable onPress={() => router.push('/newPost')} style={styles.iconButton}>
-            <Ionicons name="add-circle-outline" size={26} color={theme.colors.pink} />
-          </Pressable>
-          <Pressable onPress={() => router.push('/search')} style={styles.iconButton}>
-            <Ionicons name="search-outline" size={24} color={theme.colors.pink} />
-          </Pressable>
-          <Pressable onPress={() => router.push('/bookMark')} style={styles.iconButton}>
-            <Ionicons name="bookmark-outline" size={24} color={theme.colors.pink} />
-          </Pressable>
-          <Pressable onPress={() => router.push('/notifications')} style={styles.iconButton}>
-            <Ionicons name="notifications-outline" size={24} color={theme.colors.pink} />
-          </Pressable>
-        </View>
+  <Pressable onPress={() => router.push('/newPost')} style={styles.iconButton}>
+    <Ionicons name="add-circle-outline" size={26} color={theme.colors.pink} />
+  </Pressable>
+  <Pressable onPress={() => router.push('search')} style={styles.iconButton}>
+    <Ionicons name="search-outline" size={24} color={theme.colors.pink} />
+  </Pressable>
+  <Pressable onPress={() => rrouter.push('/bookMark')} style={styles.iconButton}>
+    <Ionicons name="bookmark-outline" size={24} color={theme.colors.pink} />
+  </Pressable>
+  <Pressable onPress={() => router.push('/notifications')} style={styles.iconButton}>
+    <Ionicons name="notifications-outline" size={24} color={theme.colors.pink} />
+  </Pressable>
+</View>
       </View>
 
       {/* לשוניות Home / Matches */}

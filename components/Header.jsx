@@ -6,7 +6,6 @@ import { hp, wp } from '../constants/helpers/common';
 import BackButton from './BackButton';
 import Avatar from './Avatar'; // וודא שקיים
 import BookMark from '../assets/icons/BookMark';
-import Search from '../assets/icons/Search';
 
 
 

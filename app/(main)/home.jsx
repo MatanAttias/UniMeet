@@ -42,7 +42,6 @@ export default function Home() {
     // אם אין user, לא מנויים בכלל
     if (!user?.id) return;
 
-    console.log('Setting up realtime channels:', { userId: user.id });
 
     const postChannel = supabase
       .channel('posts')
@@ -167,7 +166,7 @@ export default function Home() {
             <Icon name="heart" size={hp(3)} color={theme.colors.primary} />
             {notificationCount > 0 && <View style={styles.badge}><Text style={styles.badgeText}>{notificationCount}</Text></View>}
           </Pressable>
-          <Pressable hitSlop={8} style={styles.iconButton} onPress={() => router.push('Search')}>
+          <Pressable hitSlop={8} style={styles.iconButton} onPress={() => router.push('/search')}>
             <Icon name="search" size={hp(3)} color={theme.colors.primary} />
           </Pressable>
           <Pressable hitSlop={8} style={styles.iconButton} onPress={() => router.push('newPost')}>
