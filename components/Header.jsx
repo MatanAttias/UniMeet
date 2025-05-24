@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: hp(2.7),
     fontWeight: theme.fonts.semibold,
-    color: theme.colors.textDark,
+    color: '#F8EBE8',
     textAlign: 'center',
     flex: 1,
   },

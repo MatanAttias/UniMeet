@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   FlatList,
 } from 'react-native';
+import { Image } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import React, { useEffect, useState } from 'react';
 import ScreenWrapper from '../../components/ScreenWrapper';
@@ -284,7 +285,7 @@ const UserHeader = ({ user, router, handleLogout }) => {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingHorizontal: wp(4) }}>
       <View>
-        <Header title="Profile" mb={30} />
+        <Header title="פרטי פרופיל" mb={30} />
        
       </View>
 

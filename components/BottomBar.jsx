@@ -40,13 +40,13 @@ export default function BottomBar({
         <Text style={[styles.label, selected === 'profile' && styles.selectedLabel]}>פרופיל</Text>
       </Pressable>
       {/* צ׳אט */}
-      <Pressable style={styles.tab} onPress={() => onTabChange('chat')}>
+      <Pressable style={styles.tab} onPress={() => router.push('chats')}>
         <ChatTabIcon
-          color={selected === 'chat' ? theme.colors.primary : theme.colors.textSecondary}
+          color={selected === 'chats' ? theme.colors.primary : theme.colors.textSecondary}
           size={hp(3)}
           unreadCount={unreadMessages}
         />
-        <Text style={[styles.label, selected === 'chat' && styles.selectedLabel]}>צ׳אט</Text>
+        <Text style={[styles.label, selected === 'chats' && styles.selectedLabel]}>צ׳אט</Text>
       </Pressable>
       {/* התאמות */}
       <Pressable style={styles.tab} onPress={() => onTabChange('matches')}>
