@@ -38,7 +38,7 @@ export default function Search() {
   };
 
   const handleUserPress = (userId) => {
-    router.push({ pathname: '/VisitedProfile', params: { userId } });
+    router.push({ pathname: '/visitedProfile', params: { userId } });
   };
 
   const renderItem = ({ item }) => {

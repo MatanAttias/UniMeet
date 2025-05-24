@@ -14,7 +14,7 @@ export default function UserHeader({ user, router, onLogout }) {
   const [sound, setSound] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackStatus, setPlaybackStatus] = useState(null);
-
+  const isCurrentUser = !!onLogout; // או prop אחר אם יש
   useEffect(() => {
     return () => {
       if (sound) sound.unloadAsync();
@@ -73,20 +73,27 @@ export default function UserHeader({ user, router, onLogout }) {
     <View style={styles.wrapper}>
       {/* כותרת + עריכה */}
       <View style={styles.headerRow}>
-        <Text style={styles.screenTitle}>הפרופיל שלי</Text>
-        <Pressable onPress={() => router.push('editProfile')}>
-          <Icon name="edit" size={24} color={theme.colors.primary} />
-        </Pressable>
-        <Pressable onPress={onLogout} style={styles.logoutIcon}>
-          <MaterialCommunityIcons name="logout" size={24} color={theme.colors.rose} />
-        </Pressable>
-      </View>
+  <Text style={styles.screenTitle}>
+    {isCurrentUser ? 'הפרופיל שלי' : user.name}
+  </Text>
+
+  {isCurrentUser && (
+    <>
+      <Pressable onPress={() => router.push('editProfile')}>
+        <Icon name="edit" size={24} color={theme.colors.primary} />
+      </Pressable>
+      <Pressable onPress={onLogout} style={styles.logoutIcon}>
+        <MaterialCommunityIcons name="logout" size={24} color={theme.colors.rose} />
+      </Pressable>
+    </>
+  )}
+</View>
 
       {/* Avatar + שם + גיל */}
       <View style={styles.avatarContainer}>
         <Avatar uri={user.image} size={hp(14)} rounded={theme.radius.xl} />
         <Text style={styles.userName}>
-          {user.fullName || user.name}
+          {user.name}
           {user.birth_date ? `, ${calculateAge(user.birth_date)}` : ''}
         </Text>
       </View>

@@ -299,9 +299,11 @@ const UserHeader = ({ user, router, handleLogout }) => {
               size={hp(12)}
               rounded={theme.radius.xxl * 1.4}
             />
+            {showEdit !== false && (
             <Pressable style={styles.editIcon} onPress={() => router.push('editProfile')}>
               <Icon name="edit" strokeWidth={2.5} size={20} />
             </Pressable>
+          )}
           </View>
 
           <View style={{ alignItems: 'center', gap: 4 }}>
