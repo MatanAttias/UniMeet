@@ -1,12 +1,13 @@
 import React from 'react';
 import { View, Pressable, StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
-import Icon from '../assets/icons'; // תעדכן נתיב במידת הצורך
+import Icon from '../assets/icons'; // עדכן נתיב במידת הצורך
 import Avatar from './Avatar';
 import { theme } from '../constants/theme';
 import { hp, wp } from '../constants/helpers/common';
 
-// להוספת באדג' הודעות:
+
+// באדג' לכמות הודעות לא נקראות
 const ChatTabIcon = ({ color, size, unreadCount }) => (
   <View style={{ width: size, height: size }}>
     <Icon name="chat" size={size} color={color} />
@@ -18,19 +19,13 @@ const ChatTabIcon = ({ color, size, unreadCount }) => (
   </View>
 );
 
-export default function BottomBar({
-  currentUser,
-  selected,
-  onTabChange,
-  unreadMessages = 0, // אפשר להעביר מבחוץ
-  unreadLikes = 0     // למקרה שתרצה באדג' גם ללייקים
-}) {
+export default function BottomBar({ currentUser, selected, unreadMessages = 0, unreadLikes = 0 }) {
   const router = useRouter();
 
   return (
     <View style={styles.container}>
       {/* פרופיל */}
-      <Pressable style={styles.tab} onPress={() => router.push('profile')}>
+      <Pressable style={styles.tab} onPress={() => router.push('/profile')}>
         <Avatar
           uri={currentUser?.image}
           size={hp(3.3)}
@@ -48,17 +43,22 @@ export default function BottomBar({
         />
         <Text style={[styles.label, selected === 'chats' && styles.selectedLabel]}>צ׳אט</Text>
       </Pressable>
+
       {/* התאמות */}
-      <Pressable style={styles.tab} onPress={() => onTabChange('matches')}>
+      <Pressable style={styles.tab} onPress={() => router.push('/matches')}>
         <Icon
-          name="heart"
+          name="match"
           size={hp(3)}
           color={selected === 'matches' ? theme.colors.primary : theme.colors.textSecondary}
         />
-        <Text style={[styles.label, selected === 'matches' && styles.selectedLabel]}>התאמות</Text>
+        <Text style={[styles.label, selected === 'matches' && styles.selectedLabel]}>
+          התאמות
+        </Text>
       </Pressable>
+
+
       {/* לייקים */}
-      <Pressable style={styles.tab} onPress={() => onTabChange('likes')}>
+      <Pressable style={styles.tab} onPress={() => router.push('/likes')}>
         <View style={{ width: hp(3), height: hp(3) }}>
           <Icon
             name="heart"
@@ -73,8 +73,9 @@ export default function BottomBar({
         </View>
         <Text style={[styles.label, selected === 'likes' && styles.selectedLabel]}>לייקים</Text>
       </Pressable>
+
       {/* בית */}
-      <Pressable style={styles.tab} onPress={() => onTabChange('home')}>
+      <Pressable style={styles.tab} onPress={() => router.push('/home')}>
         <Icon
           name="home"
           size={hp(3)}

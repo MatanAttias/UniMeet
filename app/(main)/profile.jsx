@@ -122,6 +122,7 @@ const Profile = () => {
         </TouchableOpacity>
       <View style={styles.tabsContainer}>
         
+        
       <TouchableOpacity
         style={[styles.tab, activeTab === 'profile' && styles.activeTab]}
         onPress={() => setActiveTab('profile')}
@@ -154,7 +155,7 @@ const Profile = () => {
       ListHeaderComponentStyle={{ marginBottom: 30 }}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.listStyle}
-      keyExtractor={(item, index) => (item.id ? `post-${item.id}` : `default-${index}`)}
+      keyExtractor={(item, index) => item.id ? `post-${item.id}` : `default-${index}`}
       renderItem={({ item }) =>
         activeTab === 'posts' ? (
           <PostCard item={item} currentUser={user} router={router} />
@@ -286,6 +287,7 @@ const UserHeader = ({ user, router, handleLogout }) => {
     <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingHorizontal: wp(4) }}>
       <View>
         <Header title="פרטי פרופיל" mb={30} />
+       
        
       </View>
 

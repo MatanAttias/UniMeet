@@ -1,27 +1,26 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { hp, wp } from '../../constants/helpers/common';
 import { theme } from '../../constants/theme';
 import Icon from '../../assets/icons';
-import { useLocalSearchParams } from 'expo-router';
 
 const GenderSignUp = () => {
   const router = useRouter();
   const [selectedGender, setSelectedGender] = useState(null);
   const {
-      fullName,
-      email,
-      password,
-      birth_date,
-      connectionTypes,
-      location,
-      image,
-      wantsNotifications = 'false', // טיפול במידה ולא הגיע מהעמוד הקודם
-    } = useLocalSearchParams();
+    fullName,
+    email,
+    password,
+    birth_date,
+    connectionTypes,
+    location,
+    image,
+    wantsNotifications = 'false',
+  } = useLocalSearchParams();
 
-    const onNext = () => {
-      console.log('location before upsert:', location);
+  const onNext = () => {
+    console.log('location before upsert:', location);
 
     if (!selectedGender) {
       Alert.alert('שגיאה', 'אנא בחר/י מין להמשך');
@@ -43,40 +42,66 @@ const GenderSignUp = () => {
       },
     });
   };
+
   const goBack = () => router.back();
 
   return (
     <View style={styles.container}>
-       <Pressable style={styles.backButton} onPress={goBack}>
-              <Text style={styles.backText}>חזור</Text>
-        </Pressable>
+      <Pressable style={styles.backButton} onPress={goBack}>
+        <Text style={styles.backText}>חזור</Text>
+      </Pressable>
+
       <Text style={styles.title}>בחר/י את המין שלך</Text>
       <Text style={styles.subtitle}>אנא בחר/י אחת מהאופציות הבאות</Text>
 
       <View style={styles.buttonsContainer}>
-      <Pressable
-        style={[
-          styles.button,
-          selectedGender === 'נקבה' && styles.selectedButton,
-          styles.genderButton,
-        ]}
-        onPress={() => setSelectedGender('נקבה')}
-      >
-        <Icon name="female" size={26} strokeWidth={1.6} color={theme.colors.textLight} />
-        <Text style={[styles.buttonText, selectedGender === 'נקבה' && styles.selectedText]}>נקבה</Text>
-      </Pressable>
+        <Pressable
+          style={[
+            styles.genderButton,
+            styles.button,
+            selectedGender === 'נקבה' && styles.selectedButton,
+          ]}
+          onPress={() => setSelectedGender('נקבה')}
+        >
+          <Icon
+            name="female"
+            size={26}
+            strokeWidth={1.6}
+            color={theme.colors.textLight}
+          />
+          <Text
+            style={[
+              styles.buttonText,
+              selectedGender === 'נקבה' && styles.selectedText,
+            ]}
+          >
+            נקבה
+          </Text>
+        </Pressable>
 
-      <Pressable
-        style={[
-          styles.button,
-          selectedGender === 'זכר' && styles.selectedButton,
-          styles.genderButton,
-        ]}
-        onPress={() => setSelectedGender('זכר')}
-      >
-        <Icon name="male" size={26} strokeWidth={1.6} color={theme.colors.textLight} />
-        <Text style={[styles.buttonText, selectedGender === 'זכר' && styles.selectedText]}>זכר</Text>
-      </Pressable>
+        <Pressable
+          style={[
+            styles.genderButton,
+            styles.button,
+            selectedGender === 'זכר' && styles.selectedButton,
+          ]}
+          onPress={() => setSelectedGender('זכר')}
+        >
+          <Icon
+            name="male"
+            size={26}
+            strokeWidth={1.6}
+            color={theme.colors.textLight}
+          />
+          <Text
+            style={[
+              styles.buttonText,
+              selectedGender === 'זכר' && styles.selectedText,
+            ]}
+          >
+            זכר
+          </Text>
+        </Pressable>
       </View>
 
       <Pressable style={styles.nextButton} onPress={onNext}>
@@ -96,6 +121,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: wp(6),
   },
+  backButton: {
+    position: 'absolute',
+    top: hp(8),
+    right: hp(4),
+    backgroundColor: theme.colors.card,
+    paddingVertical: hp(1),
+    paddingHorizontal: wp(3),
+    borderRadius: theme.radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  backText: {
+    color: theme.colors.primary,
+    fontSize: hp(2),
+    fontWeight: theme.fonts.semibold,
+  },
   title: {
     fontSize: hp(4),
     fontWeight: theme.fonts.bold,
@@ -111,12 +157,17 @@ const styles = StyleSheet.create({
   },
   buttonsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: wp(5),
     width: '100%',
     marginBottom: hp(4),
   },
+  genderButton: {
+    flex: 1,
+    marginHorizontal: wp(2),
+  },
   button: {
-    width: wp(26),
     height: wp(26),
     borderRadius: wp(13),
     backgroundColor: theme.colors.card,
@@ -150,38 +201,6 @@ const styles = StyleSheet.create({
   nextButtonText: {
     color: theme.colors.white,
     fontSize: hp(2.5),
-    fontWeight: theme.fonts.semibold,
-  },
-  buttonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: wp(5), 
-    marginBottom: hp(4),
-  },
-  
-  genderButton: {
-    marginHorizontal: wp(2),
-  },
-  backButton: {
-    position: 'absolute',
-    top: hp(8),
-    right: hp(4),
-    backgroundColor: theme.colors.card,
-    paddingVertical: hp(1),
-    paddingHorizontal: wp(3),
-    borderRadius: theme.radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  backText: {
-    color: theme.colors.primary,
-    fontSize: hp(2),
     fontWeight: theme.fonts.semibold,
   },
 });

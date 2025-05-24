@@ -29,6 +29,7 @@ import GenderNatural from './genderNatural'
 import ChatIcon from './ChatIcon'
 import Play from './Play'
 import Pause from './Pause'
+import Match from './Match'
 
 
 
@@ -63,6 +64,7 @@ const icons = {
   chat: ChatIcon,
   play: Play, // ⬅️ חדש
   pause: Pause, 
+  match: Match,
 };
 
 const Icon = ({ name, size = 24, strokeWidth = 1.9, color, ...props }) => {

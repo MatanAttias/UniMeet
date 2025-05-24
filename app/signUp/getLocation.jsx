@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, Pressable, Alert, Linking } from 'react-native';
 import * as Location from 'expo-location';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Button from '../../components/Button';
@@ -18,54 +18,7 @@ const LocationPermission = () => {
     wantsNotifications = 'false', // טיפול במידה ולא הגיע מהעמוד הקודם
   } = useLocalSearchParams();
 
-  const handleLocationPermission = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-  
-    if (status === 'granted') {
-      try {
-        const locationData = await Location.getCurrentPositionAsync({});
-  
-        const params = {
-          fullName,
-          email,
-          password,
-          birth_date,
-          wantsNotifications: wantsNotifications === 'true',
-          connectionTypes,
-          image,
-          location: JSON.stringify({
-            latitude: locationData.coords.latitude,
-            longitude: locationData.coords.longitude,
-          }),
-        };
-  
-        router.push({ pathname: '/signUp/genderSignUp', params });
-      } catch (error) {
-        Alert.alert('שגיאה', 'לא הצלחנו לקבל את המיקום שלך');
-      }
-    } else {
-      Alert.alert('שים לב', 'לא נוכל להציע לך חווית משתמש מלאה ללא מיקום');
-  
-      const params = {
-        fullName,
-        email,
-        password,
-        birth_date,
-        wantsNotifications: wantsNotifications === 'true',
-        connectionTypes,
-        image,
-        location: null,
-      };
-  
-      router.push({ pathname: '/signUp/genderSignUp', params });
-    }
-  };
-
-  const goBack = () => router.back();
-
   const handleSkip = () => {
-    console.log('password:', password);
-
     const params = {
       fullName,
       email,
@@ -74,10 +27,62 @@ const LocationPermission = () => {
       wantsNotifications: wantsNotifications === 'true',
       connectionTypes,
       image,
-      location: null
+      location: null,
     };
     router.push({ pathname: '/signUp/genderSignUp', params });
   };
+
+  const handleLocationPermission = async () => {
+    // 1. בדוק סטטוס נוכחי
+    let { status } = await Location.getForegroundPermissionsAsync();
+
+    // 2. אם עוד לא התבקשה הרשאה – בקש אותה
+    if (status === Location.PermissionStatus.UNDETERMINED) {
+      const res = await Location.requestForegroundPermissionsAsync();
+      status = res.status;
+    }
+
+    // 3. אם קיבלת הרשאה
+    if (status === Location.PermissionStatus.GRANTED) {
+      try {
+        const { coords } = await Location.getCurrentPositionAsync({});
+        const loc = {
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        };
+        const params = {
+          fullName,
+          email,
+          password,
+          birth_date,
+          wantsNotifications: wantsNotifications === 'true',
+          connectionTypes,
+          image,
+          location: JSON.stringify(loc),  // stringify the object
+        };
+        router.push({ pathname: '/signUp/genderSignUp', params });
+      } catch (error) {
+        Alert.alert(
+          'שגיאה',
+          'לא הצלחנו לקבל את המיקום שלך.',
+          [{ text: 'המשך ללא מיקום', onPress: handleSkip }]
+        );
+      }
+
+    // 4. אם הרשאה סורבה
+    } else {
+      Alert.alert(
+        'גישה למיקום חסומה',
+        'כדי להמשיך עם חווית משתמש מלאה, אנא אפשר גישה למיקום בהגדרות האפליקציה.',
+        [
+          { text: 'פתח הגדרות', onPress: () => Linking.openSettings() },
+          { text: 'המשך בלי', style: 'cancel', onPress: handleSkip },
+        ]
+      );
+    }
+  };
+
+  const goBack = () => router.back();
 
   return (
     <View style={styles.container}>

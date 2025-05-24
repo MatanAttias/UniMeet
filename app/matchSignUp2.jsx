@@ -8,7 +8,6 @@ import { supabase } from '../lib/supabase';
 
 const MatchSignUp = () => {
   const router = useRouter();
-
   const {
     fullName,
     email,
@@ -17,37 +16,43 @@ const MatchSignUp = () => {
     connectionTypes,
     image,
     wantsNotifications = 'false',
-    location = 'false',
-
+    location = null,    // קיבלנו מחרוזת JSON או null
   } = useLocalSearchParams();
 
   const [preferredMatch, setPreferredMatch] = useState(null);
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // ➤ פענוח ה-location משורת הפרמטרים
+  let parsedLocation = null;
+  if (location) {
+    try {
+      parsedLocation = JSON.parse(location);
+    } catch (err) {
+      console.warn('Failed to parse location parameter:', location);
+    }
+  }
+
   const goBack = () => router.back();
 
   const onNext = async () => {
+    // 1. ולידציות
     if (!preferredMatch) {
-      Alert.alert('שגיאה', 'אנא בחר/י העדפה להמשך');
-      return;
+      return Alert.alert('שגיאה', 'אנא בחר/י העדפה להמשך');
     }
-
     if (!password || password.length < 6) {
-      Alert.alert('שגיאה', 'נא להזין סיסמה בת 6 תווים לפחות');
-      return;
+      return Alert.alert('שגיאה', 'נא להזין סיסמה בת 6 תווים לפחות');
     }
-
     if (!email || !fullName || !birth_date || !gender) {
-      Alert.alert('שגיאה', 'פרטי משתמש חסרים');
-      return;
+      return Alert.alert('שגיאה', 'פרטי משתמש חסרים');
     }
 
     try {
       setLoading(true);
-      console.log('Signing up with:', { email, password, fullName, gender, birth_date });
+      console.log('Parsed location:', parsedLocation);
 
-      const { data, error } = await supabase.auth.signUp({
+      // 2. ראשית – הרשמה ב-Auth
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -57,34 +62,35 @@ const MatchSignUp = () => {
           },
         },
       });
+      if (signUpError) throw signUpError;
+      if (!signUpData?.user) throw new Error('User object missing after signUp');
 
-      if (error) throw error;
-      if (!data?.user) throw new Error('User not returned from signUp');
+      // 3. חשיפת userId ואז upsert לשולחן המשתמשים
+      const userId = signUpData.user.id;
+      const payload = {
+        id: userId,
+        email,
+        name: fullName,
+        birth_date,
+        gender,
+        connectionTypes: preferredMatch,
+        wantsNotifications: wantsNotifications === 'true',
+        image,
+        // ➤ כאן שולחים אובייקט JSON, לא boolean
+        location: parsedLocation,
+      };
 
       const { error: upsertError } = await supabase
         .from('users')
-        .upsert([
-            {
-            id: data.user.id,
-            email,
-            name: fullName,
-            birth_date,
-            gender,
-            connectionTypes: preferredMatch,
-            wantsNotifications: wantsNotifications === 'true',
-            image,
-            location: location === 'true',
-            },
-        ]);
+        .upsert([payload], { returning: 'minimal' });
+      if (upsertError) throw upsertError;
 
-        if (upsertError) throw upsertError;
-
-
+      // 4. הצלחה
       Alert.alert('הצלחה', 'נרשמת בהצלחה!');
-      router.push('/home'); // שנה לנתיב הנכון לאפליקציה שלך
+      router.push('/home');
     } catch (error) {
       console.error('SignUp Error:', error);
-      Alert.alert('שגיאה', 'הרישום נכשל, אנא נסה שוב');
+      Alert.alert('שגיאה', error.message || 'הרישום נכשל, אנא נסה שוב');
     } finally {
       setLoading(false);
     }
@@ -97,7 +103,9 @@ const MatchSignUp = () => {
       </Pressable>
 
       <Text style={styles.title}>עם מי היית רוצה להתאים?</Text>
-      <Text style={styles.subtitle}>אנא בחר/י את האנשים שאתה רוצה להתאים אליהם</Text>
+      <Text style={styles.subtitle}>
+        אנא בחר/י את האנשים שאתה רוצה להתאים אליהם
+      </Text>
 
       <View style={styles.buttonsContainer}>
         <Pressable
@@ -108,8 +116,20 @@ const MatchSignUp = () => {
           ]}
           onPress={() => setPreferredMatch('female')}
         >
-          <Icon name="female" size={26} strokeWidth={1.6} color={theme.colors.textLight} />
-          <Text style={[styles.buttonText, preferredMatch === 'female' && styles.selectedText]}>נשים</Text>
+          <Icon
+            name="female"
+            size={26}
+            strokeWidth={1.6}
+            color={theme.colors.textLight}
+          />
+          <Text
+            style={[
+              styles.buttonText,
+              preferredMatch === 'female' && styles.selectedText,
+            ]}
+          >
+            נשים
+          </Text>
         </Pressable>
 
         <Pressable
@@ -120,8 +140,20 @@ const MatchSignUp = () => {
           ]}
           onPress={() => setPreferredMatch('male')}
         >
-          <Icon name="male" size={26} strokeWidth={1.6} color={theme.colors.textLight} />
-          <Text style={[styles.buttonText, preferredMatch === 'male' && styles.selectedText]}>גברים</Text>
+          <Icon
+            name="male"
+            size={26}
+            strokeWidth={1.6}
+            color={theme.colors.textLight}
+          />
+          <Text
+            style={[
+              styles.buttonText,
+              preferredMatch === 'male' && styles.selectedText,
+            ]}
+          >
+            גברים
+          </Text>
         </Pressable>
       </View>
 
@@ -134,8 +166,14 @@ const MatchSignUp = () => {
         onChangeText={setPassword}
       />
 
-      <Pressable style={styles.nextButton} onPress={onNext} disabled={loading}>
-        <Text style={styles.nextButtonText}>{loading ? 'טוען...' : 'המשך'}</Text>
+      <Pressable
+        style={styles.nextButton}
+        onPress={onNext}
+        disabled={loading}
+      >
+        <Text style={styles.nextButtonText}>
+          {loading ? 'טוען...' : 'המשך'}
+        </Text>
       </Pressable>
     </View>
   );
@@ -150,6 +188,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: wp(6),
+  },
+  backButton: {
+    position: 'absolute',
+    top: hp(8),
+    right: hp(4),
+    backgroundColor: theme.colors.card,
+    paddingVertical: hp(1),
+    paddingHorizontal: wp(3),
+    borderRadius: theme.radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  backText: {
+    color: theme.colors.primary,
+    fontSize: hp(2),
+    fontWeight: theme.fonts.semibold,
   },
   title: {
     fontSize: hp(4),
@@ -220,27 +279,6 @@ const styles = StyleSheet.create({
   nextButtonText: {
     color: theme.colors.white,
     fontSize: hp(2.5),
-    fontWeight: theme.fonts.semibold,
-  },
-  backButton: {
-    position: 'absolute',
-    top: hp(8),
-    right: hp(4),
-    backgroundColor: theme.colors.card,
-    paddingVertical: hp(1),
-    paddingHorizontal: wp(3),
-    borderRadius: theme.radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  backText: {
-    color: theme.colors.primary,
-    fontSize: hp(2),
     fontWeight: theme.fonts.semibold,
   },
 });

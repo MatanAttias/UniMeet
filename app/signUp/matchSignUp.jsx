@@ -20,7 +20,6 @@ const MatchSignUp = () => {
     location,
   } = useLocalSearchParams();
   const wantsNotificationsBool = wantsNotifications === 'true';
-  const locationBool = location === 'true';
 
   const [preferredMatch, setPreferredMatch] = useState(null);
 
@@ -28,12 +27,14 @@ const MatchSignUp = () => {
 
   const onNext = () => {
 
+
     if (!preferredMatch) {
       Alert.alert('שגיאה', 'אנא בחר/י העדפה להמשך');
       return;
     }
 
     router.push({
+
       pathname: '/signUp/buildProfile',
       params: {
         fullName,
