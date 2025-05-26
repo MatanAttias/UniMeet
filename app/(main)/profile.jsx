@@ -184,13 +184,15 @@ const Profile = () => {
 };
 
 const UserHeader = ({ user, router, handleLogout }) => {
+  if (!user) return null; 
+
   const [sound, setSound] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackStatus, setPlaybackStatus] = useState(null);
   const [posts, setPosts] = useState([]);
   const [showPosts, setShowPosts] = useState(false);
   const [activeTab, setActiveTab] = useState('profile'); // profile or posts
-
+  const [showEdit, setShowEdit] = useState(true); // או false – לפי ההגיון שלך
 
   const playSound = async () => {
     if (!user.audio) return;
@@ -313,8 +315,8 @@ const UserHeader = ({ user, router, handleLogout }) => {
             <Text style={styles.infoText}>{user?.address || 'No address'}</Text>
           </View>
 
-          {(user.gender || user.birth_date || user.status || user.connectionTypes) && (
-            <MotiView
+          {['gender', 'birth_date', 'status', 'connectionTypes'].some(key => !!user?.[key]) && (
+        <MotiView
             from={{ opacity: 0, translateY: 10 }}
             animate={{ opacity: 1, translateY: 0 }}
             transition={{ type: 'timing', duration: 500 }}
@@ -362,23 +364,23 @@ const UserHeader = ({ user, router, handleLogout }) => {
           </MotiView>
           )}
 
-                    {user.introduction && (
-            <MotiView
-              from={{ opacity: 0, translateY: 10 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              transition={{ type: 'timing', duration: 500 }}
-              style={styles.infoBox}
-            >
-              <View style={styles.inlineItem}>
-                <MaterialCommunityIcons
-                  name="comment-text-outline" // אייקון מתאים להקדמה
-                  size={24}
-                  color={theme.colors.primary}
-                />
-                <Text style={styles.inlineText}>{user.introduction}</Text>
-              </View>
-            </MotiView>
-            )}     
+      {user?.introduction && (
+                      <MotiView
+                      from={{ opacity: 0, translateY: 10 }}
+                      animate={{ opacity: 1, translateY: 0 }}
+                      transition={{ type: 'timing', duration: 500 }}
+                      style={styles.infoBox}
+                    >
+                      <View style={styles.inlineItem}>
+                        <MaterialCommunityIcons
+                          name="comment-text-outline" // אייקון מתאים להקדמה
+                          size={24}
+                          color={theme.colors.primary}
+                        />
+                        <Text style={styles.inlineText}>{user.introduction}</Text>
+                      </View>
+                    </MotiView>
+        )}    
           {(user.showTraits || user.showHobbies || user.showIdentities || user.showSupportNeeds) && (
             <MotiView
             from={{ opacity: 0, translateY: 10 }}

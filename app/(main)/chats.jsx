@@ -12,7 +12,7 @@ export default function ChatsPage() {
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
-
+ 
   useEffect(() => {
     const loadChats = async () => {
       try {
@@ -26,7 +26,11 @@ export default function ChatsPage() {
 
         setUserId(id);
         const chatsData = await fetchUserChats(id);
-        setChats(chatsData);
+
+        // מיון ההודעות מהחדש לישן
+        const sortedChats = chatsData.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+
+        setChats(sortedChats);
       } catch (error) {
         console.error('Error fetching chats:', error.message);
         Alert.alert('שגיאה', 'לא ניתן לטעון שיחות כרגע');
@@ -40,12 +44,14 @@ export default function ChatsPage() {
 
   const openChat = (chat) => {
     router.push({
-        pathname: `/privateChat/${chat.id}`,
-        params: {
-          chat: JSON.stringify(chat),
-        },
+      pathname: `/privateChat/${chat.id}`,
+      params: {
+        chat: JSON.stringify(chat),
+      },
     });
   };
+
+  const goBack = () => router.back();
 
   const renderItem = ({ item }) => (
     <Pressable style={styles.chatItem} onPress={() => openChat(item)}>
@@ -66,15 +72,19 @@ export default function ChatsPage() {
     return <Text style={{ textAlign: 'center', marginTop: hp(10) }}>טוען צ׳אטים...</Text>;
   }
 
-  const goBack = () => router.back();
-
   return (
     <View style={styles.container}>
-      <Pressable style={styles.backButton} onPress={goBack}>
-        <Text style={styles.backText}>חזור</Text>
-      </Pressable>
-      <Text style={styles.title}>הצ'אטים שלי</Text>
+      {/* Top bar: חזור + כותרת */}
+      <View style={styles.topBar}>
+        <Pressable style={styles.backButton} onPress={goBack}>
+          <Text style={styles.backText}>חזור</Text>
+          </Pressable>
+        <Text style={styles.title}>הצ'אטים שלי</Text>
+        <View style={{ width: wp(15) }} /> 
+      </View>
+
       <View style={styles.separator} />
+
       <FlatList
         data={chats}
         keyExtractor={(item) => item.id}
@@ -82,10 +92,11 @@ export default function ChatsPage() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-            <Text style={{ textAlign: 'center', color: theme.colors.textSecondary }}>
-              אין עדיין שיחות
-            </Text>
-          }      />
+          <Text style={{ textAlign: 'center', color: theme.colors.textSecondary }}>
+            אין עדיין שיחות
+          </Text>
+        }
+      />
     </View>
   );
 }
@@ -94,19 +105,42 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-    paddingTop: hp(3),
+    paddingTop: hp(8), 
     paddingHorizontal: wp(4),
+  },
+  topBar: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: hp(2),
+  },
+  backButton: {
+    backgroundColor: theme.colors.card,
+    paddingVertical: hp(1),
+    paddingHorizontal: wp(3),
+    borderRadius: theme.radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  backText: {
+    color: theme.colors.primary,
+    fontSize: hp(2),
+    fontWeight: theme.fonts.semibold,
   },
   title: {
     fontSize: hp(3),
     fontWeight: 'bold',
     textAlign: 'center',
-    marginTop: hp(6),
     color: theme.colors.primary,
   },
   listContent: {
     paddingBottom: hp(3),
-    marginTop: hp(4),
+    marginTop: hp(1),
   },
   chatItem: {
     flexDirection: 'row-reverse',
@@ -150,29 +184,8 @@ const styles = StyleSheet.create({
     height: 0.8,
     backgroundColor: theme.colors.border,
     width: '100%',
-    marginTop: hp(2),
+    marginTop: hp(1),
     marginBottom: hp(1),
     borderRadius: 4,
-  },
-  backButton: {
-    position: 'absolute',
-    top: hp(8),
-    right: hp(4),
-    backgroundColor: theme.colors.card,
-    paddingVertical: hp(1),
-    paddingHorizontal: wp(3),
-    borderRadius: theme.radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  backText: {
-    color: theme.colors.primary,
-    fontSize: hp(2),
-    fontWeight: theme.fonts.semibold,
   },
 });

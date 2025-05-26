@@ -295,11 +295,13 @@ const styles = StyleSheet.create({
   tabActive: {
     borderBottomWidth: 2,
     borderBottomColor: theme.colors.primary,
+    
   },
   tabText: {
     fontSize: hp(1.8),
     color: theme.colors.textSecondary,
     fontFamily: 'Poppins_600SemiBold',
+    
   },
   tabTextActive: {
     color: theme.colors.primary,

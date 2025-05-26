@@ -34,21 +34,26 @@ const tagsStyles = {
   h4: { color: theme.colors.textSecondary, fontSize: hp(1.9) },
 };
 
-const PostCard = ({
-  item,
-  currentUser,
-  router,
-  hasShadow = true,
-  showMoreIcon = true,
-  showDelete = false,
-  onDelete = () => {},
-  onEdit = () => {},
-}) => {
-  if (!item || !currentUser?.id || !item.id) {
+const PostCard = (props) => {
+  const { item, currentUser, router, hasShadow = true, showMoreIcon = true, showDelete = false, onDelete = () => {}, onEdit = () => {} } = props;
+
+  if (!item || typeof item !== 'object') {
     return (
-      <Text style={{ color: theme.colors.error, textAlign: 'center' }}>
-        Error: Missing data
-      </Text>
+      <View style={{ padding: 10 }}>
+        <Text style={{ color: 'red', textAlign: 'center' }}>
+          ⚠️ פוסט לא תקין
+        </Text>
+      </View>
+    );
+  }
+
+  if (!currentUser?.id || !item.id) {
+    return (
+      <View style={{ padding: 10 }}>
+        <Text style={{ color: 'orange', textAlign: 'center' }}>
+          ⛔ משתמש לא מזוהה או פוסט חסר מזהה
+        </Text>
+      </View>
     );
   }
 

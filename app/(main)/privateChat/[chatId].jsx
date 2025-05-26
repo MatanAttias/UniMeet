@@ -424,7 +424,7 @@ import {
         alignItems: 'center',
       },
       plusButton: {
-        padding: 5,
+        padding: 10, // או כל ערך מתאים
         backgroundColor: '#2c2c2e',
         borderRadius: 20,
       },
