@@ -1,4 +1,5 @@
 const sendMessage = async () => {
+    
     if (!messageText.trim() || !chatObj || !user) return;
   
     const receiverId =

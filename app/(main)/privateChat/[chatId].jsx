@@ -107,28 +107,46 @@ import {
         }, [user, chatObj]);
 
   
-    const sendMessage = async () => {
-      if (!messageText.trim() || !chatObj || !user) return;
-  
-      const { data, error } = await supabase.from('messages').insert({
-        chat_id: chatObj.id,
-        sender_id: user.id,
-        message_type: 'text',
-        content: messageText.trim(),
-      }).select().single();
-  
-      if (error) {
-        console.error('שגיאה בשליחת הודעה:', error);
-      } else {
-        setMessages(prev => [...prev, data]);
-        setMessageText('');
-  
-        await supabase.from('chats').update({
-          last_message: messageText.trim(),
-          last_message_at: new Date().toISOString(),
-        }).eq('id', chatObj.id);
-      }
-    };
+        const sendMessage = async () => {
+          if (!messageText.trim() || !chatObj || !user) return;
+        
+          const messageContent = messageText.trim();
+        
+          // שליחת ההודעה
+          const { data: messageData, error: messageError } = await supabase
+            .from('messages')
+            .insert({
+              chat_id: chatObj.id,
+              sender_id: user.id,
+              message_type: 'text',
+              content: messageContent,
+              is_read: false, // הוספנו את זה לפי הבקשה שלך
+            })
+            .select()
+            .single();
+        
+          if (messageError) {
+            console.error('שגיאה בשליחת הודעה:', messageError);
+          } else {
+            // הוספה לרשימת ההודעות
+            setMessages((prev) => [...prev, messageData]);
+            setMessageText('');
+        
+            // עדכון שורת הצ'אט עם ההודעה האחרונה
+            const { error: updateChatError } = await supabase
+              .from('chats')
+              .update({
+                last_message: messageContent,
+                updated_at: new Date().toISOString(),
+                is_read: false
+              })
+              .eq('id', chatObj.id);
+        
+            if (updateChatError) {
+              console.error('שגיאה בעדכון הצ׳אט:', updateChatError);
+            }
+          }
+        };
   
     const toggleModal = () => {
       setModalVisible(!modalVisible);
@@ -164,8 +182,9 @@ import {
           useNativeDriver: false,
         }).start();
       }, [messageText]);
-    const goBack = () => router.back();
-  
+      const goBack = () => {
+        router.replace('/chats?refresh=true');
+      };  
     if (!chatObj || !user) {
         return (
           <ScreenWrapper bg="black">
@@ -173,7 +192,33 @@ import {
           </ScreenWrapper>
         );
       }
+      useEffect(() => {
+        if (!chatObj?.id) return;
       
+        const subscription = supabase
+          .channel('messages-realtime')
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'messages',
+              filter: `chat_id=eq.${chatObj.id}`,
+            },
+            (payload) => {
+              setMessages((prev) => {
+                const exists = prev.some(msg => msg.id === payload.new.id);
+                if (exists) return prev;
+                return [...prev, payload.new];
+              });
+            }
+          )
+          .subscribe();
+      
+        return () => {
+          supabase.removeChannel(subscription);
+        };
+      }, [chatObj?.id]);
     return (
 <ScreenWrapper bg="black">
   <View style={styles.topBar}>

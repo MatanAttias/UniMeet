@@ -12,7 +12,7 @@ export default function ChatsPage() {
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
- 
+
   useEffect(() => {
     const loadChats = async () => {
       try {
@@ -42,31 +42,57 @@ export default function ChatsPage() {
     loadChats();
   }, []);
 
-  const openChat = (chat) => {
-    router.push({
-      pathname: `/privateChat/${chat.id}`,
-      params: {
-        chat: JSON.stringify(chat),
-      },
-    });
+  const openChat = async (chat) => {
+    try {
+      // עדכן את הצ'אט שנלחץ כ"נקרא"
+      await supabase
+        .from('chats')
+        .update({ is_read: true })
+        .eq('id', chat.id);
+  
+      // המשך לניווט
+      router.push({
+        pathname: `/privateChat/${chat.id}`,
+        params: {
+          chat: JSON.stringify({ ...chat, is_read: true }),
+        },
+      });
+  
+      // עדכן את המצב המקומי כדי להסיר את ההדגשה מיד
+      setChats((prevChats) =>
+        prevChats.map((c) =>
+          c.id === chat.id ? { ...c, is_read: true } : c
+        )
+      );
+    } catch (error) {
+      console.error('Failed to mark chat as read:', error.message);
+    }
   };
 
   const goBack = () => router.back();
 
-  const renderItem = ({ item }) => (
-    <Pressable style={styles.chatItem} onPress={() => openChat(item)}>
-      <Avatar uri={item.image} size={hp(6)} rounded={theme.radius.full} />
-      <View style={styles.chatContent}>
-        <View style={styles.row}>
-          <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.time}>{item.time}</Text>
+  const renderItem = ({ item }) => {
+    const isUnread = !item.is_read;  
+
+    return (
+      <Pressable style={[styles.chatItem, isUnread && styles.unreadChat]} onPress={() => openChat(item)}>
+        <Avatar uri={item.image} size={hp(6)} rounded={theme.radius.full} />
+        <View style={styles.chatContent}>
+          <View style={styles.row}>
+            <Text style={[styles.name, isUnread && styles.unreadName]}>
+              {item.name}
+            </Text>
+            <Text style={[styles.time, isUnread && styles.unreadTime]}>
+              {item.time}
+            </Text>
+          </View>
+          <Text style={[styles.lastMessage, isUnread && styles.unreadMessage]} numberOfLines={1}>
+            {item.lastMessage || 'התחל את השיחה'}
+          </Text>
         </View>
-        <Text style={styles.lastMessage} numberOfLines={1}>
-          {item.lastMessage || 'התחל את השיחה'}
-        </Text>
-      </View>
-    </Pressable>
-  );
+      </Pressable>
+    );
+  };
 
   if (loading) {
     return <Text style={{ textAlign: 'center', marginTop: hp(10) }}>טוען צ׳אטים...</Text>;
@@ -187,5 +213,23 @@ const styles = StyleSheet.create({
     marginTop: hp(1),
     marginBottom: hp(1),
     borderRadius: 4,
+  },
+  unreadChat: {
+    backgroundColor: theme.colors.primaryLight, // או צבע אחר שמדגיש
+  },
+  
+  unreadName: {
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+  },
+  
+  unreadTime: {
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+  },
+  
+  unreadMessage: {
+    fontWeight: '600',
+    color: theme.colors.primary,
   },
 });

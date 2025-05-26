@@ -26,7 +26,6 @@ const UsersSearch = ({ onSelectUser }) => {
       }
     };
     fetchResults();
-    console.log('Users data:', res.data);
   }, [query]);
 
   const renderItem = ({ item }) => (

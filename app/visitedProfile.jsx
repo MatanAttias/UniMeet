@@ -95,6 +95,7 @@ const VisitedProfile = () => {
           user2_id: userId2,
           last_message: '',
           updated_at: null,
+          is_read: false,
         },
       ])
       .select()
@@ -126,6 +127,7 @@ const VisitedProfile = () => {
       content: message,
       sender_id: user.id,
       chat_id: chatId,
+      is_read: false,
     });
   
     if (error) {
@@ -141,6 +143,7 @@ const VisitedProfile = () => {
       .update({
         last_message: message,
         updated_at: new Date().toISOString(),
+        is_read: false,
       })
       .eq("id", chatId);
   

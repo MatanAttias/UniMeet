@@ -7,6 +7,7 @@ export const fetchUserChats = async (userId) => {
       id,
       user1_id,
       user2_id,
+      is_read,
       last_message,
       updated_at,
       user1:user1_id (id, name, image),
@@ -25,10 +26,12 @@ export const fetchUserChats = async (userId) => {
       name: otherUser.name,
       image: otherUser.image,
       lastMessage: chat.last_message,
+      is_read: chat.is_read,
       time: new Date(chat.updated_at).toLocaleTimeString([], {
         hour: '2-digit',
         minute: '2-digit',
       }),
     };
   });
+  
 };
