@@ -1,269 +1,267 @@
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React, { useEffect, useRef, useState } from 'react'
-import {
-  Platform,
-  SafeAreaView,
-  KeyboardAvoidingView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  Pressable,
-  Alert,
-} from 'react-native'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import Header from '../../components/Header'
 import { hp, wp } from '../../constants/helpers/common'
 import { theme } from '../../constants/theme'
 import Avatar from '../../components/Avatar'
+import { useAuth } from '../../contexts/AuthContext'
 import RichTextEditor from '../../components/RichTextEditor'
 import Button from '../../components/Button'
-import Icon from '../../assets/icons'
 import * as ImagePicker from 'expo-image-picker'
+import Icon from '../../assets/icons'
 import { Image } from 'expo-image'
-import { Video } from 'expo-av'
-import { useAuth } from '../../contexts/AuthContext'
-import { useLocalSearchParams, useRouter } from 'expo-router'
 import { getSupabaseFileUrl } from '../../services/imageService'
+import { Video } from 'expo-av'
 import { createOrUpdatePost } from '../../services/PostService'
-
-export default function NewPost() {
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { Animated } from 'react-native'
+const NewPost = () => {
   const post = useLocalSearchParams()
   const { user } = useAuth()
-  const router = useRouter()
   const bodyRef = useRef('')
   const editorRef = useRef(null)
   const [loading, setLoading] = useState(false)
   const [file, setFile] = useState(null)
+  const router = useRouter()
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (post?.id) {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  useEffect(() => {
+    if (post && post.id) {
       bodyRef.current = post.body
       setFile(post.file || null)
-      setTimeout(() => editorRef.current?.setContentHTML(post.body), 300)
+      setTimeout(() => {
+        editorRef?.current?.setContentHTML(post.body)
+      }, 300)
     }
   }, [])
 
   const onPick = async (isImage) => {
-    const config = {
-      mediaTypes: isImage ? ImagePicker.MediaType.Images : ImagePicker.MediaType.Videos,
+    let mediaConfig = {
+      mediaTypes: isImage ? ImagePicker.MediaTypeOptions.Images : ImagePicker.MediaTypeOptions.Videos,
       allowsEditing: true,
-      aspect: isImage ? [4, 3] : undefined,
-      quality: isImage ? 0.7 : undefined,
+      aspect: [4, 3],
+      quality: 0.7,
     }
-    const result = await ImagePicker.launchImageLibraryAsync(config)
-    if (!result.canceled) setFile(result.assets[0])
+
+    const result = await ImagePicker.launchImageLibraryAsync(mediaConfig)
+    if (!result.canceled) {
+      setFile(result.assets[0])
+    }
   }
 
-  const isLocal = (f) => f && typeof f === 'object'
-  const fileType = (f) => {
-    if (!f) return null
-    if (isLocal(f)) return f.type
-    return f.includes('postImages') ? 'image' : 'video'
+  const isLocalFile = (file) => typeof file === 'object'
+
+  const getFileType = (file) => {
+    if (!file) return null
+    if (isLocalFile(file)) return file.type
+    return file.includes('postImages') ? 'image' : 'video'
   }
-  const fileUri = (f) => (isLocal(f) ? f.uri : getSupabaseFileUrl(f)?.uri)
+
+  const getFileUri = (file) => {
+    if (!file) return null
+    return isLocalFile(file) ? file.uri : getSupabaseFileUrl(file)?.uri
+  }
 
   const onSubmit = async () => {
     if (!bodyRef.current && !file) {
-      Alert.alert('Post', 'Please add text or select media.')
+      Alert.alert('פוסט', 'אנא בחר תמונה או הוסף תוכן לפוסט')
       return
     }
+
+    let data = {
+      file,
+      body: bodyRef.current,
+      userId: user?.id,
+    }
+    if (post && post.id) data.id = post.id
+
     setLoading(true)
-    const payload = { id: post?.id, userId: user.id, body: bodyRef.current, file }
-    const res = await createOrUpdatePost(payload)
+    const res = await createOrUpdatePost(data)
     setLoading(false)
+
     if (res.success) {
-      editorRef.current?.setContentHTML('')
       setFile(null)
+      bodyRef.current = ''
+      editorRef.current?.setContentHTML('')
       router.replace('/home')
     } else {
-      Alert.alert('Post', res.msg)
+      Alert.alert('פוסט', res.msg)
     }
   }
-
+  console.log("Profile Image URL:", user?.image);
+  console.log("Full user object:", user);
   return (
-    <ScreenWrapper bg={theme.colors.background}>
-      <SafeAreaView style={styles.flex}>
-        {/* ======= Header עם כפתור סגירה ו־Post ======= */}
-        <Header
-          leftIcon="close"
-          onLeftPress={() => router.back()}
-          rightElement={
-            <TouchableOpacity onPress={onSubmit} style={styles.postButton}>
-              <Text style={styles.postText}>{post?.id ? 'Update' : 'Post'}</Text>
-            </TouchableOpacity>
-          }
-        />
+    <ScreenWrapper bg="white">
+      <View style={styles.container}>
+        <Pressable style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backText}>חזור</Text>
+        </Pressable>
 
-        {/* ======= Selector של ערוץ (Posting in …) ======= */}
-        <View style={styles.selector}>
-          <Text style={styles.selectorLabel}>Posting in</Text>
-          <TouchableOpacity style={styles.selectorBtn}>
-            <Text style={styles.selectorText}>General</Text>
-            <Icon name="chevron-down" size={20} color={theme.colors.textLight} />
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.title}>יצירת פוסט</Text>
 
-        {/* ======= תוכן הגולל ======= */}
-        <KeyboardAvoidingView
-          style={styles.flex}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          <ScrollView
-            contentContainerStyle={styles.scrollContainer}
-            keyboardShouldPersistTaps="handled"
-          >
-            {/* Avatar + שם משתמש */}
-            <View style={styles.userRow}>
-              <Avatar uri={user.image} size={hp(6)} rounded={theme.radius.xl} />
-              <Text style={styles.username}>{user.name}</Text>
+        <View style={styles.content}>
+          <ScrollView contentContainerStyle={{ gap: 20, flexGrow: 1 }}>
+            <View style={styles.header}>
+              <Avatar uri={user?.image} size={hp(6.5)} rounded={theme.radius.xl} />
+              <Text style={styles.username}>{user?.name}</Text>
             </View>
 
-            {/* Editor */}
-            <View style={styles.editorWrapper}>
-              <RichTextEditor
-                editorRef={editorRef}
-                onChange={(html) => (bodyRef.current = html)}
-                style={styles.editor}
-                placeholder="What's on your mind?"
-              />
-            </View>
+            <Animated.View style={styles.textEditor}>
+              <RichTextEditor editorRef={editorRef} onChange={(body) => (bodyRef.current = body)} />
+            </Animated.View>
 
-            {/* תצוגת מדיה אם נבחרה */}
             {file && (
-              <View style={styles.mediaPreviewContainer}>
-                {fileType(file) === 'video' ? (
+              <View style={styles.filePreview}>
+                {getFileType(file) === 'video' ? (
                   <Video
-                    source={{ uri: fileUri(file) }}
+                    style={{ flex: 1 }}
+                    source={{ uri: getFileUri(file) }}
                     useNativeControls
                     resizeMode="cover"
                     isLooping
-                    style={styles.mediaPreview}
                   />
                 ) : (
-                  <Image source={{ uri: fileUri(file) }} style={styles.mediaPreview} />
+                  <Image source={{ uri: getFileUri(file) }} resizeMode="cover" style={{ flex: 1 }} />
                 )}
-                <Pressable style={styles.closeIcon} onPress={() => setFile(null)}>
-                  <Icon name="delete" size={18} color="white" />
+                <Pressable style={styles.deleteButton} onPress={() => setFile(null)}>
+                  <Icon name="delete" size={20} color="white" />
                 </Pressable>
               </View>
             )}
-          </ScrollView>
-        </KeyboardAvoidingView>
 
-        {/* ======= ToolBar תחתון עם אייקונים ======= */}
-        <View style={styles.toolbar}>
-          <TouchableOpacity onPress={() => onPick(true)}>
-            <Icon name="image" size={28} color={theme.colors.textLight} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => onPick(false)}>
-            <Icon name="camera" size={28} color={theme.colors.textLight} />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Icon name="gif" size={28} color={theme.colors.textLight} />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Icon name="audio" size={28} color={theme.colors.textLight} />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Icon name="more-horizontal" size={28} color={theme.colors.textLight} />
-          </TouchableOpacity>
+            <View style={styles.mediaRow}>
+              <TouchableOpacity onPress={() => onPick(true)}>
+                <Icon name="image" size={30} color={theme.colors.dark} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => onPick(false)}>
+                <Icon name="video" size={33} color={theme.colors.dark} />
+              </TouchableOpacity>
+              <Text style={styles.addImageText}>הוסף לפוסט שלך תמונה או סירטון</Text>
+            </View>
+          </ScrollView>
         </View>
-      </SafeAreaView>
+
+        <View style={styles.buttonContainer}>
+          <Button
+            buttonStyle={{ height: hp(6.2), width: '100%' }}
+            title={post && post.id ? 'עדכון' : 'פרסם'}
+            loading={loading}
+            hasShadow={false}
+            onPress={onSubmit}
+          />
+        </View>
+      </View>
     </ScreenWrapper>
   )
 }
 
+export default NewPost
+
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  postButton: {
+  container: {
+    flex: 1,
+    marginBottom: 30,
     paddingHorizontal: wp(4),
-    paddingVertical: hp(1),
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.primary,
+    gap: 15,
+    backgroundColor: theme.colors.background,  // שימוש ברקע הראשי מתוך theme
+    writingDirection: 'rtl',
   },
-  postText: {
-    fontSize: hp(2),
-    fontWeight: theme.fonts.semibold,
-    color: theme.colors.white,
+  content: {
+    flex: 1,
   },
-  selector: {
-    flexDirection: 'row',
+  title: {
+    fontSize: hp(2.8),
+    fontWeight: 'bold',
+    color: theme.colors.primary,  // צבע טקסט ראשי פריימרי כהה יותר
+    textAlign: 'center',
+  },
+  header: {
+    flexDirection: 'row-reverse',
     alignItems: 'center',
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(1),
-    gap: wp(2),
-  },
-  selectorLabel: {
-    fontSize: hp(1.8),
-    color: theme.colors.textLight,
-  },
-  selectorBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(0.8),
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radius.md,
-  },
-  selectorText: {
-    fontSize: hp(1.9),
-    color: theme.colors.text,
-    marginRight: wp(1),
-  },
-  scrollContainer: {
-    paddingHorizontal: wp(4),
-    paddingTop: hp(1),
-    gap: hp(2),
-  },
-  userRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: wp(3),
+    gap: 12,
   },
   username: {
     fontSize: hp(2.2),
     fontWeight: theme.fonts.semibold,
-    color: theme.colors.text,
+    color: theme.colors.primary, // צבע בהיר ונקי
+    textAlign: 'right',
   },
-  editorWrapper: {
-    minHeight: hp(20),
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radius.xl,
-    overflow: 'hidden',
+  textEditor: {
+    borderRadius: theme.radius.md,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    elevation: 6,
+    // אנימציה קטנה בכניסה:
+    transform: [{ scale: 1 }],
+    transitionDuration: '300ms',
   },
-  editor: {
-    padding: wp(3),
-    color: theme.colors.text,
-  },
-  mediaPreviewContainer: {
+  filePreview: {
+    height: hp(30),
     width: '100%',
-    height: hp(25),
-    borderRadius: theme.radius.xl,
+    borderRadius: theme.radius.lg,
     overflow: 'hidden',
     position: 'relative',
+    backgroundColor: '#e0e0e5',  // רקע חלונית בהיר
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  mediaPreview: {
-    flex: 1,
-    width: '100%',
-  },
-  closeIcon: {
+  deleteButton: {
     position: 'absolute',
-    top: hp(1),
-    right: wp(3),
-    padding: hp(0.4),
-    borderRadius: theme.radius.circle,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.4)', // שקיפות נמוכה יותר
+    padding: 5,
+    borderRadius: 20,
+    opacity: 0.8,
+    transitionDuration: '200ms',
   },
-  toolbar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+  mediaRow: {
+    flexDirection: 'row-reverse',
     alignItems: 'center',
-    paddingVertical: hp(1),
-    backgroundColor: theme.colors.background,
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.primary + 'cc', // פריימרי עם שקיפות קלה
+    borderRadius: theme.radius.xl,
+    padding: 12,
+    gap: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  addImageText: {
+    fontSize: hp(1.8),
+    color: theme.colors.black + 'dd', // צבע בהיר ונקי
+    flex: 1,
+    textAlign: 'right',
+  },
+  buttonContainer: {
+    paddingVertical: 15,
     borderTopWidth: 1,
-    borderColor: theme.colors.border,
+    borderTopColor: '#ccc',
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    marginTop: 10,
+  },
+  backText: {
+    color: theme.colors.primary,
+    fontSize: hp(2),
+    fontWeight: '600',
   },
 })

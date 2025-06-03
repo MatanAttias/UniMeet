@@ -1,74 +1,82 @@
-import { StyleSheet, Text, View, TextInput } from 'react-native'
-import React, { useState } from 'react'
-import { RichEditor } from 'react-native-pell-rich-editor'
-import { theme } from '../constants/theme'
+import { StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { RichEditor } from 'react-native-pell-rich-editor';
+import { theme } from '../constants/theme';
 
 const RichTextEditor = ({ editorRef, onChange }) => {
-  const [text, setText] = useState("");
-
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>What's on your mind?</Text>
-      
-      <View style={styles.textBox}>
-        <TextInput
-          style={styles.input}
-          placeholder="Start typing here..."
-          placeholderTextColor="#999"
-          multiline
-          onChangeText={(value) => {
-            setText(value);
-            onChange(value);
-          }}
-          value={text}
-        />
-      </View>
+      <Text style={styles.title}>מה אתה מרגיש?</Text>
       
       <RichEditor
         ref={editorRef}
-        containerStyle={styles.rich}
-        editorStyle={styles.contantStyle}
+        containerStyle={styles.editorContainer}
+        editorStyle={styles.editorStyle}
         onChange={onChange}
+        editorInitializedCallback={() => {
+          editorRef?.current?.registerToolbar(() => {
+            // לוגיקה של בר הכלים במידת הצורך
+          });
+        }}
+        style={styles.editorInlineStyle}
+        placeholder="שתף כאן את מה שעל לבך..."
       />
     </View>
-  )
-}
+  );
+};
 
-export default RichTextEditor
+export default RichTextEditor;
 
 const styles = StyleSheet.create({
   container: {
     minHeight: 285,
-    padding: 10,
+    padding: 12,
+    backgroundColor: '#f5f5f7', // רקע כללי בהיר מאוד
+    borderRadius: 12,
   },
   title: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 8,
+    color: theme.colors.primary,
+    marginBottom: 12,
+    textAlign: 'right',
+    writingDirection: 'rtl',
   },
-  textBox: {
-    backgroundColor: "#fff",
+  editorContainer: {
+    backgroundColor: '#e2e2e8', // אפור כהה יותר מהרקע הכללי (למשל #f5f5f7)
     borderRadius: 12,
-    padding: 15,
+    padding: 8,
+    minHeight: 140,
     borderWidth: 1,
-    borderColor: "#ddd",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3, // צל לאנדרואיד
-    marginBottom: 10,
+    borderColor: '#c0c0c5', // גבול אפור כהה יותר
+  
+    // צל מודגש טיפה יותר
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 5,
+    elevation: 5,
   },
-  input: {
-    fontSize: 16,
-    color: "#333",
-    textAlignVertical: "top",
-    minHeight: 100,
+  editorStyle: {
+    backgroundColor: '#ffffff',
+    color: '#ffffff', // טקסט לבן אם צריך
+    placeholderColor: '#888888',
+    cssText: `
+      body {
+        direction: rtl;
+        text-align: right;
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        color: #333333;
+        background-color: #ffffff;
+        padding: 10px;
+      }
+    `,
   },
-  richBar: {
-    borderTopRightRadius: theme.radius.xl,
-    borderTopLeftRadius: theme.radius.xl,
-    backgroundColor: theme.colors.gray,
-  }
+  editorInlineStyle: {
+    writingDirection: 'rtl',
+    textAlign: 'right',
+    minHeight: 120,
+    color: '#333333',
+  },
 });
