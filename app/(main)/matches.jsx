@@ -94,12 +94,10 @@ export default function Matches() {
   const navigateToChat = (chatId, targetUser) => {
     console.log('🚀 Navigating to chat:', { chatId, userName: targetUser.name });
     
-    // יצירת אובייקט הצ'אט כמו שהקובץ privateChat מצפה לקבל
     const chatData = {
       id: chatId,
       name: targetUser.name,
       image: targetUser.image,
-      // אפשר להוסיף עוד פרטים אם נדרש
     };
     
     router.push({
@@ -164,10 +162,35 @@ export default function Matches() {
     try {
       const result = await friendUser(user.id, current.id);
       
-      if (result.success && result.chatId) {
-        console.log('👫 Friendship created! Opening chat...');
-        
-        // הצגת הודעה ואפשרות לעבור לצ'אט
+      if (result.mismatch) {
+        // Mismatch situation - like vs friend
+        Alert.alert(
+          '💝 מצב מעניין!',
+          `${current.name} מעוניין/ת להכיר רומנטית, ואתה מעוניין/ת בחברות.\n\nהאם תרצה לנסות ולהכיר כחברים תחילה? זה יכול להוביל לדברים יפים! 😊`,
+          [
+            {
+              text: 'לא, תודה',
+              style: 'cancel',
+              onPress: () => {
+                console.log('User declined mismatch chat');
+                animateAndNext();
+              }
+            },
+            {
+              text: 'בואו ננסה',
+              onPress: () => {
+                console.log('User accepted mismatch chat');
+                Alert.alert(
+                  '✅ נשלח!',
+                  'התגובה שלך נשלחה. אם גם המשתמש השני יסכים, תקבל התראה ויפתח צ\'אט ביניכם.',
+                  [{ text: 'הבנתי', onPress: () => animateAndNext() }]
+                );
+              }
+            }
+          ]
+        );
+      } else if (result.success && result.chatId) {
+        // Regular friendship - immediate chat
         Alert.alert(
           '👫 חברות נוצרה!',
           `נוצרה חברות עם ${current.name}!\nרוצה לפתוח את הצ'אט?`,
@@ -175,17 +198,11 @@ export default function Matches() {
             {
               text: 'אחר כך',
               style: 'cancel',
-              onPress: () => {
-                console.log('User chose to continue matching');
-                animateAndNext();
-              }
+              onPress: () => animateAndNext()
             },
             {
               text: 'פתח צ\'אט',
-              onPress: () => {
-                console.log('User chose to open chat');
-                navigateToChat(result.chatId, current);
-              }
+              onPress: () => navigateToChat(result.chatId, current)
             }
           ]
         );
@@ -211,10 +228,35 @@ export default function Matches() {
       const result = await likeUser(user.id, current.id);
       console.log('💫 Like result:', result);
 
-      if (result.matched && result.chatId) {
-        console.log('🎉 MATCH! Showing alert and navigating to chat...');
-        
-        // הצגת הודעת התאמה עם אפשרות לעבור לצ'אט
+      if (result.mismatch) {
+        // Mismatch situation - like vs friend
+        Alert.alert(
+          '🌟 יש עדכון מעניין!',
+          `${current.name} מעוניין/ת להכיר אותך כחבר/ה טוב/ה, ואתה מעוניין/ת להכיר רומנטית.\n\nהאם תרצה לנסות ולהכיר כחברים תחילה? זה יכול להוביל לדברים יפים! 😊`,
+          [
+            {
+              text: 'לא, תודה',
+              style: 'cancel',
+              onPress: () => {
+                console.log('User declined mismatch chat');
+                animateAndNext();
+              }
+            },
+            {
+              text: 'כן, בואו נכיר',
+              onPress: () => {
+                console.log('User accepted mismatch chat');
+                Alert.alert(
+                  '✅ נשלח!',
+                  'התגובה שלך נשלחה. אם גם המשתמש השני יסכים, תקבל התראה ויפתח צ\'אט ביניכם.',
+                  [{ text: 'הבנתי', onPress: () => animateAndNext() }]
+                );
+              }
+            }
+          ]
+        );
+      } else if (result.matched && result.chatId) {
+        // Perfect match - both like
         Alert.alert(
           '🎉 זה התאמה!',
           `יצרת התאמה עם ${current.name}!\nרוצה לפתוח את הצ'אט?`,
@@ -222,35 +264,28 @@ export default function Matches() {
             {
               text: 'אחר כך',
               style: 'cancel',
-              onPress: () => {
-                console.log('User chose to continue matching');
-                animateAndNext();
-              }
+              onPress: () => animateAndNext()
             },
             {
               text: 'פתח צ\'אט',
-              onPress: () => {
-                console.log('User chose to open chat');
-                navigateToChat(result.chatId, current);
-              }
+              onPress: () => navigateToChat(result.chatId, current)
             }
           ]
         );
       } else if (result.matched && !result.chatId) {
-        console.log('💝 Match without chat - showing simple alert');
-        // התאמה בלי צ'אט (במקרה של תקלה)
+        // Match without chat (error case)
         Alert.alert('🎉 התאמה!', 'נוצרה התאמה!', [
           { text: 'נהדר!', onPress: () => animateAndNext() }
         ]);
       } else {
+        // Like sent, no match yet
         console.log('💕 Like sent, no match yet');
-        // עדיין לא התאמה - ממשיכים לכרטיס הבא
         animateAndNext();
       }
     } catch (error) {
       console.error('❌ Error in handleLike:', error);
       Alert.alert('שגיאה', 'לא ניתן לבצע לייק: ' + error.message);
-      animateAndNext(); // ממשיכים גם במקרה של שגיאה
+      animateAndNext();
     }
   };
 

@@ -134,50 +134,56 @@ export const fetchAttributeMatches = async (userId) => {
 };
 
 /**
- * Enhanced function to determine if two users are compatible
- * @param {Object} user1 - First user object with gender and connectionTypes
- * @param {Object} user2 - Second user object with gender and connectionTypes  
- * @returns {Object} - Compatibility result with reasons
+ * Check for mismatch between two users' interaction preferences
+ * @param {string} userAType - Type of interaction from user A ('like' or 'friend')
+ * @param {string} userBType - Type of interaction from user B ('like' or 'friend')
+ * @returns {Object} - Mismatch info
  */
-export const checkUserCompatibility = (user1, user2) => {
-  const user1WantsDating = user1.connectionTypes && user1.connectionTypes.includes('דייטים');
-  const user1WantsFriends = user1.connectionTypes && user1.connectionTypes.includes('חברויות');
-  const user2WantsDating = user2.connectionTypes && user2.connectionTypes.includes('דייטים');
-  const user2WantsFriends = user2.connectionTypes && user2.connectionTypes.includes('חברויות');
-
-  const compatibilityReasons = [];
-  let isCompatible = false;
-
-  // Check dating compatibility (Hebrew format)
-  if (user1WantsDating && user2WantsDating) {
-    const oppositeGenders = (
-      (user1.gender === 'זכר' && user2.gender === 'נקבה') ||
-      (user1.gender === 'נקבה' && user2.gender === 'זכר')
-    );
-    
-    if (oppositeGenders) {
-      compatibilityReasons.push('דייטים');
-      isCompatible = true;
-    }
+const checkInteractionMismatch = (userAType, userBType) => {
+  if (userAType === userBType) {
+    return { hasMismatch: false, matchType: userAType };
   }
-
-  // Check friendship compatibility
-  if (user1WantsFriends && user2WantsFriends) {
-    compatibilityReasons.push('חברויות');
-    isCompatible = true;
-  }
-
+  
+  // One wants dating (like), one wants friendship (friend)
   return {
-    compatible: isCompatible,
-    reasons: compatibilityReasons,
-    details: {
-      user1WantsDating,
-      user1WantsFriends,
-      user2WantsDating, 
-      user2WantsFriends,
-      genders: [user1.gender, user2.gender]
-    }
+    hasMismatch: true,
+    likeUser: userAType === 'like' ? 'A' : 'B',
+    friendUser: userAType === 'friend' ? 'A' : 'B'
   };
+};
+
+/**
+ * Create a chat request notification for mismatched interactions
+ * @param {string} userId - User receiving the notification
+ * @param {string} actorId - User who triggered the notification
+ * @param {string} userType - 'like' or 'friend' - what the receiving user wants
+ * @param {string} actorType - 'like' or 'friend' - what the actor wants
+ */
+const createChatRequestNotification = async (userId, actorId, userType, actorType) => {
+  try {
+    const { error } = await supabase
+      .from('match_notifications')
+      .insert({
+        user_id: userId,
+        actor_id: actorId,
+        type: 'chat_request',
+        read: false,
+        metadata: {
+          user_preference: userType,
+          actor_preference: actorType,
+          status: 'pending',
+          created_at: new Date().toISOString()
+        }
+      });
+    
+    if (error) {
+      console.error('❌ Error creating chat request notification:', error);
+    } else {
+      console.log('✅ Chat request notification created');
+    }
+  } catch (error) {
+    console.error('❌ Error in createChatRequestNotification:', error);
+  }
 };
 
 export const likeUser = async (userId, targetId) => {
@@ -241,116 +247,61 @@ export const likeUser = async (userId, targetId) => {
     }
   }
 
-  // 2. Insert a "like" notification via RPC
-  console.log('🔔 Inserting like notification...');
-  const { error: likeNotifErr } = await supabase.rpc('insert_notification', {
-    params: {
-      user_id: targetId,
-      actor_id: userId,
-      type: 'like',
-      interaction_id: interactionId,
-    }
-  });
-  if (likeNotifErr) console.error('❌ Like notification RPC error:', likeNotifErr);
-  else console.log('✅ Like notification sent');
-
-  // 3. Check for reciprocal like
-  console.log('🔍 Checking for reciprocal like...');
-  const { data: reciprocal, error: recErr } = await supabase
+  // 2. Check for reciprocal interaction (like or friend)
+  console.log('🔍 Checking for reciprocal interaction...');
+  const { data: reciprocalInteraction, error: recErr } = await supabase
     .from('interactions')
-    .select('id')
+    .select('id, type')
     .eq('user_id', targetId)
     .eq('target_id', userId)
-    .eq('type', 'like')
-    .limit(1);
+    .in('type', ['like', 'friend'])
+    .single();
   
-  if (recErr) {
-    console.error('❌ Reciprocal like check error:', recErr);
+  if (recErr && recErr.code !== 'PGRST116') {
+    console.error('❌ Reciprocal interaction check error:', recErr);
     return { matched: false };
   }
-  console.log('🔍 Reciprocal like result:', reciprocal);
 
-  // 4. If reciprocal, complete the match flow
-  if (reciprocal?.length) {
-    console.log('🎉 RECIPROCAL LIKE FOUND! Starting match process...');
-    const [u1, u2] = [userId, targetId].sort();
-    console.log('👥 Sorted user IDs:', { u1, u2 });
-
-    // a) Find or create chat
-    console.log('💬 Looking for existing chat...');
-    const { data: existingChat, error: findChatErr } = await supabase
-      .from('chats')
-      .select('id')
-      .eq('user1_id', u1)
-      .eq('user2_id', u2)
-      .single();
-
-    let chat;
-    if (findChatErr && findChatErr.code === 'PGRST116') {
-      console.log('💬 Creating new chat...');
-      const { data: newChat, error: createChatErr } = await supabase
-        .from('chats')
-        .insert({ user1_id: u1, user2_id: u2 })
-        .select('id')
-        .single();
-      if (createChatErr) console.error('❌ Chat creation error:', createChatErr);
-      else chat = newChat;
-    } else if (findChatErr) {
-      console.error('❌ Chat find error:', findChatErr);
+  if (reciprocalInteraction) {
+    console.log(`🔍 Found reciprocal interaction: ${reciprocalInteraction.type}`);
+    
+    // Check for mismatch
+    const mismatchInfo = checkInteractionMismatch('like', reciprocalInteraction.type);
+    
+    if (mismatchInfo.hasMismatch) {
+      console.log('⚠️ MISMATCH DETECTED: like vs friend');
+      
+      // Create chat request notifications for both users
+      await createChatRequestNotification(userId, targetId, 'like', 'friend');
+      await createChatRequestNotification(targetId, userId, 'friend', 'like');
+      
+      return { 
+        matched: false, 
+        mismatch: true,
+        message: 'נוצרה בקשת צ\'אט בגלל העדפות שונות'
+      };
     } else {
-      console.log('💬 Found existing chat');
-      chat = existingChat;
+      // Perfect match - both like
+      console.log('🎉 PERFECT MATCH! Both users want dating');
+      return await createMatch(userId, targetId, interactionId, reciprocalInteraction.id);
     }
-    console.log('✅ Chat step done:', chat);
-
-    // b) Find or create match record (with correct column names)
-    console.log('💕 Looking for existing match...');
-    const { data: existingMatch, error: findMatchErr } = await supabase
-      .from('matches')
-      .select('id')
-      .eq('user1', u1)
-      .eq('user2', u2)
-      .single();
-
-    let match;
-    if (findMatchErr && findMatchErr.code === 'PGRST116') {
-      console.log('💕 Creating new match record...');
-      const { data: newMatch, error: matchErr } = await supabase
-        .from('matches')
-        .insert({ user1: u1, user2: u2 })
-        .select('id')
-        .single();
-      if (matchErr) console.error('❌ Match creation error:', matchErr);
-      else {
-        console.log('✅ Match record created:', newMatch);
-        match = newMatch;
-      }
-    } else if (findMatchErr) {
-      console.error('❌ Match find error:', findMatchErr);
-    } else {
-      console.log('💕 Found existing match:', existingMatch);
-      match = existingMatch;
-    }
-
-    // c) Insert a "match" notification via RPC
-    console.log('🔔 Inserting match notification...');
-    const { error: matchNotifErr } = await supabase.rpc('insert_notification', {
+  } else {
+    console.log('📝 Like registered, no reciprocal interaction found yet');
+    
+    // Send like notification
+    const { error: likeNotifErr } = await supabase.rpc('insert_notification', {
       params: {
         user_id: targetId,
         actor_id: userId,
-        type: 'match',
-        interaction_id: reciprocal[0].id,
+        type: 'like',
+        interaction_id: interactionId,
       }
     });
-    if (matchNotifErr) console.error('❌ Match notification RPC error:', matchNotifErr);
-    else console.log('✅ Match notification sent');
-
-    console.log('🎉 Match process completed successfully!');
-    return { matched: true, chatId: chat?.id };
+    if (likeNotifErr) console.error('❌ Like notification RPC error:', likeNotifErr);
+    else console.log('✅ Like notification sent');
+    
+    return { matched: false };
   }
-
-  console.log('📝 Like registered, but no reciprocal like found yet');
-  return { matched: false };
 };
 
 export const friendUser = async (userId, targetId) => {
@@ -379,59 +330,469 @@ export const friendUser = async (userId, targetId) => {
     console.error('❌ Error checking existing interaction:', checkError);
     return { success: false };
   } else {
-    // Interaction already exists - check what type
+    // Interaction already exists
     console.log(`📝 Existing interaction found: ${existingInteraction.type}`);
     
-    if (existingInteraction.type === 'like') {
-      console.log('💕 Like already exists - this should create a match first!');
-      // If like exists, we shouldn't be here - the user should already be matched
-      // But let's handle it gracefully by checking for existing chat
-    } else if (existingInteraction.type === 'reject') {
+    if (existingInteraction.type === 'reject') {
       console.log('❌ User was rejected - cannot add as friend');
       return { success: false };
     } else if (existingInteraction.type === 'friend') {
-      console.log('👫 Friend interaction already exists - checking for existing chat');
+      console.log('👫 Friend interaction already exists');
+    } else if (existingInteraction.type === 'like') {
+      console.log('💕 Like exists - this will be handled by match logic');
     }
   }
 
-  // For friendships, create chat immediately (no need for reciprocal)
-  console.log('💬 Looking for existing chat...');
+  // Check for reciprocal interaction
+  console.log('🔍 Checking for reciprocal interaction...');
+  const { data: reciprocalInteraction, error: recErr } = await supabase
+    .from('interactions')
+    .select('id, type')
+    .eq('user_id', targetId)
+    .eq('target_id', userId)
+    .in('type', ['like', 'friend'])
+    .single();
+  
+  if (recErr && recErr.code !== 'PGRST116') {
+    console.error('❌ Reciprocal interaction check error:', recErr);
+    return { success: false };
+  }
+
+  if (reciprocalInteraction) {
+    console.log(`🔍 Found reciprocal interaction: ${reciprocalInteraction.type}`);
+    
+    // Check for mismatch
+    const mismatchInfo = checkInteractionMismatch('friend', reciprocalInteraction.type);
+    
+    if (mismatchInfo.hasMismatch) {
+      console.log('⚠️ MISMATCH DETECTED: friend vs like');
+      
+      // Create chat request notifications for both users
+      await createChatRequestNotification(userId, targetId, 'friend', 'like');
+      await createChatRequestNotification(targetId, userId, 'like', 'friend');
+      
+      return { 
+        success: false, 
+        mismatch: true,
+        message: 'נוצרה בקשת צ\'אט בגלל העדפות שונות'
+      };
+    } else {
+      // Perfect match - both friend
+      console.log('👫 FRIENDSHIP MATCH! Creating chat immediately');
+      return await createFriendshipChat(userId, targetId);
+    }
+  } else {
+    // No reciprocal, create chat immediately for friendship
+    console.log('👫 Creating friendship chat immediately');
+    return await createFriendshipChat(userId, targetId);
+  }
+};
+
+/**
+ * Create a romantic match with all the bells and whistles
+ */
+const createMatch = async (userId, targetId, userInteractionId, targetInteractionId) => {
   const [u1, u2] = [userId, targetId].sort();
   
-  // Check if chat already exists
-  const { data: existingChat, error: findChatErr } = await supabase
+  // Create chat
+  console.log('💬 Creating match chat...');
+  const { data: chat, error: chatErr } = await supabase
     .from('chats')
+    .upsert({ user1_id: u1, user2_id: u2 }, { onConflict: 'user1_id,user2_id' })
     .select('id')
-    .eq('user1_id', u1)
-    .eq('user2_id', u2)
     .single();
+  
+  if (chatErr) {
+    console.error('❌ Chat creation error:', chatErr);
+    return { matched: false };
+  }
+  
+  // Create match record
+  console.log('💕 Creating match record...');
+  const { error: matchErr } = await supabase
+    .from('matches')
+    .upsert({ user1: u1, user2: u2 }, { onConflict: 'user1,user2' });
+  
+  if (matchErr) console.error('❌ Match creation error:', matchErr);
+  
+  // Send match notifications
+  const { error: matchNotifErr } = await supabase.rpc('insert_notification', {
+    params: {
+      user_id: targetId,
+      actor_id: userId,
+      type: 'match',
+      interaction_id: targetInteractionId,
+    }
+  });
+  if (matchNotifErr) console.error('❌ Match notification error:', matchNotifErr);
+  
+  console.log('🎉 Match created successfully!');
+  return { matched: true, chatId: chat.id };
+};
 
-  let chatId;
-  if (findChatErr && findChatErr.code === 'PGRST116') {
-    // Create new chat
-    console.log('💬 Creating new friendship chat...');
-    const { data: newChat, error: createChatErr } = await supabase
+/**
+ * Create a friendship chat
+ */
+const createFriendshipChat = async (userId, targetId) => {
+  const [u1, u2] = [userId, targetId].sort();
+  
+  console.log('💬 Creating friendship chat...');
+  const { data: chat, error: chatErr } = await supabase
+    .from('chats')
+    .upsert({ user1_id: u1, user2_id: u2 }, { onConflict: 'user1_id,user2_id' })
+    .select('id')
+    .single();
+  
+  if (chatErr) {
+    console.error('❌ Friendship chat creation error:', chatErr);
+    return { success: false };
+  }
+  
+  console.log('✅ Friendship chat created successfully!');
+  return { success: true, chatId: chat.id };
+};
+
+/**
+ * Fetch all likes, chat requests, matches and active chats for the likes screen
+ * @param {string} userId - Current user's UUID
+ * @returns {Promise<Object>} Object with categorized data
+ */
+export const fetchLikesAndRequests = async (userId) => {
+  try {
+    console.log('🔍 Fetching likes and requests for user:', userId);
+    
+    // 1. Get users who liked me (and I haven't responded yet)
+    const { data: likedYou, error: likedError } = await supabase
+      .from('interactions')
+      .select(`
+        id,
+        created_at,
+        user:users!interactions_user_id_fkey (
+          id, name, image, birth_date
+        )
+      `)
+      .eq('target_id', userId)
+      .eq('type', 'like')
+      .order('created_at', { ascending: false });
+
+    if (likedError) {
+      console.error('❌ Error fetching liked you:', likedError);
+    }
+
+    // Filter out users I already responded to
+    const { data: myInteractions, error: myIntError } = await supabase
+      .from('interactions')
+      .select('target_id')
+      .eq('user_id', userId);
+
+    const myTargets = new Set(myInteractions?.map(i => i.target_id) || []);
+    const filteredLikedYou = likedYou?.filter(like => !myTargets.has(like.user.id)) || [];
+
+    // 2. Get chat requests (from match_notifications with type 'chat_request')
+    const { data: chatRequests, error: requestError } = await supabase
+      .from('match_notifications')
+      .select(`
+        id,
+        created_at,
+        type,
+        metadata,
+        actor:users!match_notifications_actor_id_fkey (
+          id, name, image, birth_date
+        )
+      `)
+      .eq('user_id', userId)
+      .eq('type', 'chat_request')
+      .eq('read', false)
+      .order('created_at', { ascending: false });
+
+    if (requestError) {
+      console.error('❌ Error fetching chat requests:', requestError);
+    }
+
+    // 3. Get matches (users I have mutual likes with)
+    const { data: matches, error: matchError } = await supabase
+      .from('matches')
+      .select(`
+        id,
+        created_at,
+        user1,
+        user2
+      `)
+      .or(`user1.eq.${userId},user2.eq.${userId}`)
+      .order('created_at', { ascending: false });
+
+    if (matchError) {
+      console.error('❌ Error fetching matches:', matchError);
+    }
+
+    // Get user details for matches and find corresponding chats
+    const matchesWithDetails = [];
+    if (matches) {
+      for (const match of matches) {
+        const otherUserId = match.user1 === userId ? match.user2 : match.user1;
+        
+        // Get other user details
+        const { data: otherUser, error: userErr } = await supabase
+          .from('users')
+          .select('id, name, image, birth_date')
+          .eq('id', otherUserId)
+          .single();
+
+        if (!userErr && otherUser) {
+          // Find corresponding chat
+          const [u1, u2] = [userId, otherUserId].sort();
+          const { data: chat, error: chatErr } = await supabase
+            .from('chats')
+            .select('id')
+            .eq('user1_id', u1)
+            .eq('user2_id', u2)
+            .single();
+
+          matchesWithDetails.push({
+            id: match.id,
+            user: otherUser,
+            chatId: chat?.id || null,
+            created_at: match.created_at
+          });
+        }
+      }
+    }
+
+    // 4. Get active chats
+    const { data: activeChats, error: chatError } = await supabase
       .from('chats')
-      .insert({ user1_id: u1, user2_id: u2 })
+      .select(`
+        id,
+        created_at,
+        last_message,
+        updated_at,
+        user1_id,
+        user2_id
+      `)
+      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+      .order('updated_at', { ascending: false });
+
+    if (chatError) {
+      console.error('❌ Error fetching active chats:', chatError);
+    }
+
+    // Get user details for active chats
+    const chatsWithDetails = [];
+    if (activeChats) {
+      for (const chat of activeChats) {
+        const otherUserId = chat.user1_id === userId ? chat.user2_id : chat.user1_id;
+        
+        const { data: otherUser, error: userErr } = await supabase
+          .from('users')
+          .select('id, name, image, birth_date')
+          .eq('id', otherUserId)
+          .single();
+
+        if (!userErr && otherUser) {
+          chatsWithDetails.push({
+            id: chat.id,
+            user: otherUser,
+            last_message: chat.last_message,
+            updated_at: chat.updated_at,
+            created_at: chat.created_at
+          });
+        }
+      }
+    }
+
+    const result = {
+      liked_you: filteredLikedYou || [],
+      chat_requests: chatRequests || [],
+      matches: matchesWithDetails || [],
+      active_chats: chatsWithDetails || []
+    };
+
+    console.log('📊 Likes data summary:', {
+      liked_you: result.liked_you.length,
+      chat_requests: result.chat_requests.length,
+      matches: result.matches.length,
+      active_chats: result.active_chats.length
+    });
+
+    return result;
+
+  } catch (error) {
+    console.error('❌ Error in fetchLikesAndRequests:', error);
+    return {
+      liked_you: [],
+      chat_requests: [],
+      matches: [],
+      active_chats: []
+    };
+  }
+};
+
+/**
+ * Like a user back (from the likes screen)
+ */
+export const likeUserBack = async (userId, targetId) => {
+  console.log('💕 Liking user back:', { userId, targetId });
+  
+  try {
+    // Create like interaction
+    const { data: likeRow, error: likeError } = await supabase
+      .from('interactions')
+      .insert({ user_id: userId, target_id: targetId, type: 'like' })
       .select('id')
       .single();
     
-    if (createChatErr) {
-      console.error('❌ Chat creation error:', createChatErr);
-      return { success: false };
+    if (likeError) {
+      console.error('❌ Error creating like back:', likeError);
+      return { matched: false };
+    }
+
+    // Since we know the other user already liked us, this should be a match
+    const [u1, u2] = [userId, targetId].sort();
+    
+    // Create chat
+    const { data: chat, error: chatErr } = await supabase
+      .from('chats')
+      .upsert({ user1_id: u1, user2_id: u2 }, { onConflict: 'user1_id,user2_id' })
+      .select('id')
+      .single();
+    
+    if (chatErr) {
+      console.error('❌ Chat creation error:', chatErr);
+      return { matched: false };
     }
     
-    console.log('✅ Friendship chat created:', newChat);
-    chatId = newChat.id;
-  } else if (findChatErr) {
-    console.error('❌ Chat find error:', findChatErr);
-    return { success: false };
-  } else {
-    console.log('💬 Chat already exists:', existingChat);
-    chatId = existingChat.id;
-  }
+    // Create match record
+    const { error: matchErr } = await supabase
+      .from('matches')
+      .upsert({ user1: u1, user2: u2 }, { onConflict: 'user1,user2' });
+    
+    if (matchErr) console.error('❌ Match creation error:', matchErr);
+    
+    console.log('🎉 Match created successfully!');
+    return { matched: true, chatId: chat.id };
 
-  return { success: true, chatId };
+  } catch (error) {
+    console.error('❌ Error in likeUserBack:', error);
+    return { matched: false };
+  }
+};
+
+/**
+ * Handle response to chat request (approve/reject)
+ * @param {string} userId - User responding
+ * @param {string} actorId - Original actor
+ * @param {boolean} approved - Whether user approved the chat request
+ */
+export const respondToChatRequest = async (userId, actorId, approved) => {
+  console.log('📋 Responding to chat request:', { userId, actorId, approved });
+  
+  try {
+    // Find the notification
+    const { data: notification, error: findError } = await supabase
+      .from('match_notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('actor_id', actorId)
+      .eq('type', 'chat_request')
+      .single();
+
+    if (findError) {
+      console.error('❌ Error finding notification:', findError);
+      return { success: false };
+    }
+
+    if (!approved) {
+      // Mark as read and rejected
+      const { error: updateError } = await supabase
+        .from('match_notifications')
+        .update({ 
+          read: true,
+          metadata: { 
+            ...notification.metadata, 
+            status: 'rejected',
+            rejected_at: new Date().toISOString()
+          }
+        })
+        .eq('id', notification.id);
+
+      if (updateError) {
+        console.error('❌ Error updating rejection:', updateError);
+      }
+
+      console.log('❌ Chat request declined');
+      return { success: true, chatCreated: false };
+    }
+
+    // User approved - mark as approved
+    const { error: approveError } = await supabase
+      .from('match_notifications')
+      .update({ 
+        read: true,
+        metadata: { 
+          ...notification.metadata, 
+          status: 'approved',
+          approved_at: new Date().toISOString()
+        }
+      })
+      .eq('id', notification.id);
+
+    if (approveError) {
+      console.error('❌ Error updating approval:', approveError);
+      return { success: false };
+    }
+
+    // Check if the other user also approved
+    const { data: otherNotification, error: otherError } = await supabase
+      .from('match_notifications')
+      .select('*')
+      .eq('user_id', actorId)
+      .eq('actor_id', userId)
+      .eq('type', 'chat_request')
+      .single();
+
+    if (otherError && otherError.code !== 'PGRST116') {
+      console.error('❌ Error checking other user response:', otherError);
+      return { success: false };
+    }
+
+    // Check if both users approved
+    const otherApproved = otherNotification?.metadata?.status === 'approved';
+    
+    if (otherApproved) {
+      console.log('🎉 Both users approved! Creating chat...');
+      
+      // Create the chat
+      const [u1, u2] = [userId, actorId].sort();
+      const { data: chat, error: chatError } = await supabase
+        .from('chats')
+        .upsert({ user1_id: u1, user2_id: u2 }, { onConflict: 'user1_id,user2_id' })
+        .select('id')
+        .single();
+      
+      if (chatError) {
+        console.error('❌ Chat creation error:', chatError);
+        return { success: false };
+      }
+
+      console.log('✅ Chat created successfully!');
+      return { 
+        success: true, 
+        chatCreated: true, 
+        chatId: chat.id 
+      };
+    } else {
+      console.log('⏳ Waiting for other user to respond...');
+      return { 
+        success: true, 
+        chatCreated: false, 
+        message: 'התגובה נשמרה, מחכים לתגובת המשתמש השני' 
+      };
+    }
+
+  } catch (error) {
+    console.error('❌ Error in respondToChatRequest:', error);
+    return { success: false };
+  }
 };
 
 export const rejectUser = async (userId, targetId) => {
