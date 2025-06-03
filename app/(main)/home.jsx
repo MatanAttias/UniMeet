@@ -73,6 +73,7 @@ export default function Home() {
       });
 
     const commentsChannel = supabase
+    
       .channel('comments')
       .on(
         'postgres_changes',
@@ -84,11 +85,11 @@ export default function Home() {
         else console.log('commentsChannel status', status);
       });
 
-    return () => {
-      supabase.removeChannel(postChannel);
-      supabase.removeChannel(notificationChannel);
-      supabase.removeChannel(commentsChannel);
-    };
+
+      return () => {
+        supabase.removeChannel(commentsChannel);
+      };
+      
     // נסנכרן רק כש־user.id משתנה
   }, [user?.id]);
 

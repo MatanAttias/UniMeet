@@ -22,7 +22,9 @@ import {
   import { hp, wp } from '../../../constants/helpers/common';
   import { supabase } from '../../../lib/supabase';
   import Avatar from '../../../components/Avatar';
-  
+  import { useFocusEffect } from '@react-navigation/native';
+  import { useCallback } from 'react';
+
   const Settings = () => {
     const { user } = useAuth();
     const router = useRouter();
@@ -36,6 +38,7 @@ import {
     const [chatPartnerImage, setChatPartnerImage] = useState('');
     const flatListRef = useRef();
     const sendButtonAnim = useRef(new Animated.Value(0)).current;
+    
     const animatedSendColor = sendButtonAnim.interpolate({
         inputRange: [0, 1],
         outputRange: ['#ccc', theme.colors.primary],
@@ -59,8 +62,47 @@ import {
         console.error("שגיאה כללית:", err.message);
       }
     };
-  
+    useEffect(() => {
+      if (!chatObj?.id || !user?.id) return;
     
+      const markChatAsRead = async () => {
+        const isUser1 = user.id === chatObj.user1_id;
+    
+        await supabase
+          .from('chats')
+          .update({
+            user1_read: isUser1 ? true : undefined,
+            user2_read: isUser1 ? undefined : true,
+          })
+          .eq('id', chatObj.id);
+      };
+    
+      markChatAsRead();
+    }, [chatObj?.id, user?.id]);
+    
+    useFocusEffect(
+      useCallback(() => {
+        const loadChats = async () => {
+          setLoading(true);
+          try {
+            const { data, error } = await supabase.auth.getUser();
+            if (error || !data?.user) throw error || new Error('No user logged in');
+    
+            const currentUser = data.user;
+            setUser(currentUser);
+            const chatsData = await fetchUserChats(currentUser.id);
+            const sortedChats = chatsData.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+            setChats(sortedChats);
+          } catch (err) {
+            console.error('Error fetching chats:', err.message);
+          } finally {
+            setLoading(false);
+          }
+        };
+    
+        loadChats();
+      }, [])
+    );
     const fetchChatPartnerName = async () => {
         if (!chatObj || !user) return;
       
@@ -73,7 +115,7 @@ import {
             .single();
       
           if (chatError) {
-            console.error('שגיאה בשליפת נתוני הצ׳אט:', chatError);
+            console.error("שגיאה בשליפת נתוני הצ׳אט:", chatError);
             return;
           }
       
@@ -107,47 +149,73 @@ import {
         }, [user, chatObj]);
 
   
-        const sendMessage = async () => {
-          if (!messageText.trim() || !chatObj || !user) return;
-        
-          const messageContent = messageText.trim();
-        
-          // שליחת ההודעה
-          const { data: messageData, error: messageError } = await supabase
-            .from('messages')
-            .insert({
-              chat_id: chatObj.id,
-              sender_id: user.id,
-              message_type: 'text',
-              content: messageContent,
-              is_read: false, // הוספנו את זה לפי הבקשה שלך
-            })
-            .select()
-            .single();
-        
-          if (messageError) {
-            console.error('שגיאה בשליחת הודעה:', messageError);
-          } else {
-            // הוספה לרשימת ההודעות
-            setMessages((prev) => [...prev, messageData]);
-            setMessageText('');
-        
-            // עדכון שורת הצ'אט עם ההודעה האחרונה
-            const { error: updateChatError } = await supabase
-              .from('chats')
-              .update({
-                last_message: messageContent,
-                updated_at: new Date().toISOString(),
-                is_read: false
-              })
-              .eq('id', chatObj.id);
-        
-            if (updateChatError) {
-              console.error('שגיאה בעדכון הצ׳אט:', updateChatError);
-            }
-          }
-        };
-  
+    const sendMessage = async () => {
+      if (!messageText.trim() || !chatObj || !user) return;
+    
+      const messageContent = messageText.trim();
+    
+      // הוספת ההודעה לטבלת messages
+      const { data: messageData, error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          chat_id: chatObj.id,
+          sender_id: user.id,
+          message_type: 'text',
+          content: messageContent,
+        })
+        .select()
+        .single();
+    
+      if (messageError) {
+        console.error('שגיאה בשליחת הודעה:', messageError);
+        return;
+      }
+    
+      // עדכון הצ'אט עם ההודעה האחרונה
+      const { error: updateChatError } = await supabase
+        .from('chats')
+        .update({
+          last_message: messageContent,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', chatObj.id);
+    
+      if (updateChatError) {
+        console.error('שגיאה בעדכון הצ׳אט:', updateChatError);
+      }
+    
+      // שליפת נתוני הצ׳אט כדי לדעת מי המשתמש 1 ומי 2
+      const { data: chatData, error: chatError } = await supabase
+        .from('chats')
+        .select('user1_id, user2_id')
+        .eq('id', chatObj.id)
+        .single();
+    
+      if (chatError || !chatData) {
+        console.error('שגיאה בשליפת נתוני הצ׳אט לעדכון סטטוס קריאה:', chatError?.message);
+      } else {
+        const isUser1 = chatData.user1_id === user.id;
+    
+        // עדכון שדות הקריאה: שולח = true, מקבל = false
+        const updates = isUser1
+          ? { user1_read: true, user2_read: false }
+          : { user2_read: true, user1_read: false };
+    
+        const { error: readUpdateError } = await supabase
+          .from('chats')
+          .update(updates)
+          .eq('id', chatObj.id);
+    
+        if (readUpdateError) {
+          console.error('שגיאה בעדכון סטטוס קריאה:', readUpdateError);
+        }
+      }
+    
+      // עדכון ההודעות במסך
+      setMessages((prev) => [...prev, messageData]);
+      setMessageText('');
+    };
+    
     const toggleModal = () => {
       setModalVisible(!modalVisible);
       Animated.timing(animation, {
@@ -219,6 +287,9 @@ import {
           supabase.removeChannel(subscription);
         };
       }, [chatObj?.id]);
+
+
+      
     return (
 <ScreenWrapper bg="black">
   <View style={styles.topBar}>
@@ -261,8 +332,7 @@ import {
   <FlatList
   ref={flatListRef}
   data={messages}
-  keyExtractor={(item) => item.id.toString()}
-  renderItem={({ item }) => {
+  keyExtractor={(item, index) => `${item.id || item.created_at}-${index}`}  renderItem={({ item }) => {
     const isMine = item.sender_id === user.id;
     return (
       <View style={isMine ? styles.messageBubbleMine : styles.messageBubbleOther}>

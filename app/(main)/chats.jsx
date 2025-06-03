@@ -11,7 +11,7 @@ export default function ChatsPage() {
   const router = useRouter();
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState(null);
+  const [user, setUser] = useState(null); // ← שונה מ-userId כדי שתהיה גישה לכל ה-object
 
   useEffect(() => {
     const loadChats = async () => {
@@ -21,15 +21,13 @@ export default function ChatsPage() {
           throw error || new Error('No user logged in');
         }
 
-        const id = data.user.id;
-        console.log('Logged in user ID (UUID):', id);
+        const currentUser = data.user;
+        console.log('Logged in user ID (UUID):', currentUser.id);
 
-        setUserId(id);
-        const chatsData = await fetchUserChats(id);
+        setUser(currentUser);
+        const chatsData = await fetchUserChats(currentUser.id);
 
-        // מיון ההודעות מהחדש לישן
         const sortedChats = chatsData.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-
         setChats(sortedChats);
       } catch (error) {
         console.error('Error fetching chats:', error.message);
@@ -43,50 +41,71 @@ export default function ChatsPage() {
   }, []);
 
   const openChat = async (chat) => {
+    if (!user) return;
+
+    const isUser1 = chat.user1_id === user.id;
+    const readField = isUser1 ? 'user1_read' : 'user2_read';
+
     try {
-      // עדכן את הצ'אט שנלחץ כ"נקרא"
-      await supabase
+      const { data, error } = await supabase
         .from('chats')
-        .update({ is_read: true })
+        .update({ [readField]: true })
         .eq('id', chat.id);
-  
-      // המשך לניווט
+    
+      if (error) {
+        console.error('Error updating read status:', error.message);
+      } else {
+        console.log('Read status updated successfully:', data);
+      }
+    
       router.push({
         pathname: `/privateChat/${chat.id}`,
         params: {
-          chat: JSON.stringify({ ...chat, is_read: true }),
+          chat: JSON.stringify({
+            ...chat,
+            is_read: true,
+          }),
         },
       });
-  
-      // עדכן את המצב המקומי כדי להסיר את ההדגשה מיד
+    
       setChats((prevChats) =>
-        prevChats.map((c) =>
-          c.id === chat.id ? { ...c, is_read: true } : c
-        )
+        prevChats.map((c) => {
+          if (c.id !== chat.id) return c;
+    
+          const isUser1 = user?.id === c.user1_id;
+          return {
+            ...c,
+            user1_read: isUser1 ? true : c.user1_read,
+            user2_read: !isUser1 ? true : c.user2_read,
+          };
+        })
       );
     } catch (error) {
-      console.error('Failed to mark chat as read:', error.message);
+      console.error('Failed to mark chat as read:', error?.message || error);
     }
   };
 
-  const goBack = () => router.back();
-
+  const goBack = () => {
+    router.push('/home');
+  };
   const renderItem = ({ item }) => {
-    const isUnread = !item.is_read;  
-
+    const isUnread = (chat) => {
+      const isUser1 = user?.id === chat.user1_id;
+      return isUser1 ? !chat.user1_read : !chat.user2_read;
+    };
     return (
-      <Pressable style={[styles.chatItem, isUnread && styles.unreadChat]} onPress={() => openChat(item)}>
+      <Pressable style={[styles.chatItem, isUnread(item) && styles.unreadChat]} onPress={() => openChat(item)}>
         <Avatar uri={item.image} size={hp(6)} rounded={theme.radius.full} />
         <View style={styles.chatContent}>
           <View style={styles.row}>
-            <Text style={[styles.name, isUnread && styles.unreadName]}>
+            <Text style={[styles.name, isUnread(item) && styles.unreadName]}>
               {item.name}
             </Text>
-            <Text style={[styles.time, isUnread && styles.unreadTime]}>
+            <Text style={[styles.time, isUnread(item) && styles.unreadTime]}>
               {item.time}
             </Text>
           </View>
-          <Text style={[styles.lastMessage, isUnread && styles.unreadMessage]} numberOfLines={1}>
+          <Text style={[styles.lastMessage, isUnread(item) && styles.unreadMessage]} numberOfLines={1}>
             {item.lastMessage || 'התחל את השיחה'}
           </Text>
         </View>
@@ -100,13 +119,12 @@ export default function ChatsPage() {
 
   return (
     <View style={styles.container}>
-      {/* Top bar: חזור + כותרת */}
       <View style={styles.topBar}>
         <Pressable style={styles.backButton} onPress={goBack}>
           <Text style={styles.backText}>חזור</Text>
-          </Pressable>
+        </Pressable>
         <Text style={styles.title}>הצ'אטים שלי</Text>
-        <View style={{ width: wp(15) }} /> 
+        <View style={{ width: wp(15) }} />
       </View>
 
       <View style={styles.separator} />
@@ -131,7 +149,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-    paddingTop: hp(8), 
+    paddingTop: hp(8),
     paddingHorizontal: wp(4),
   },
   topBar: {
@@ -215,19 +233,16 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   unreadChat: {
-    backgroundColor: theme.colors.primaryLight, // או צבע אחר שמדגיש
+    backgroundColor: theme.colors.primaryLight,
   },
-  
   unreadName: {
     fontWeight: 'bold',
     color: theme.colors.primary,
   },
-  
   unreadTime: {
     fontWeight: 'bold',
     color: theme.colors.primary,
   },
-  
   unreadMessage: {
     fontWeight: '600',
     color: theme.colors.primary,

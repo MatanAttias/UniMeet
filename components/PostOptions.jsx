@@ -10,7 +10,7 @@ const PostOptions = ({ visible, onClose, postId }) => {
 
   const handleSavePost = async () => {
     const { data, error } = await supabase
-      .from('saved_posts')
+      .from('postss')
       .insert([{ user_id: user.id, post_id: postId }]);
 
     if (error) {
