@@ -100,7 +100,7 @@ const NewPost = () => {
   console.log("Profile Image URL:", user?.image);
   console.log("Full user object:", user);
   return (
-    <ScreenWrapper bg="white">
+    <ScreenWrapper bg="black">
       <View style={styles.container}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backText}>חזור</Text>
@@ -183,11 +183,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.primary,  // צבע טקסט ראשי פריימרי כהה יותר
     textAlign: 'center',
+    marginTop: -5,
   },
   header: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: 12,
+    marginTop: 25,
   },
   username: {
     fontSize: hp(2.2),
@@ -202,6 +204,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 5,
+    backgroundColor: theme.colors.black + 'cc', // פריימרי עם שקיפות קלה
     elevation: 6,
     // אנימציה קטנה בכניסה:
     transform: [{ scale: 1 }],
@@ -256,8 +259,19 @@ const styles = StyleSheet.create({
     borderTopColor: '#ccc',
   },
   backButton: {
-    alignSelf: 'flex-start',
-    marginTop: 10,
+    backgroundColor: theme.colors.card,
+    paddingVertical: hp(1),
+    paddingHorizontal: wp(3),
+    borderRadius: theme.radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+    alignSelf: 'flex-end',  // זה יזיז אותו לקצה הימני בקונטיינר
+    marginTop: 13,
   },
   backText: {
     color: theme.colors.primary,

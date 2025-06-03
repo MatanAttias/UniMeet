@@ -5,23 +5,25 @@ import { theme } from '../constants/theme';
 
 const RichTextEditor = ({ editorRef, onChange }) => {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>מה אתה מרגיש?</Text>
-      
-      <RichEditor
-        ref={editorRef}
-        containerStyle={styles.editorContainer}
-        editorStyle={styles.editorStyle}
-        onChange={onChange}
-        editorInitializedCallback={() => {
-          editorRef?.current?.registerToolbar(() => {
-            // לוגיקה של בר הכלים במידת הצורך
-          });
-        }}
-        style={styles.editorInlineStyle}
-        placeholder="שתף כאן את מה שעל לבך..."
-      />
-    </View>
+    <View style={{ flex: 1, backgroundColor: '#1a1a1a' }}>
+      <View style={styles.container}>
+        <Text style={styles.title}>מה אתה מרגיש?</Text>
+        
+        <RichEditor
+          ref={editorRef}
+          containerStyle={styles.editorContainer}
+          editorStyle={styles.editorStyle}
+          onChange={onChange}
+          editorInitializedCallback={() => {
+            editorRef?.current?.registerToolbar(() => {
+              // לוגיקה של בר הכלים במידת הצורך
+            });
+          }}
+          style={styles.editorInlineStyle}
+          placeholder="שתף כאן את מה שעל לבך..."
+        />
+      </View>
+      </View>
   );
 };
 
@@ -30,9 +32,18 @@ export default RichTextEditor;
 const styles = StyleSheet.create({
   container: {
     minHeight: 285,
-    padding: 12,
-    backgroundColor: '#f5f5f7', // רקע כללי בהיר מאוד
-    borderRadius: 12,
+    padding: 16,
+    backgroundColor: '#3e2e3e', // טיפה יותר בהיר מ-#1a1a1a
+    borderRadius: 16,
+  
+    // הצללה עמוקה למראה "מרחף"
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 10, // בולט באנדרואיד
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
   },
   title: {
     fontSize: 20,
@@ -59,16 +70,17 @@ const styles = StyleSheet.create({
   },
   editorStyle: {
     backgroundColor: '#ffffff',
-    color: '#ffffff', // טקסט לבן אם צריך
+    color: theme.colors.textDark,
     placeholderColor: '#888888',
     cssText: `
       body {
         direction: rtl;
         text-align: right;
+        
         font-family: Arial, sans-serif;
         font-size: 16px;
-        color: #333333;
-        background-color: #ffffff;
+        color:rgb(165, 153, 161);
+        background-color:rgb(195, 181, 190);
         padding: 10px;
       }
     `,
@@ -76,7 +88,7 @@ const styles = StyleSheet.create({
   editorInlineStyle: {
     writingDirection: 'rtl',
     textAlign: 'right',
-    minHeight: 120,
+    minHeight: 190,
     color: '#333333',
   },
 });
