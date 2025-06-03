@@ -157,19 +157,26 @@ export default PostDetails;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: 'white',
-    },
-    inputContainer: {
+        backgroundColor: '#666666', // רקע בהיר לאזור התגובה
+      },
+      inputContainer: {
         flexDirection: 'row',
-        alignItems: 'flex-start', // שינוי כדי שהטקסט והכפתור יתיישרו בחלק העליון
+        alignItems: 'flex-start',
         gap: wp(2),
         paddingHorizontal: wp(4),
         paddingVertical: hp(2),
-        backgroundColor: '#f5f5f5', // רקע בהיר לאזור התגובה
-    },
+        backgroundColor: '#4A4A4A', // אפור עכבר כהה ונעים
+        borderRadius: 12, // עיגול פינות למראה עדין
+        shadowColor: '#000', // צל שחור
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+        elevation: 6, // עבור אנדרואיד
+      },
     list: {
         paddingHorizontal: wp(4),
         paddingBottom: hp(20), // רווח גדול יותר בתחתית
+        
     },
     inputStyle: {
         flex: 1,

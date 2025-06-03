@@ -63,7 +63,6 @@ export default function ChatsPage() {
         params: {
           chat: JSON.stringify({
             ...chat,
-            is_read: true,
           }),
         },
       });

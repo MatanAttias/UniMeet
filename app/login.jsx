@@ -10,6 +10,7 @@ import { theme } from '../constants/theme';
 import Input from '../components/input';
 import Button from '../components/Button';
 import { supabase } from '../lib/supabase';
+import { TouchableOpacity } from 'react-native';
 
 const Login = () => {
   const router = useRouter();
@@ -68,7 +69,9 @@ const Login = () => {
             onChangeText={(value) => (passwordRef.current = value)}
             style={{ textAlign: 'right' }}
           />
-          <Text style={styles.forgotPassword}>שכחת סיסמה?</Text>
+          <TouchableOpacity onPress={() => router.push('/forgotPassword')}>
+            <Text style={styles.forgotPassword}>שכחת סיסמה?</Text>
+          </TouchableOpacity>
           <Button title={'התחבר'} loading={loading} onPress={onSubmit} />
         </View>
 
@@ -112,12 +115,15 @@ const styles = StyleSheet.create({
     paddingBottom: hp(4),
     gap: hp(4),
     justifyContent: 'flex-start',
+    color: theme.colors.primary,
+
   },
   welcomeText: {
     fontSize: hp(4),
     color: theme.colors.textPrimary,
     textAlign: 'right',
     fontWeight: theme.fonts.bold,
+    
   },
   subtext: {
     fontSize: hp(1.6),
@@ -126,6 +132,7 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 25,
+
   },
   forgotPassword: {
     textAlign: 'right',
@@ -137,6 +144,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 6,
+    
   },
   footerText: {
     color: theme.colors.textSecondary,

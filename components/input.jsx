@@ -14,8 +14,8 @@ const Input = ({ icon, iconPosition = 'left', containerStyle, inputRef, inputSty
     >
       {icon && icon}
       <TextInput
-        style={[styles.input, inputStyle]} // שימוש בסטייל של input בצורה נקייה
-        placeholderTextColor={theme.colors.textLight}
+        style={[styles.input, inputStyle]}
+        placeholderTextColor="#ccc"  // צבע Placeholder בהיר
         ref={inputRef}
         {...props}
       />
@@ -43,8 +43,8 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: theme.colors.text,
-    textAlign: 'right',            // כיווניות טקסט
-    writingDirection: 'rtl',       // תוודא שהתווים מימין לשמאל
+    color: '#fff',       // הצבע של הטקסט שהמשתמש מקליד
+    textAlign: 'right',
+    writingDirection: 'rtl',
   },
 })

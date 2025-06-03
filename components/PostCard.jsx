@@ -215,6 +215,7 @@ const styles = StyleSheet.create({
     padding: hp(2),
     marginBottom: hp(2),
     gap: hp(2),
+    marginTop: 40,
   },
   shadow: {
     shadowColor: '#000',
@@ -222,16 +223,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 4,
+    
   },
   header: {
     flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
+    
   },
   userInfo: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: wp(2),
+    
   },
   nameTime: {
     flexDirection: 'row-reverse',
@@ -250,20 +254,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: wp(3),
+    
   },
   content: {
     gap: hp(1),
     marginBottom: hp(1),
+    
   },
   postMedia: {
     width: '100%',
     borderRadius: theme.radius.xxl,
     height: hp(40),
+    
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
+    
   },
   footerButton: {
     flexDirection: 'row',
@@ -282,6 +290,8 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1),
     paddingHorizontal: wp(3),
     gap: wp(2),
+    
+    
   },
   quickReplyInput: {
     flex: 1,
@@ -293,5 +303,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.md,
     borderWidth: 1,
     borderColor: theme.colors.surface,
+    backgroundColor: theme.colors.background,
+
   },
 });
