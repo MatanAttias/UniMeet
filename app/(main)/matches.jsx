@@ -1,3 +1,4 @@
+// app/(main)/matches.jsx
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -9,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import ScreenWrapper from '../../components/ScreenWrapper';
 import Header from '../../components/Header';
 import { useAuth } from '../../contexts/AuthContext';
@@ -38,6 +40,7 @@ const CARD_HEIGHT = IMAGE_HEIGHT + BUTTON_ROW_HEIGHT;
 const BTN_SIZE = hp(4.5);
 
 export default function Matches() {
+  const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [matches, setMatches] = useState([]);
@@ -57,10 +60,14 @@ export default function Matches() {
     setLoading(true);
     fetchAttributeMatches(user.id)
       .then((data) => {
+        console.log('📊 Loaded matches:', data?.length || 0);
         setMatches(data || []);
         data.forEach((u) => u.image && Image.prefetch(u.image));
       })
-      .catch(() => Alert.alert('שגיאה', 'לא ניתן לטעון התאמות'))
+      .catch((error) => {
+        console.error('❌ Error loading matches:', error);
+        Alert.alert('שגיאה', 'לא ניתן לטעון התאמות');
+      })
       .finally(() => setLoading(false));
   }, [user?.id]);
 
@@ -71,7 +78,8 @@ export default function Matches() {
   }, [index, matches]);
 
   const resetAndAdvance = () => {
-    resetAnimation();
+    translateX.value = 0;
+    opacity.value = 1;
     setIndex((prev) => prev + 1);
   };
 
@@ -82,18 +90,54 @@ export default function Matches() {
     });
   };
 
-  const resetAnimation = () => {
-    translateX.value = 0;
-    opacity.value = 1;
+  // פונקציה לניווט לצ'אט עם הנתונים הנכונים
+  const navigateToChat = (chatId, targetUser) => {
+    console.log('🚀 Navigating to chat:', { chatId, userName: targetUser.name });
+    
+    // יצירת אובייקט הצ'אט כמו שהקובץ privateChat מצפה לקבל
+    const chatData = {
+      id: chatId,
+      name: targetUser.name,
+      image: targetUser.image,
+      // אפשר להוסיף עוד פרטים אם נדרש
+    };
+    
+    router.push({
+      pathname: `/privateChat/${chatId}`,
+      params: {
+        chat: JSON.stringify(chatData),
+      },
+    });
   };
 
   const current = matches[index];
-  if (index >= matches.length || !current) {
+  if (loading) {
+    return (
+      <ScreenWrapper>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      </ScreenWrapper>
+    );
+  }
+  if (!current) {
     return (
       <ScreenWrapper>
         <Header title="התאמות" />
         <View style={styles.center}>
           <Text style={styles.noMore}>אין עוד התאמות כרגע</Text>
+          <Pressable 
+            style={styles.refreshButton} 
+            onPress={() => {
+              setIndex(0);
+              setLoading(true);
+              fetchAttributeMatches(user.id)
+                .then((data) => setMatches(data || []))
+                .finally(() => setLoading(false));
+            }}
+          >
+            <Text style={styles.refreshText}>רענן התאמות</Text>
+          </Pressable>
         </View>
         <BottomBar selected="matches" />
       </ScreenWrapper>
@@ -105,29 +149,110 @@ export default function Matches() {
     : null;
 
   const handleReject = async () => {
-    await rejectUser(user.id, current.id);
-    animateAndNext();
-  };
-
-  const handleLike = async () => {
-    await likeUser(user.id, current.id);
-    animateAndNext();
+    console.log('❌ Rejecting user:', current.name);
+    try {
+      await rejectUser(user.id, current.id);
+      animateAndNext();
+    } catch (error) {
+      console.error('Error rejecting user:', error);
+      Alert.alert('שגיאה', 'לא ניתן לדחות את המשתמש');
+    }
   };
 
   const handleFriend = async () => {
-    await friendUser(user.id, current.id);
-    animateAndNext();
+    console.log('😊 Adding as friend:', current.name);
+    try {
+      const result = await friendUser(user.id, current.id);
+      
+      if (result.success && result.chatId) {
+        console.log('👫 Friendship created! Opening chat...');
+        
+        // הצגת הודעה ואפשרות לעבור לצ'אט
+        Alert.alert(
+          '👫 חברות נוצרה!',
+          `נוצרה חברות עם ${current.name}!\nרוצה לפתוח את הצ'אט?`,
+          [
+            {
+              text: 'אחר כך',
+              style: 'cancel',
+              onPress: () => {
+                console.log('User chose to continue matching');
+                animateAndNext();
+              }
+            },
+            {
+              text: 'פתח צ\'אט',
+              onPress: () => {
+                console.log('User chose to open chat');
+                navigateToChat(result.chatId, current);
+              }
+            }
+          ]
+        );
+      } else if (result.success) {
+        console.log('👫 Friend interaction added');
+        animateAndNext();
+      } else {
+        console.log('❌ Friend action failed');
+        Alert.alert('מידע', 'לא ניתן להוסיף כחבר (אולי נדחית קודם?)');
+        animateAndNext();
+      }
+    } catch (error) {
+      console.error('Error adding friend:', error);
+      Alert.alert('שגיאה', 'לא ניתן להוסיף כחבר');
+      animateAndNext();
+    }
   };
 
-  if (loading) {
-    return (
-      <ScreenWrapper>
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
-      </ScreenWrapper>
-    );
-  }
+  const handleLike = async () => {
+    console.log('❤️ Liking user:', current.name);
+    
+    try {
+      const result = await likeUser(user.id, current.id);
+      console.log('💫 Like result:', result);
+
+      if (result.matched && result.chatId) {
+        console.log('🎉 MATCH! Showing alert and navigating to chat...');
+        
+        // הצגת הודעת התאמה עם אפשרות לעבור לצ'אט
+        Alert.alert(
+          '🎉 זה התאמה!',
+          `יצרת התאמה עם ${current.name}!\nרוצה לפתוח את הצ'אט?`,
+          [
+            {
+              text: 'אחר כך',
+              style: 'cancel',
+              onPress: () => {
+                console.log('User chose to continue matching');
+                animateAndNext();
+              }
+            },
+            {
+              text: 'פתח צ\'אט',
+              onPress: () => {
+                console.log('User chose to open chat');
+                navigateToChat(result.chatId, current);
+              }
+            }
+          ]
+        );
+      } else if (result.matched && !result.chatId) {
+        console.log('💝 Match without chat - showing simple alert');
+        // התאמה בלי צ'אט (במקרה של תקלה)
+        Alert.alert('🎉 התאמה!', 'נוצרה התאמה!', [
+          { text: 'נהדר!', onPress: () => animateAndNext() }
+        ]);
+      } else {
+        console.log('💕 Like sent, no match yet');
+        // עדיין לא התאמה - ממשיכים לכרטיס הבא
+        animateAndNext();
+      }
+    } catch (error) {
+      console.error('❌ Error in handleLike:', error);
+      Alert.alert('שגיאה', 'לא ניתן לבצע לייק: ' + error.message);
+      animateAndNext(); // ממשיכים גם במקרה של שגיאה
+    }
+  };
 
   return (
     <ScreenWrapper contentContainerStyle={[styles.container, { paddingTop: hp(10) }]}>
@@ -201,6 +326,19 @@ const styles = StyleSheet.create({
   noMore: {
     color: '#888',
     fontSize: hp(2.5),
+    textAlign: 'center',
+    marginBottom: hp(3),
+  },
+  refreshButton: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: wp(6),
+    paddingVertical: hp(1.5),
+    borderRadius: theme.radius.lg,
+  },
+  refreshText: {
+    color: 'white',
+    fontSize: hp(2),
+    fontWeight: '600',
   },
   cardContainer: {
     width: CARD_WIDTH,
