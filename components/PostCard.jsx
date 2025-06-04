@@ -81,7 +81,7 @@ const PostCard = (props) => {
         { event: 'DELETE', schema: 'public', table: 'comments', filter: `postId=eq.${item.id}` },
         () => setCommentCount(c => Math.max(0, c - 1))
       )
-      .subscribe(status => console.log('comments subscription', status));
+      .subscribe();
     return () => supabase.removeChannel(channel);
   }, [item.id]);
 
@@ -89,7 +89,7 @@ const PostCard = (props) => {
     setLikes(item.postLikes || []);
   }, [item.postLikes]);
 
-  const createdAt = item.created_at ? moment(item.created_at).format('D MMM') : 'Unknown';
+  const createdAt = item.created_at ? moment(item.created_at).format('D MMM') : 'לא ידוע';
   const liked = likes.some(l => l.userId === currentUser.id);
 
   const onLike = async () => {
@@ -127,7 +127,7 @@ const PostCard = (props) => {
         <View style={styles.userInfo}>
           <Avatar size={hp(4.5)} uri={item.user?.image} rounded={theme.radius.md} />
           <View style={styles.nameTime}>
-            <Text style={styles.username}>{item.user?.name}</Text>
+            <Text style={styles.username}>{item.user?.name || 'משתמש'}</Text>
             <Text style={styles.postTime}>{createdAt}</Text>
           </View>
         </View>
@@ -142,7 +142,7 @@ const PostCard = (props) => {
               <TouchableOpacity onPress={() => onEdit(item)}>
                 <Icon name="edit" size={hp(2.5)} color={theme.colors.textSecondary} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => Alert.alert('Confirm','Are you sure?',[{ text:'Cancel', style:'cancel' },{ text:'Delete', style:'destructive', onPress:()=>onDelete(item) }])}>
+              <TouchableOpacity onPress={() => Alert.alert('אישור','בטוח שברצונך למחוק?',[{ text:'ביטול', style:'cancel' },{ text:'מחק', style:'destructive', onPress:()=>onDelete(item) }])}>
                 <Icon name="delete" size={hp(2.5)} color={theme.colors.rose} />
               </TouchableOpacity>
             </>

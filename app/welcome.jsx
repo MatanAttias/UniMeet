@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, Pressable } from 'react-native'
+import { StyleSheet, Text, View, Image, Pressable, Alert } from 'react-native'
 import React from 'react'
 import ScreenWrapper from '../components/ScreenWrapper'
 import { StatusBar } from 'expo-status-bar'
@@ -8,9 +8,49 @@ import { useRouter } from 'expo-router'
 import { theme } from '../constants/theme'
 import BottomButtonContainer from '../components/BottomButtonContainer'
 import { MotiView, MotiText } from 'moti'
+import { useAuth } from '../contexts/AuthContext'
 
 const Welcome = () => {
   const router = useRouter()
+  const { debugAuthState, clearAuthStorage } = useAuth()
+
+  // 🔍 כפתור ניפוי - מראה מה קורה מתחת למשטח
+  const handleDebugAuth = async () => {
+    console.log('🔍 Starting debug...')
+    const result = await debugAuthState()
+    
+    // הצגת התוצאות בצורה ברורה
+    Alert.alert(
+      'מצב Authentication', 
+      `Storage Keys: ${result.storageKeys?.length || 0}
+Session: ${result.hasSession ? 'קיימת' : 'לא קיימת'}
+User: ${result.hasUser ? 'קיים' : 'לא קיים'}
+שגיאה: ${result.error || 'אין'}`
+    )
+  }
+
+  // 🧹 כפתור ניקוי - מנקה הכל ומאפס
+  const handleClearAuth = async () => {
+    Alert.alert(
+      'ניקוי נתונים',
+      'זה ימחק את כל נתוני ההתחברות. בטוח?',
+      [
+        { text: 'ביטול', style: 'cancel' },
+        { 
+          text: 'נקה', 
+          style: 'destructive',
+          onPress: async () => {
+            console.log('🧹 Clearing all auth data...')
+            const success = await clearAuthStorage()
+            Alert.alert(
+              success ? 'הצלחה' : 'שגיאה',
+              success ? 'כל נתוני ההתחברות נוקו' : 'בעיה בניקוי הנתונים'
+            )
+          }
+        }
+      ]
+    )
+  }
 
   return (
     <ScreenWrapper bg={theme.colors.dark}>
@@ -60,6 +100,21 @@ const Welcome = () => {
             מתחברים ויוצרים קהילה אחת תומכת ומכילה.
           </MotiText>
         </View>
+
+        {/* 🛠️ כפתורי ניפוי זמניים - רק בפיתוח */}
+        {__DEV__ && (
+          <View style={styles.debugContainer}>
+            <Text style={styles.debugTitle}>🛠️ כלי פיתוח</Text>
+            
+            <Pressable style={styles.debugButton} onPress={handleDebugAuth}>
+              <Text style={styles.debugButtonText}>🔍 בדוק מצב Auth</Text>
+            </Pressable>
+            
+            <Pressable style={styles.debugButton} onPress={handleClearAuth}>
+              <Text style={styles.debugButtonText}>🧹 נקה נתוני Auth</Text>
+            </Pressable>
+          </View>
+        )}
 
       </View>
 
@@ -156,5 +211,35 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.bold,
     fontSize: hp(1.6),
     marginBottom: 30,
-  }
+  },
+  // 🛠️ סטיילים לכפתורי הניפוי
+  debugContainer: {
+    backgroundColor: 'rgba(228, 113, 163, 0.2)', // צבע primary שקוף
+    borderRadius: 10,
+    padding: 15,
+    marginVertical: 10,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+  },
+  debugTitle: {
+    color: theme.colors.primary,
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  debugButton: {
+    backgroundColor: 'rgba(228, 113, 163, 0.3)',
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(228, 113, 163, 0.5)',
+  },
+  debugButtonText: {
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '500',
+  },
 })

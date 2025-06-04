@@ -1,3 +1,4 @@
+// app/_layout.jsx - גרסה מתוקנת עם SplashScreen
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
@@ -5,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { useRouter } from 'expo-router';
 import { getUserData } from '../services/userService';
 import { LogBox } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen'; // שינוי כאן
 import {
   useFonts,
   Poppins_400Regular,
@@ -12,12 +14,17 @@ import {
   Poppins_700Bold,
   Poppins_600SemiBold,
 } from '@expo-google-fonts/poppins';
-import AppLoading from 'expo-app-loading';
+
+// מניעת הסתרה אוטומטית של splash screen
+SplashScreen.preventAutoHideAsync();
 
 LogBox.ignoreLogs([
   'Warning: TNodeChildrenRenderer',
   'Warning: MemoizedTNodeRenderer',
   'Warning: TRenderEngineProvider',
+  'VirtualizedList: You have a large list that is slow to update',
+  'expo-app-loading is deprecated',
+  'expo-notifications: Android Push notifications',
 ]);
 
 const _layout = () => (
@@ -27,7 +34,6 @@ const _layout = () => (
 );
 
 const MainLayout = () => {
-  // כל ה-hooks בראש
   const [fontsLoaded] = useFonts({
     Poppins_400Regular,
     Poppins_500Medium,
@@ -37,21 +43,29 @@ const MainLayout = () => {
   const { setAuth, setUserData } = useAuth();
   const router = useRouter();
 
-  // useEffect תמיד קיים! בודק בתוך ה-hook אם יש פונטים
   useEffect(() => {
-    if (!fontsLoaded) return; // כלום עד שהפונטים נטענים
+    if (!fontsLoaded) return;
 
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('Initial session user:', session?.user?.id);
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-      if (session) {
-        setAuth(session.user);
-        updateUserData(session.user, session.user.email);
-        router.replace('/home');
-      } else {
-        setAuth(null);
-        router.replace('/splash');
+        if (session) {
+          setAuth(session.user);
+          await updateUserData(session.user, session.user.email);
+          router.replace('/home');
+        } else {
+          setAuth(null);
+          router.replace('/welcome');
+        }
+      } catch (error) {
+        console.error('Session error:', error);
+        router.replace('/welcome');
+      } finally {
+        // הסתר את splash screen כשהכל מוכן
+        await SplashScreen.hideAsync();
       }
     };
 
@@ -67,23 +81,31 @@ const MainLayout = () => {
         router.replace('/home');
       } else {
         setAuth(null);
-        router.replace('/splash');
+        router.replace('/welcome');
       }
     });
 
     return () => {
       listener.subscription?.unsubscribe();
     };
-    // eslint-disable-next-line
-  }, [fontsLoaded]); // תלוי גם ב-fontsLoaded
+  }, [fontsLoaded]);
 
   const updateUserData = async (user, email) => {
-    let res = await getUserData(user?.id);
-    if (res?.success) setUserData({ ...res.data, email });
+    try {
+      let res = await getUserData(user?.id);
+      if (res?.success) {
+        setUserData({ ...res.data, email });
+        console.log('User data updated successfully');
+      }
+    } catch (error) {
+      console.error('Error updating user data:', error);
+    }
   };
 
-  // עכשיו אפשר להחזיר AppLoading אם הפונטים לא נטענו
-  if (!fontsLoaded) return <AppLoading />;
+  // אל תחזיר כלום עד שהפונטים נטענים
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <Stack
@@ -100,6 +122,5 @@ const MainLayout = () => {
     </Stack>
   );
 };
-
 
 export default _layout;

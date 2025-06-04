@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import AppLoading from 'expo-app-loading';
 import {
   useFonts,
   Poppins_600SemiBold,
@@ -151,7 +150,13 @@ export default function Home() {
   };
 
   if (!fontsLoaded) {
-    return <AppLoading />;
+    return (
+      <ScreenWrapper bg={theme.colors.background}>
+        <View style={styles.loadingContainer}>
+          <Loading />
+        </View>
+      </ScreenWrapper>
+    );
   }
 
   return (
@@ -232,8 +237,12 @@ export default function Home() {
   );
 }
 
-
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

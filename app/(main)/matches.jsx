@@ -1,8 +1,6 @@
-// app/(main)/matches.jsx
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   Pressable,
   StyleSheet,
   Text,
@@ -16,7 +14,6 @@ import Header from '../../components/Header';
 import { useAuth } from '../../contexts/AuthContext';
 import { hp, wp } from '../../constants/helpers/common';
 import { theme } from '../../constants/theme';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
   fetchAttributeMatches,
   likeUser,
@@ -24,6 +21,7 @@ import {
   rejectUser,
 } from '../../services/matchService';
 import BottomBar from '../../components/BottomBar';
+import MatchUserProfile from '../../components/MatchUserProfile';
 
 import Animated, {
   useSharedValue,
@@ -32,20 +30,13 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH - wp(1);
-const IMAGE_HEIGHT = hp(40);
-const BUTTON_ROW_HEIGHT = hp(30);
-const CARD_HEIGHT = IMAGE_HEIGHT + BUTTON_ROW_HEIGHT;
-const BTN_SIZE = hp(4.5);
-
 export default function Matches() {
   const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [matches, setMatches] = useState([]);
   const [index, setIndex] = useState(0);
-  const [imgLoading, setImgLoading] = useState(false);
+  const [showFullProfile, setShowFullProfile] = useState(false);
 
   const translateX = useSharedValue(0);
   const opacity = useSharedValue(1);
@@ -81,10 +72,11 @@ export default function Matches() {
     translateX.value = 0;
     opacity.value = 1;
     setIndex((prev) => prev + 1);
+    setShowFullProfile(false); // חזרה לתצוגת תמונה במשתמש הבא
   };
 
   const animateAndNext = () => {
-    translateX.value = withTiming(-SCREEN_WIDTH, { duration: 300 }, () => {
+    translateX.value = withTiming(-wp(100), { duration: 300 }, () => {
       opacity.value = 0;
       runOnJS(resetAndAdvance)();
     });
@@ -94,12 +86,10 @@ export default function Matches() {
   const navigateToChat = (chatId, targetUser) => {
     console.log('🚀 Navigating to chat:', { chatId, userName: targetUser.name });
     
-    // יצירת אובייקט הצ'אט כמו שהקובץ privateChat מצפה לקבל
     const chatData = {
       id: chatId,
       name: targetUser.name,
       image: targetUser.image,
-      // אפשר להוסיף עוד פרטים אם נדרש
     };
     
     router.push({
@@ -111,15 +101,20 @@ export default function Matches() {
   };
 
   const current = matches[index];
+  
   if (loading) {
     return (
       <ScreenWrapper>
+        <Header title="התאמות" />
         <View style={styles.center}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>טוען התאמות...</Text>
         </View>
+        <BottomBar selected="matches" />
       </ScreenWrapper>
     );
   }
+  
   if (!current) {
     return (
       <ScreenWrapper>
@@ -144,10 +139,6 @@ export default function Matches() {
     );
   }
 
-  const age = current.birth_date
-    ? new Date().getFullYear() - new Date(current.birth_date).getFullYear()
-    : null;
-
   const handleReject = async () => {
     console.log('❌ Rejecting user:', current.name);
     try {
@@ -163,11 +154,8 @@ export default function Matches() {
     console.log('😊 Adding as friend:', current.name);
     try {
       const result = await friendUser(user.id, current.id);
-      
-      if (result.success && result.chatId) {
-        console.log('👫 Friendship created! Opening chat...');
-        
-        // הצגת הודעה ואפשרות לעבור לצ'אט
+      if (result?.success && result?.chatId) {
+        // Immediate friendship match → open chat
         Alert.alert(
           '👫 חברות נוצרה!',
           `נוצרה חברות עם ${current.name}!\nרוצה לפתוח את הצ'אט?`,
@@ -175,26 +163,16 @@ export default function Matches() {
             {
               text: 'אחר כך',
               style: 'cancel',
-              onPress: () => {
-                console.log('User chose to continue matching');
-                animateAndNext();
-              }
+              onPress: () => animateAndNext()
             },
             {
               text: 'פתח צ\'אט',
-              onPress: () => {
-                console.log('User chose to open chat');
-                navigateToChat(result.chatId, current);
-              }
+              onPress: () => navigateToChat(result.chatId, current)
             }
           ]
         );
-      } else if (result.success) {
-        console.log('👫 Friend interaction added');
-        animateAndNext();
       } else {
-        console.log('❌ Friend action failed');
-        Alert.alert('מידע', 'לא ניתן להוסיף כחבר (אולי נדחית קודם?)');
+        // Interaction recorded, no match yet
         animateAndNext();
       }
     } catch (error) {
@@ -209,12 +187,8 @@ export default function Matches() {
     
     try {
       const result = await likeUser(user.id, current.id);
-      console.log('💫 Like result:', result);
-
-      if (result.matched && result.chatId) {
-        console.log('🎉 MATCH! Showing alert and navigating to chat...');
-        
-        // הצגת הודעת התאמה עם אפשרות לעבור לצ'אט
+      if (result?.matched && result?.chatId) {
+        // Romantic match → open chat
         Alert.alert(
           '🎉 זה התאמה!',
           `יצרת התאמה עם ${current.name}!\nרוצה לפתוח את הצ'אט?`,
@@ -222,89 +196,57 @@ export default function Matches() {
             {
               text: 'אחר כך',
               style: 'cancel',
-              onPress: () => {
-                console.log('User chose to continue matching');
-                animateAndNext();
-              }
+              onPress: () => animateAndNext()
             },
             {
               text: 'פתח צ\'אט',
-              onPress: () => {
-                console.log('User chose to open chat');
-                navigateToChat(result.chatId, current);
-              }
+              onPress: () => navigateToChat(result.chatId, current)
             }
           ]
         );
-      } else if (result.matched && !result.chatId) {
-        console.log('💝 Match without chat - showing simple alert');
-        // התאמה בלי צ'אט (במקרה של תקלה)
-        Alert.alert('🎉 התאמה!', 'נוצרה התאמה!', [
-          { text: 'נהדר!', onPress: () => animateAndNext() }
-        ]);
       } else {
-        console.log('💕 Like sent, no match yet');
-        // עדיין לא התאמה - ממשיכים לכרטיס הבא
+        // Like recorded, no match yet
         animateAndNext();
       }
     } catch (error) {
       console.error('❌ Error in handleLike:', error);
       Alert.alert('שגיאה', 'לא ניתן לבצע לייק: ' + error.message);
-      animateAndNext(); // ממשיכים גם במקרה של שגיאה
+      animateAndNext();
     }
   };
 
+  const toggleProfileView = () => {
+    setShowFullProfile(!showFullProfile);
+  };
+
   return (
-    <ScreenWrapper contentContainerStyle={[styles.container, { paddingTop: hp(10) }]}>
+    <ScreenWrapper bg={theme.colors.background}>
       <Header title="התאמות" />
-
-      <Animated.View style={[styles.cardContainer, animatedCardStyle]}>
-        <Text style={styles.nameTop}>
-          {current.name}
-          {age ? `, ${age}` : ''}
-        </Text>
-
-        <View style={styles.imageWrapper}>
-          {imgLoading && (
-            <ActivityIndicator
-              style={styles.loader}
-              size="large"
-              color={theme.colors.primary}
-            />
-          )}
-          <Image
-            source={{ uri: current.image }}
-            style={styles.image}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-            transition={250}
-            onLoadStart={() => setImgLoading(true)}
-            onLoadEnd={() => setImgLoading(false)}
+      
+      <View style={styles.container}>
+        <Animated.View style={[styles.cardContainer, animatedCardStyle]}>
+          <MatchUserProfile
+            user={current}
+            onLike={handleLike}
+            onFriend={handleFriend}
+            onReject={handleReject}
+            showFullProfile={showFullProfile}
+            onToggleView={toggleProfileView}
           />
-          <View style={styles.overlayActions}>
-            <Pressable style={styles.actionBtn} onPress={handleFriend}>
-              <MaterialCommunityIcons
-                name="emoticon-happy-outline"
-                size={hp(3.5)}
-                color={theme.colors.primary}
-              />
-            </Pressable>
-            <Pressable style={styles.actionBtn} onPress={handleLike}>
-              <MaterialCommunityIcons
-                name="heart"
-                size={hp(3.5)}
-                color={theme.colors.primary}
-              />
-            </Pressable>
-          </View>
-        </View>
+        </Animated.View>
 
-        <View style={styles.buttonRow}>
-          <Pressable style={styles.btn} onPress={handleReject}>
-            <MaterialCommunityIcons name="close" size={hp(3.8)} color="#fff" />
-          </Pressable>
+        {/* מידע נוסף על ההתאמה */}
+        <View style={styles.matchInfo}>
+          <Text style={styles.matchCounter}>
+            {index + 1} מתוך {matches.length}
+          </Text>
+          {!showFullProfile && (
+            <Text style={styles.tapHint}>
+              לחץ על התמונה לפרופיל מלא
+            </Text>
+          )}
         </View>
-      </Animated.View>
+      </View>
 
       <BottomBar selected="matches" />
     </ScreenWrapper>
@@ -315,16 +257,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: theme.colors.background,
+    justifyContent: 'center',
+    paddingHorizontal: wp(2),
+    marginTop: -700,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: wp(4),
+  },
+  loadingText: {
+    color: theme.colors.textSecondary,
+    fontSize: hp(1.8),
+    marginTop: hp(2),
   },
   noMore: {
-    color: '#888',
+    color: theme.colors.textSecondary,
     fontSize: hp(2.5),
     textAlign: 'center',
     marginBottom: hp(3),
@@ -341,68 +290,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   cardContainer: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT + hp(4),
-    alignItems: 'center',
-    marginBottom: hp(12),
-  },
-  nameTop: {
-    color: '#fff',
-    fontSize: hp(3.1),
-    fontWeight: 'bold',
-    marginBottom: hp(1),
-    alignSelf: 'flex-start',
-    paddingHorizontal: wp(2),
-  },
-  imageWrapper: {
-    width: '99%',
-    height: IMAGE_HEIGHT,
-    borderRadius: theme.radius.xl,
-    overflow: 'hidden',
-    backgroundColor: theme.colors.card,
-    position: 'relative',
-  },
-  image: {
+    flex: 1,
     width: '100%',
-    height: '100%',
-  },
-  loader: {
-    position: 'absolute',
-    top: IMAGE_HEIGHT / 2 - hp(2),
-    left: CARD_WIDTH / 2 - hp(2),
-    zIndex: 1,
-  },
-  overlayActions: {
-    position: 'absolute',
-    bottom: hp(1.2),
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-  actionBtn: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    width: 50,
-    height: 50,
-    borderRadius: BTN_SIZE / 3,
-    alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: wp(1),
+    marginBottom: hp(2),
   },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    width: '100%',
-    height: BUTTON_ROW_HEIGHT,
+  matchInfo: {
     alignItems: 'center',
-    marginTop: hp(10),
-    paddingHorizontal: wp(2),
+    paddingVertical: hp(1),
+    marginBottom: hp(2),
   },
-  btn: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    width: BTN_SIZE,
-    height: BTN_SIZE,
-    borderRadius: BTN_SIZE / 3.5,
-    alignItems: 'center',
-    justifyContent: 'center',
+  matchCounter: {
+    color: theme.colors.textSecondary,
+    fontSize: hp(1.6),
+    fontWeight: '500',
+  },
+  tapHint: {
+    color: theme.colors.textLight,
+    fontSize: hp(1.4),
+    marginTop: 4,
+    textAlign: 'center',
   },
 });
