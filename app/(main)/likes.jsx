@@ -20,8 +20,8 @@ import { theme } from '../../constants/theme';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
   fetchLikesAndRequests,
-  respondToChatRequest,
   likeUserBack,
+  friendUserBack, // ← הוספת הפונקציה לקבלת בקשת חברות חזרה
 } from '../../services/matchService';
 import BottomBar from '../../components/BottomBar';
 
@@ -35,14 +35,12 @@ export default function Likes() {
   const [selectedTab, setSelectedTab] = useState('liked_you');
   const [likesData, setLikesData] = useState({
     liked_you: [],
-    chat_requests: [],
     matches: [],
     active_chats: []
   });
 
   const tabs = [
     { id: 'liked_you', title: 'עשו לייק', icon: 'heart', color: theme.colors.rose },
-    { id: 'chat_requests', title: 'בקשות צ\'אט', icon: 'message-text', color: '#4ECDC4' },
     { id: 'matches', title: 'התאמות', icon: 'heart-multiple', color: '#FFD93D' },
     { id: 'active_chats', title: 'צ\'אטים פעילים', icon: 'chat', color: theme.colors.primary }
   ];
@@ -80,6 +78,7 @@ export default function Likes() {
     });
   };
 
+  // טיפול ב-“לייק חזרה” (רומנטי)
   const handleLikeBack = async (targetUser) => {
     try {
       const result = await likeUserBack(user.id, targetUser.id);
@@ -109,14 +108,15 @@ export default function Likes() {
     }
   };
 
-  const handleChatRequestResponse = async (requestId, targetUser, approved) => {
+  // טיפול ב-“קבלת בקשת חברות חזרה”
+  const handleAcceptFriend = async (targetUser) => {
     try {
-      const result = await respondToChatRequest(user.id, targetUser.id, approved);
+      const result = await friendUserBack(user.id, targetUser.id);
       
-      if (result.chatCreated && result.chatId) {
+      if (result.matched && result.chatId) {
         Alert.alert(
-          '🎉 צ\'אט נוצר!',
-          `נוצר צ\'אט עם ${targetUser.name}!\nרוצה לפתוח אותו?`,
+          '👫 חברות!',
+          `אתם עכשיו חברים עם ${targetUser.name}!\nרוצה לפתוח את הצ'אט?`,
           [
             {
               text: 'אחר כך',
@@ -129,90 +129,97 @@ export default function Likes() {
             }
           ]
         );
-      } else if (approved) {
-        Alert.alert(
-          '✅ נשלח!',
-          'האישור שלך נשלח. מחכים לתגובת המשתמש השני.',
-          [{ text: 'הבנתי', onPress: () => loadLikesData() }]
-        );
       } else {
         loadLikesData();
       }
     } catch (error) {
-      console.error('Error responding to chat request:', error);
-      Alert.alert('שגיאה', 'לא ניתן לעדכן תגובה');
+      console.error('Error accepting friend:', error);
+      Alert.alert('שגיאה', 'לא ניתן לקבל בקשת חברות');
     }
   };
 
-  const renderLikedYouCard = (likeData) => (
-    <View key={likeData.id} style={styles.card}>
-      {likeData.user.image ? (
-        <Image
-          source={{ uri: likeData.user.image }}
-          style={styles.cardImage}
-          contentFit="cover"
-        />
-      ) : (
-        <View style={[styles.cardImage, styles.placeholderImage]}>
-          <MaterialCommunityIcons name="account" size={wp(15)} color="#666" />
-        </View>
-      )}
-      <View style={[styles.cardOverlay, { backgroundColor: 'rgba(255, 79, 147, 0.9)' }]}>
-        <MaterialCommunityIcons 
-          name="heart" 
-          size={wp(5)} 
-          color="white"
-        />
-      </View>
-      <View style={styles.cardInfo}>
-        <Text style={styles.cardName} numberOfLines={1}>{likeData.user.name}</Text>
-        <Text style={styles.cardSubtitle} numberOfLines={1}>עשה לייק לתמונה שלך</Text>
-      </View>
-      <Pressable 
-        style={[styles.actionBtn, { backgroundColor: theme.colors.rose }]}
-        onPress={() => handleLikeBack(likeData.user)}
-      >
-        <MaterialCommunityIcons name="heart" size={wp(4)} color="white" />
-      </Pressable>
-    </View>
-  );
+  // רינדור קלף עבור “לעשו לך לייק / בקשת חברות”
+  const renderLikedYouCard = (likeData) => {
+    const isFriendRequest = likeData.type === 'friend';
 
-  const renderChatRequestCard = (requestData) => (
-    <View key={requestData.id} style={[styles.card, styles.fullWidthCard]}>
-      <View style={styles.requestCardContent}>
-        {requestData.actor.image ? (
+    return (
+      <View key={likeData.id} style={styles.card}>
+        {likeData.user.image ? (
           <Image
-            source={{ uri: requestData.actor.image }}
-            style={styles.requestCardImage}
+            source={{ uri: likeData.user.image }}
+            style={styles.cardImage}
             contentFit="cover"
           />
         ) : (
-          <View style={[styles.requestCardImage, styles.placeholderRequestImage]}>
-            <MaterialCommunityIcons name="account" size={wp(8)} color="#666" />
+          <View style={[styles.cardImage, styles.placeholderImage]}>
+            <MaterialCommunityIcons name="account" size={wp(15)} color="#666" />
           </View>
         )}
-        <View style={styles.requestCardInfo}>
-          <Text style={styles.cardName} numberOfLines={1}>{requestData.actor.name}</Text>
-          <Text style={styles.cardSubtitle} numberOfLines={2}>רוצה להתחיל צ'אט איתך</Text>
-        </View>
-        <View style={styles.requestActions}>
-          <Pressable 
-            style={[styles.actionBtn, styles.rejectBtn]}
-            onPress={() => handleChatRequestResponse(requestData.id, requestData.actor, false)}
-          >
-            <MaterialCommunityIcons name="close" size={wp(4)} color="white" />
-          </Pressable>
-          <Pressable 
-            style={[styles.actionBtn, styles.acceptBtn]}
-            onPress={() => handleChatRequestResponse(requestData.id, requestData.actor, true)}
-          >
-            <MaterialCommunityIcons name="check" size={wp(4)} color="white" />
-          </Pressable>
-        </View>
-      </View>
-    </View>
-  );
 
+        {/* צבע משתנה: ורוד ללייק, צהוב־סמיילי לבקשת חברות */}
+        <View 
+          style={[
+            styles.cardOverlay, 
+            { backgroundColor: isFriendRequest 
+                ? 'rgba(255, 217, 61, 0.9)' 
+                : 'rgba(255, 79, 147, 0.9)' 
+            }
+          ]}
+        >
+          {isFriendRequest ? (
+            <MaterialCommunityIcons 
+              name="emoticon-happy-outline" 
+              size={wp(5)} 
+              color="white"
+            />
+          ) : (
+            <MaterialCommunityIcons 
+              name="heart" 
+              size={wp(5)} 
+              color="white"
+            />
+          )}
+        </View>
+
+        <View style={styles.cardInfo}>
+          <Text style={styles.cardName} numberOfLines={1}>
+            {likeData.user.name}
+          </Text>
+          <Text style={styles.cardSubtitle} numberOfLines={1}>
+            {isFriendRequest 
+              ? 'שלח לך בקשת חברות' 
+              : 'עשה לך לייק'}
+          </Text>
+        </View>
+
+        {/* כפתור פעולה בפינה התחתונה־ימנית */}
+        <Pressable 
+          style={[
+            styles.actionBtn, 
+            { backgroundColor: isFriendRequest 
+                ? theme.colors.primary 
+                : theme.colors.rose 
+            }
+          ]}
+          onPress={() => {
+            if (isFriendRequest) {
+              handleAcceptFriend(likeData.user);
+            } else {
+              handleLikeBack(likeData.user);
+            }
+          }}
+        >
+          {isFriendRequest ? (
+            <MaterialCommunityIcons name="emoticon-happy-outline" size={wp(4)} color="white" />
+          ) : (
+            <MaterialCommunityIcons name="heart" size={wp(4)} color="white" />
+          )}
+        </Pressable>
+      </View>
+    );
+  };
+
+  // רינדור קלף עבור התאמה
   const renderMatchCard = (matchData) => (
     <View key={matchData.id} style={styles.card}>
       {matchData.user.image ? (
@@ -246,6 +253,7 @@ export default function Likes() {
     </View>
   );
 
+  // רינדור קלף עבור צ'אט פעיל
   const renderActiveChatCard = (chatData) => (
     <View key={chatData.id} style={styles.card}>
       {chatData.user.image ? (
@@ -260,11 +268,7 @@ export default function Likes() {
         </View>
       )}
       <View style={[styles.cardOverlay, { backgroundColor: `rgba(228, 113, 163, 0.9)` }]}>
-        <MaterialCommunityIcons 
-          name="chat" 
-          size={wp(5)} 
-          color="white"
-        />
+        <MaterialCommunityIcons name="chat" size={wp(5)} color="white" />
       </View>
       <View style={styles.cardInfo}>
         <Text style={styles.cardName} numberOfLines={1}>{chatData.user.name}</Text>
@@ -297,17 +301,12 @@ export default function Likes() {
         liked_you: { 
           icon: 'heart-broken',
           title: 'אין לייקים חדשים',
-          subtitle: 'כשמישהו יעשה לך לייק, תראה אותו כאן'
-        },
-        chat_requests: {
-          icon: 'message-question',
-          title: 'אין בקשות צ\'אט',
-          subtitle: 'בקשות לצ\'אט יופיעו כאן'
+          subtitle: 'כשמישהו יעשה לך לייק או בקשת חברות, תראה אותן כאן'
         },
         matches: {
           icon: 'heart-multiple',
           title: 'אין התאמות עדיין',
-          subtitle: 'המשך לעשות לייקים למצוא התאמות!'
+          subtitle: 'המשך לעשות לייקים ולשלוח בקשות חברות כדי למצוא התאמות!'
         },
         active_chats: {
           icon: 'chat-sleep',
@@ -344,8 +343,6 @@ export default function Likes() {
             switch (selectedTab) {
               case 'liked_you':
                 return renderLikedYouCard(item);
-              case 'chat_requests':
-                return renderChatRequestCard(item);
               case 'matches':
                 return renderMatchCard(item);
               case 'active_chats':
@@ -405,7 +402,6 @@ export default function Likes() {
           <MaterialCommunityIcons name="lightbulb-on" size={wp(4)} color={theme.colors.primary} />
           <Text style={styles.tipText}>
             {selectedTab === 'liked_you' && 'ככל שתגיב מהר יותר, כך הסיכויים שלך טובים יותר'}
-            {selectedTab === 'chat_requests' && 'בקשות צ\'אט נוצרות כשיש העדפות שונות'}
             {selectedTab === 'matches' && 'התאמות מושלמות! זמן לפתוח צ\'אט'}
             {selectedTab === 'active_chats' && 'הצ\'אטים הפעילים שלך'}
           </Text>
@@ -511,25 +507,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  fullWidthCard: {
-    width: '100%',
-  },
   cardImage: {
     width: '100%',
-    height: hp(20), // הגדלנו את גובה התמונה
+    height: hp(20),
     position: 'relative',
   },
   placeholderImage: {
-    backgroundColor: '#333',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  requestCardImage: {
-    width: hp(14), // הגדלנו את התמונה של בקשות צ'אט
-    height: hp(14),
-    borderRadius: theme.radius.lg,
-  },
-  placeholderRequestImage: {
     backgroundColor: '#333',
     justifyContent: 'center',
     alignItems: 'center',
@@ -547,7 +530,7 @@ const styles = StyleSheet.create({
   cardInfo: {
     padding: wp(3),
     flex: 1,
-    minHeight: hp(7), // מינימום גובה לאזור המידע
+    minHeight: hp(7),
   },
   cardName: {
     color: theme.colors.textPrimary,
@@ -574,25 +557,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
-  },
-  requestCardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: wp(4),
-    gap: wp(3),
-  },
-  requestCardInfo: {
-    flex: 1,
-  },
-  requestActions: {
-    flexDirection: 'row',
-    gap: wp(2),
-  },
-  acceptBtn: {
-    backgroundColor: '#4ECDC4',
-  },
-  rejectBtn: {
-    backgroundColor: '#666',
   },
   center: {
     flex: 1,

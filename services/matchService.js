@@ -1,123 +1,108 @@
+// services/matchService.js
+
 import { supabase } from '../lib/supabase';
 
 /**
- * Fetch users for matching with improved gender and connection type filtering
+ * Fetch users for matching with improved filtering:
+ *   - Exclude anyone that the current user has already interacted with (לייק/חבר/דחה).
+ *   - Exclude anyone that has already liked (רומנטי או חברי) the current user.
+ * כך, אם מישהו שלח לנו לייק או בקשת חברות, הוא יופיע רק תחת "עשו לייק" ולא בתוך ה־deck של "התאמות".
  */
 export const fetchAttributeMatches = async (userId) => {
   try {
-    // First, get the current user's preferences
+    // 1. קבלת פרטי המשתמש הנוכחי (מגדר + סוגי חיבורים)
     const { data: currentUser, error: userError } = await supabase
       .from('users')
       .select('gender, connectionTypes')
       .eq('id', userId)
       .single();
 
-    if (userError) {
+    if (userError || !currentUser) {
       console.error('Error fetching current user:', userError);
       return [];
     }
-
     if (!currentUser.gender || !currentUser.connectionTypes) {
       console.warn('User missing gender or connectionTypes');
       return [];
     }
 
-    // Get ALL existing interactions to exclude
-    const { data: allInteractions, error: intErr } = await supabase
+    // 2. קבלת כל האינטראקציות שהמשתמש הנוכחי עשה (user_id = userId)
+    const { data: outgoingInteractions, error: outErr } = await supabase
       .from('interactions')
-      .select('target_id, type')
+      .select('target_id')
       .eq('user_id', userId);
-
-    if (intErr) {
-      console.error('Error fetching interactions:', intErr);
+    if (outErr) {
+      console.error('Error fetching outgoing interactions:', outErr);
       return [];
     }
+    const outgoingIds = outgoingInteractions.map((i) => i.target_id);
 
-    const excludedIds = Array.from(new Set(allInteractions.map(i => i.target_id)));
-    
-    console.log('🚫 Excluding users with existing interactions:', {
-      total: excludedIds.length,
-      interactions: allInteractions.map(i => `${i.target_id}: ${i.type}`)
-    });
+    // 3. קבלת כל האינטראקציות שנעשו אל המשתמש הנוכחי (target_id = userId)
+    //    זה כדי להוציא מה־deck אנשים שכבר עשו לנו לייק או בקשה לחברות.
+    const { data: incomingInteractions, error: inErr } = await supabase
+      .from('interactions')
+      .select('user_id')
+      .eq('target_id', userId);
+    if (inErr) {
+      console.error('Error fetching incoming interactions:', inErr);
+      return [];
+    }
+    const incomingIds = incomingInteractions.map((i) => i.user_id);
 
-    // Parse current user's connection types
-    const userWantsDating = currentUser.connectionTypes && currentUser.connectionTypes.includes('דייטים');
-    const userWantsFriends = currentUser.connectionTypes && currentUser.connectionTypes.includes('חברויות');
+    // 4. מאחדים את שתי הרשימות כדי לקבל מערך ייחודי של כל ה־IDs להוצאה
+    const excludedIdsSet = new Set([...outgoingIds, ...incomingIds]);
+
+    // 5. פרטי חיבורי המשתמש הנוכחי
+    const userWantsDating = currentUser.connectionTypes.includes('דייטים');
+    const userWantsFriends = currentUser.connectionTypes.includes('חברויות');
     const userGender = currentUser.gender;
 
-    console.log('🔍 User preferences:', {
-      gender: userGender,
-      wantsDating: userWantsDating,
-      wantsFriends: userWantsFriends,
-      connectionTypes: currentUser.connectionTypes
-    });
-
-    // Get all users first, then filter in JavaScript
+    // 6. קבלת כלל המשתמשים ואז סינון בצד הלקוח
     const { data: allUsers, error: fetchErr } = await supabase
       .from('users')
       .select('*')
       .neq('id', userId)
       .not('gender', 'is', null)
       .not('connectionTypes', 'is', null);
-    
+
     if (fetchErr) {
       console.error('Error fetching users:', fetchErr);
       return [];
     }
 
-    // Apply matching logic
+    // 7. מסננים לפי:
+    //    א. לא בקבוצת ה־excludedIds
+    //    ב. התאמה על בסיס סוגי חיבור + מגדר
     const filteredUsers = allUsers
-      .filter(user => !excludedIds.includes(user.id))
-      .filter(targetUser => {
+      .filter((u) => !excludedIdsSet.has(u.id))
+      .filter((targetUser) => {
         const targetGender = targetUser.gender;
-        const targetWantsDating = targetUser.connectionTypes && targetUser.connectionTypes.includes('דייטים');
-        const targetWantsFriends = targetUser.connectionTypes && targetUser.connectionTypes.includes('חברויות');
-
-        console.log(`👤 Checking ${targetUser.name}:`, {
-          gender: targetGender,
-          wantsDating: targetWantsDating,
-          wantsFriends: targetWantsFriends,
-          connectionTypes: targetUser.connectionTypes
-        });
+        const targetWantsDating = targetUser.connectionTypes.includes('דייטים');
+        const targetWantsFriends = targetUser.connectionTypes.includes('חברויות');
 
         let hasCompatibleConnection = false;
 
-        // DATING COMPATIBILITY
+        // 1. אם אני רוצה דייט והם רוצים דייט, חייב להיות הפוכה במגדר
         if (userWantsDating && targetWantsDating) {
-          const oppositeGenders = (
+          const oppositeGenders =
             (userGender === 'זכר' && targetGender === 'נקבה') ||
-            (userGender === 'נקבה' && targetGender === 'זכר')
-          );
-          
+            (userGender === 'נקבה' && targetGender === 'זכר');
           if (oppositeGenders) {
-            console.log(`💕 Dating compatibility: YES (opposite genders)`);
             hasCompatibleConnection = true;
-          } else {
-            console.log(`💕 Dating compatibility: NO (same gender)`);
           }
         }
 
-        // FRIENDSHIP COMPATIBILITY  
+        // 2. אם אני רוצה חברות והם רוצים חברות
         if (userWantsFriends && targetWantsFriends) {
-          console.log(`👫 Friendship compatibility: YES`);
           hasCompatibleConnection = true;
         }
 
-        const result = hasCompatibleConnection;
-        console.log(`✅ Final result for ${targetUser.name}: ${result ? 'MATCH' : 'NO MATCH'}`);
-        
-        return result;
+        return hasCompatibleConnection;
       });
 
-    console.log(`📊 Filtered ${filteredUsers.length} users from ${allUsers.length} total (excluded ${excludedIds.length} with existing interactions)`);
-    
-    // Limit to 50 users and randomize order
-    const shuffledUsers = filteredUsers
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 50);
-
+    // 8. לוקחים עד 50 בצורה אקראית
+    const shuffledUsers = filteredUsers.sort(() => Math.random() - 0.5).slice(0, 50);
     return shuffledUsers;
-
   } catch (error) {
     console.error('Error in fetchAttributeMatches:', error);
     return [];
@@ -125,392 +110,472 @@ export const fetchAttributeMatches = async (userId) => {
 };
 
 /**
- * Check for mismatch between interaction types
+ * Create a romantic or friendship like (no more cross-type mismatches).
+ * בסוף מחזירים גם interaction_id כדי שה־frontend יוכל להשתמש בו.
  */
-const checkInteractionMismatch = (userAType, userBType) => {
-  if (userAType === userBType) {
-    return { hasMismatch: false, matchType: userAType };
+export const likeUser = async (userId, targetId) => {
+  console.log('🔄 Starting likeUser process:', { userId, targetId });
+
+  try {
+    // 1. בודקים אם קיימת אינטראקציה של userId -> targetId
+    const { data: existingInteraction, error: checkError } = await supabase
+      .from('interactions')
+      .select('id, type')
+      .eq('user_id', userId)
+      .eq('target_id', targetId)
+      .single();
+
+    let interactionId;
+
+    if (checkError && checkError.code === 'PGRST116') {
+      // אין עדיין אינטראקציה, נוציא לייק חדש
+      console.log('📝 Creating new like interaction...');
+      const { data: likeRow, error: likeError } = await supabase
+        .from('interactions')
+        .insert({ user_id: userId, target_id: targetId, type: 'like' })
+        .select('id')
+        .single();
+
+      if (likeError || !likeRow) {
+        console.error('❌ likeUser error:', likeError);
+        return { matched: false };
+      }
+      interactionId = likeRow.id;
+    } else if (checkError) {
+      console.error('❌ Error checking existing interaction:', checkError);
+      return { matched: false };
+    } else {
+      interactionId = existingInteraction.id;
+      if (existingInteraction.type === 'like') {
+        // כבר יש לייק
+      } else if (existingInteraction.type === 'friend') {
+        // משדרגים friend ל-like
+        console.log('👫➡️💕 Upgrading friend to like...');
+        const { data: updated, error: updateError } = await supabase
+          .from('interactions')
+          .update({ type: 'like' })
+          .eq('id', existingInteraction.id)
+          .select('id')
+          .single();
+        if (updateError || !updated) {
+          console.error('❌ Error upgrading to like:', updateError);
+          return { matched: false };
+        }
+        interactionId = updated.id;
+      } else if (existingInteraction.type === 'reject') {
+        console.log('❌ User was rejected - cannot like');
+        return { matched: false };
+      }
+    }
+
+    // 2. בודקים אם יש אינטראקציה הפוכה מסוג 'like'
+    console.log('🔍 Checking for reciprocal interaction...');
+    const { data: reciprocalInteraction, error: recErr } = await supabase
+      .from('interactions')
+      .select('id, type')
+      .eq('user_id', targetId)
+      .eq('target_id', userId)
+      .eq('type', 'like')
+      .single();
+
+    if (recErr && recErr.code !== 'PGRST116') {
+      console.error('❌ Reciprocal interaction check error:', recErr);
+      return { matched: false };
+    }
+
+    if (reciprocalInteraction) {
+      // נוצר התאמה רומנטית
+      return await createMatch(userId, targetId, interactionId, reciprocalInteraction.id);
+    } else {
+      // 3. שולחים התראה למקבל ה–like בטבלת match_notifications
+      const { error: likeNotifErr } = await supabase
+        .from('match_notifications')
+        .insert({
+          user_id: targetId,
+          actor_id: userId,
+          type: 'like',
+          interaction_id: interactionId,
+          read: false,
+          metadata: {},
+        });
+
+      if (likeNotifErr) {
+        console.error('❌ Error inserting like into match_notifications:', likeNotifErr);
+      }
+      return { matched: false, interaction_id: interactionId };
+    }
+  } catch (error) {
+    console.error('❌ Error in likeUser:', error);
+    return { matched: false };
   }
-  
-  return {
-    hasMismatch: true,
-    likeUser: userAType === 'like' ? 'A' : 'B',
-    friendUser: userAType === 'friend' ? 'A' : 'B'
-  };
 };
 
 /**
- * Create a chat request notification for mismatched interactions
- * ✅ עכשיו יעבוד עם constraint מעודכן
+ * Create a romantic match: שני משתמשים שלחו אחד לשני לייק רומנטי.
  */
-const createChatRequestNotification = async (userId, actorId, userType, actorType) => {
+const createMatch = async (userId, targetId, userInteractionId, targetInteractionId) => {
+  const [u1, u2] = [userId, targetId].sort();
+
   try {
-    const { error } = await supabase
+    // 1. יצירת/עדכון צ'אט
+    console.log('💬 Creating match chat...');
+    const { data: chat, error: chatErr } = await supabase
+      .from('chats')
+      .upsert(
+        { user1_id: u1, user2_id: u2 },
+        { onConflict: 'user1_id,user2_id' }
+      )
+      .select('id')
+      .single();
+
+    if (chatErr || !chat) {
+      console.error('❌ Chat creation error:', chatErr);
+      return { matched: false };
+    }
+
+    // 2. יצירת/עדכון טבלת matches
+    console.log('💕 Creating match record...');
+    const { error: matchErr } = await supabase
+      .from('matches')
+      .upsert(
+        { user1: u1, user2: u2 },
+        { onConflict: 'user1,user2' }
+      );
+
+    if (matchErr) {
+      console.error('❌ Match creation error:', matchErr);
+    }
+
+    // 3. שליחת התראה על ״התאמה״
+    const { error: matchNotifErr } = await supabase
       .from('match_notifications')
       .insert({
-        user_id: userId,
-        actor_id: actorId,
-        type: 'chat_request', // ✅ עכשיו מותר בconstraint
-        interaction_id: null,
+        user_id: targetId,
+        actor_id: userId,
+        type: 'match',
+        interaction_id: targetInteractionId,
         read: false,
         metadata: {
-          user_preference: userType,
-          actor_preference: actorType,
-          status: 'pending',
-          created_at: new Date().toISOString()
-        }
+          chat_id: chat.id,
+          match_type: 'romantic',
+          user_interaction: userInteractionId,
+        },
       });
-    
-    if (error) {
-      console.error('❌ Error creating chat request notification:', error);
-    } else {
-      console.log('✅ Chat request notification created');
+
+    if (matchNotifErr) {
+      console.error('❌ Match notification error:', matchNotifErr);
     }
+
+    return { matched: true, chatId: chat.id, interaction_id: targetInteractionId };
   } catch (error) {
-    console.error('❌ Error in createChatRequestNotification:', error);
+    console.error('❌ Error in createMatch:', error);
+    return { matched: false };
   }
 };
 
-export const likeUser = async (userId, targetId) => {
-  console.log('🔄 Starting likeUser process:', { userId, targetId });
-  
-  // Check if interaction already exists
-  const { data: existingInteraction, error: checkError } = await supabase
-    .from('interactions')
-    .select('id, type')
-    .eq('user_id', userId)
-    .eq('target_id', targetId)
-    .single();
+/**
+ * Create a friendship interaction and check for reciprocal connections.
+ * בסוף מוחזר גם interaction_id לשם שימוש ב־frontend.
+ */
+export const friendUser = async (userId, targetId) => {
+  console.log('👫 Starting friendUser process:', { userId, targetId });
 
-  let interactionId;
-  
-  if (checkError && checkError.code === 'PGRST116') {
-    // Create new like interaction
-    console.log('📝 Creating new like interaction...');
+  try {
+    // 1. בדיקה אם קיימת אינטראקציה של userId -> targetId
+    const { data: existingInteraction, error: checkError } = await supabase
+      .from('interactions')
+      .select('id, type')
+      .eq('user_id', userId)
+      .eq('target_id', targetId)
+      .single();
+
+    let interactionId;
+
+    if (checkError && checkError.code === 'PGRST116') {
+      // אין עדיין אינטראקציה, ניצור friend חדש
+      console.log('📝 Creating new friend interaction...');
+      const { data: friendRow, error: friendError } = await supabase
+        .from('interactions')
+        .insert({ user_id: userId, target_id: targetId, type: 'friend' })
+        .select('id')
+        .single();
+
+      if (friendError || !friendRow) {
+        console.error('❌ friendUser error:', friendError);
+        return { matched: false };
+      }
+      interactionId = friendRow.id;
+    } else if (checkError) {
+      console.error('❌ Error checking existing interaction:', checkError);
+      return { matched: false };
+    } else {
+      interactionId = existingInteraction.id;
+      if (existingInteraction.type === 'friend') {
+        return { matched: false, interaction_id: interactionId };
+      } else if (existingInteraction.type === 'like') {
+        // כבר יש לייק רומנטי → נשאיר
+        return { matched: false, interaction_id: interactionId };
+      } else if (existingInteraction.type === 'reject') {
+        return { matched: false };
+      }
+    }
+
+    // 2. בדיקה אם יש אינטראקציה הפוכה מסוג friend או like
+    console.log('🔍 Checking for reciprocal interaction...');
+    const { data: reciprocalInteraction, error: recErr } = await supabase
+      .from('interactions')
+      .select('id, type')
+      .eq('user_id', targetId)
+      .eq('target_id', userId)
+      .in('type', ['friend', 'like'])
+      .single();
+
+    if (recErr && recErr.code !== 'PGRST116') {
+      console.error('❌ Reciprocal interaction check error:', recErr);
+      return { matched: false };
+    }
+
+    if (reciprocalInteraction) {
+      // נוצר צ'אט חברי (או רומנטי אם הייתה הדדיות בלייק)
+      return await createFriendshipChat(userId, targetId, interactionId, reciprocalInteraction.id);
+    } else {
+      // 3. שליחת התראה על בקשת חברות
+      const { error: friendNotifErr } = await supabase
+        .from('match_notifications')
+        .insert({
+          user_id: targetId,
+          actor_id: userId,
+          type: 'friend',
+          interaction_id: interactionId,
+          read: false,
+          metadata: {},
+        });
+
+      if (friendNotifErr) {
+        console.error('❌ Error inserting friend request into match_notifications:', friendNotifErr);
+      }
+      return { matched: false, interaction_id: interactionId };
+    }
+  } catch (error) {
+    console.error('❌ Error in friendUser:', error);
+    return { matched: false };
+  }
+};
+
+/**
+ * Create a friendship chat (לא match רומנטי, רק צ'אט חברי).
+ */
+const createFriendshipChat = async (userId, targetId, userInteractionId, targetInteractionId) => {
+  try {
+    const [u1, u2] = [userId, targetId].sort();
+
+    // 1. יצירת/עדכון צ'אט
+    console.log('💬 Creating friendship chat...');
+    const { data: chat, error: chatErr } = await supabase
+      .from('chats')
+      .upsert(
+        { user1_id: u1, user2_id: u2 },
+        { onConflict: 'user1_id,user2_id' }
+      )
+      .select('id')
+      .single();
+
+    if (chatErr || !chat) {
+      console.error('❌ Chat creation error:', chatErr);
+      return { matched: false };
+    }
+
+    // 2. שליחת התראת friend ל־match_notifications
+    const { error: friendshipNotifErr } = await supabase
+      .from('match_notifications')
+      .insert({
+        user_id: targetId,
+        actor_id: userId,
+        type: 'friend',
+        interaction_id: targetInteractionId,
+        read: false,
+        metadata: {
+          chat_id: chat.id,
+          user_interaction: userInteractionId,
+        },
+      });
+
+    if (friendshipNotifErr) {
+      console.error('❌ Friendship chat notification error:', friendshipNotifErr);
+    }
+    return { matched: true, chatId: chat.id, interaction_id: targetInteractionId };
+  } catch (error) {
+    console.error('❌ Error in createFriendshipChat:', error);
+    return { matched: false };
+  }
+};
+
+/**
+ * Create a romantic or friendship like-back.
+ * במקרה של לייק חזרה (רומנטי) – עושה את מלאכת createMatch אם יש הדדיות.
+ */
+export const likeUserBack = async (userId, targetId) => {
+  console.log('💕 Liking user back:', { userId, targetId });
+
+  try {
+    // יצירת לייק חדש
     const { data: likeRow, error: likeError } = await supabase
       .from('interactions')
       .insert({ user_id: userId, target_id: targetId, type: 'like' })
       .select('id')
       .single();
-    
-    if (likeError) {
-      console.error('❌ likeUser error:', likeError);
-      return { matched: false };
-    }
-    console.log('✅ Like interaction created');
-    interactionId = likeRow.id;
-  } else if (checkError) {
-    console.error('❌ Error checking existing interaction:', checkError);
-    return { matched: false };
-  } else {
-    console.log(`📝 Existing interaction found: ${existingInteraction.type}`);
-    
-    if (existingInteraction.type === 'like') {
-      console.log('💕 Like already exists');
-      interactionId = existingInteraction.id;
-    } else if (existingInteraction.type === 'friend') {
-      // Upgrade friend to like
-      console.log('👫➡️💕 Upgrading friend to like...');
-      const { data: updatedInteraction, error: updateError } = await supabase
-        .from('interactions')
-        .update({ type: 'like' })
-        .eq('id', existingInteraction.id)
-        .select('id')
-        .single();
-      
-      if (updateError) {
-        console.error('❌ Error upgrading to like:', updateError);
-        return { matched: false };
-      }
-      console.log('✅ Friend upgraded to like');
-      interactionId = updatedInteraction.id;
-    } else if (existingInteraction.type === 'reject') {
-      console.log('❌ User was rejected - cannot like');
-      return { matched: false };
-    }
-  }
 
-  // Check for reciprocal interaction
-  console.log('🔍 Checking for reciprocal interaction...');
-  const { data: reciprocalInteraction, error: recErr } = await supabase
-    .from('interactions')
-    .select('id, type')
-    .eq('user_id', targetId)
-    .eq('target_id', userId)
-    .in('type', ['like', 'friend'])
-    .single();
-  
-  if (recErr && recErr.code !== 'PGRST116') {
-    console.error('❌ Reciprocal interaction check error:', recErr);
-    return { matched: false };
-  }
-
-  if (reciprocalInteraction) {
-    console.log(`🔍 Found reciprocal interaction: ${reciprocalInteraction.type}`);
-    
-    const mismatchInfo = checkInteractionMismatch('like', reciprocalInteraction.type);
-    
-    if (mismatchInfo.hasMismatch) {
-      console.log('⚠️ MISMATCH DETECTED: like vs friend');
-      
-      // Create notifications for both users
-      await createChatRequestNotification(userId, targetId, 'like', 'friend');
-      await createChatRequestNotification(targetId, userId, 'friend', 'like');
-      
-      return { 
-        matched: false, 
-        mismatch: true,
-        message: 'נוצרה בקשת צ\'אט בגלל העדפות שונות'
-      };
-    } else {
-      // Perfect match
-      console.log('🎉 PERFECT MATCH! Both users want dating');
-      return await createMatch(userId, targetId, interactionId, reciprocalInteraction.id);
+    if (likeError || !likeRow) {
+      console.error('❌ Error creating like back:', likeError);
+      return { matched: false, error: likeError?.message };
     }
-  } else {
-    console.log('📝 Like registered, no reciprocal interaction found yet');
-    
-    // Send like notification
-    const { error: likeNotifErr } = await supabase
-      .from('notifications')
+    const userInteractionId = likeRow.id;
+
+    // עכשיו יש לייק בשני הכיוונים – יוצרים התאמה
+    const [u1, u2] = [userId, targetId].sort();
+
+    // יצירת צ'אט
+    const { data: chat, error: chatErr } = await supabase
+      .from('chats')
+      .upsert(
+        { user1_id: u1, user2_id: u2 },
+        { onConflict: 'user1_id,user2_id' }
+      )
+      .select('id')
+      .single();
+
+    if (chatErr || !chat) {
+      console.error('❌ Chat creation error:', chatErr);
+      return { matched: false, error: chatErr?.message };
+    }
+
+    // יצירת match
+    const { error: matchErr } = await supabase
+      .from('matches')
+      .upsert(
+        { user1: u1, user2: u2 },
+        { onConflict: 'user1,user2' }
+      );
+    if (matchErr) {
+      console.error('❌ Match creation error:', matchErr);
+    }
+
+    // שליחת התראה על match
+    const { error: matchNotifErr } = await supabase
+      .from('match_notifications')
       .insert({
-        receiverId: targetId,
-        senderId: userId,
-        title: 'מישהו עשה לך לייק!',
-        data: JSON.stringify({
-          type: 'like',
-          interaction_id: interactionId
-        })
+        user_id: targetId,
+        actor_id: userId,
+        type: 'match',
+        interaction_id: likeRow.id,
+        read: false,
+        metadata: {
+          chat_id: chat.id,
+          match_type: 'romantic',
+          user_interaction: userInteractionId,
+        },
       });
-      
-    if (likeNotifErr) console.error('❌ Like notification error:', likeNotifErr);
-    else console.log('✅ Like notification sent');
-    
-    return { matched: false };
+
+    if (matchNotifErr) {
+      console.error('❌ Error inserting match into match_notifications:', matchNotifErr);
+    }
+    return { matched: true, chatId: chat.id, interaction_id: likeRow.id };
+  } catch (error) {
+    console.error('❌ Error in likeUserBack:', error);
+    return { matched: false, error: error.message };
   }
 };
 
-export const friendUser = async (userId, targetId) => {
-  console.log('😊 Starting friendUser process:', { userId, targetId });
-  
-  // Check if interaction already exists
-  const { data: existingInteraction, error: checkError } = await supabase
-    .from('interactions')
-    .select('id, type')
-    .eq('user_id', userId)
-    .eq('target_id', targetId)
-    .single();
+/**
+ * Create a friendship-back (קבלת בקשת חברות חזרה).
+ */
+export const friendUserBack = async (userId, targetId) => {
+  console.log('👫 Accepting friend back:', { userId, targetId });
 
-  if (checkError && checkError.code === 'PGRST116') {
-    // Create new friend interaction
-    console.log('📝 Creating new friend interaction...');
-    const { error } = await supabase
+  try {
+    // יצירת friend חדש (כדי שיהיה reciprocal)
+    const { data: friendRow, error: friendError } = await supabase
       .from('interactions')
-      .insert({ user_id: userId, target_id: targetId, type: 'friend' });
-    if (error) {
-      console.error('❌ friendUser error:', error);
-      return { success: false };
-    }
-    console.log('✅ Friend interaction created');
-  } else if (checkError) {
-    console.error('❌ Error checking existing interaction:', checkError);
-    return { success: false };
-  } else {
-    console.log(`📝 Existing interaction found: ${existingInteraction.type}`);
-    
-    if (existingInteraction.type === 'reject') {
-      console.log('❌ User was rejected - cannot add as friend');
-      return { success: false };
-    }
-  }
+      .insert({ user_id: userId, target_id: targetId, type: 'friend' })
+      .select('id')
+      .single();
 
-  // Check for reciprocal interaction
-  console.log('🔍 Checking for reciprocal interaction...');
-  const { data: reciprocalInteraction, error: recErr } = await supabase
-    .from('interactions')
-    .select('id, type')
-    .eq('user_id', targetId)
-    .eq('target_id', userId)
-    .in('type', ['like', 'friend'])
-    .single();
-  
-  if (recErr && recErr.code !== 'PGRST116') {
-    console.error('❌ Reciprocal interaction check error:', recErr);
-    return { success: false };
-  }
-
-  if (reciprocalInteraction) {
-    console.log(`🔍 Found reciprocal interaction: ${reciprocalInteraction.type}`);
-    
-    const mismatchInfo = checkInteractionMismatch('friend', reciprocalInteraction.type);
-    
-    if (mismatchInfo.hasMismatch) {
-      console.log('⚠️ MISMATCH DETECTED: friend vs like');
-      
-      // Create notifications for both users
-      await createChatRequestNotification(userId, targetId, 'friend', 'like');
-      await createChatRequestNotification(targetId, userId, 'like', 'friend');
-      
-      return { 
-        success: false, 
-        mismatch: true,
-        message: 'נוצרה בקשת צ\'אט בגלל העדפות שונות'
-      };
-    } else {
-      // Perfect match - both friend
-      console.log('👫 FRIENDSHIP MATCH! Creating chat immediately');
-      return await createFriendshipChat(userId, targetId);
+    if (friendError || !friendRow) {
+      console.error('❌ Error creating friend back:', friendError);
+      return { matched: false, error: friendError?.message };
     }
-  } else {
-    // No reciprocal for friendship - create chat immediately
-    console.log('👫 Creating friendship chat immediately');
-    return await createFriendshipChat(userId, targetId);
+    const userInteractionId = friendRow.id;
+
+    // עכשיו יש friend בשני הכיוונים – נוצרת התאמה חברית
+    const [u1, u2] = [userId, targetId].sort();
+
+    // יצירת צ'אט חברי
+    const { data: chat, error: chatErr } = await supabase
+      .from('chats')
+      .upsert(
+        { user1_id: u1, user2_id: u2 },
+        { onConflict: 'user1_id,user2_id' }
+      )
+      .select('id')
+      .single();
+
+    if (chatErr || !chat) {
+      console.error('❌ Chat creation error:', chatErr);
+      return { matched: false, error: chatErr?.message };
+    }
+
+    // שליחת התראה על match חברי ל־match_notifications
+    const { error: matchNotifErr } = await supabase
+      .from('match_notifications')
+      .insert({
+        user_id: targetId,
+        actor_id: userId,
+        type: 'friend',
+        interaction_id: friendRow.id,
+        read: false,
+        metadata: {
+          chat_id: chat.id,
+          user_interaction: userInteractionId,
+        },
+      });
+
+    if (matchNotifErr) {
+      console.error('❌ Error inserting friend match into match_notifications:', matchNotifErr);
+    }
+    return { matched: true, chatId: chat.id, interaction_id: friendRow.id };
+  } catch (error) {
+    console.error('❌ Error in friendUserBack:', error);
+    return { matched: false, error: error.message };
   }
 };
 
 /**
- * Create a romantic match
- */
-const createMatch = async (userId, targetId, userInteractionId, targetInteractionId) => {
-  const [u1, u2] = [userId, targetId].sort();
-  
-  // Create chat
-  console.log('💬 Creating match chat...');
-  const { data: chat, error: chatErr } = await supabase
-    .from('chats')
-    .upsert({ user1_id: u1, user2_id: u2 }, { onConflict: 'user1_id,user2_id' })
-    .select('id')
-    .single();
-  
-  if (chatErr) {
-    console.error('❌ Chat creation error:', chatErr);
-    return { matched: false };
-  }
-  
-  // Create match record
-  console.log('💕 Creating match record...');
-  const { error: matchErr } = await supabase
-    .from('matches')
-    .upsert({ user1: u1, user2: u2 }, { onConflict: 'user1,user2' });
-  
-  if (matchErr) console.error('❌ Match creation error:', matchErr);
-  
-  // Send match notification
-  const { error: matchNotifErr } = await supabase
-    .from('match_notifications')
-    .insert({
-      user_id: targetId,
-      actor_id: userId,
-      type: 'match',
-      interaction_id: targetInteractionId,
-      read: false,
-      metadata: {
-        chat_id: chat.id,
-        match_type: 'romantic'
-      }
-    });
-    
-  if (matchNotifErr) console.error('❌ Match notification error:', matchNotifErr);
-  
-  console.log('🎉 Match created successfully!');
-  return { matched: true, chatId: chat.id };
-};
-
-/**
- * Create a friendship chat
- */
-const createFriendshipChat = async (userId, targetId) => {
-  const [u1, u2] = [userId, targetId].sort();
-  
-  console.log('💬 Creating friendship chat...');
-  const { data: chat, error: chatErr } = await supabase
-    .from('chats')
-    .upsert({ user1_id: u1, user2_id: u2 }, { onConflict: 'user1_id,user2_id' })
-    .select('id')
-    .single();
-  
-  if (chatErr) {
-    console.error('❌ Friendship chat creation error:', chatErr);
-    return { success: false };
-  }
-  
-  // Send friendship match notification
-  const { error: friendNotifErr } = await supabase
-    .from('match_notifications')
-    .insert({
-      user_id: targetId,
-      actor_id: userId,
-      type: 'friend',
-      interaction_id: null,
-      read: false,
-      metadata: {
-        chat_id: chat.id,
-        match_type: 'friendship'
-      }
-    });
-    
-  if (friendNotifErr) console.error('❌ Friend notification error:', friendNotifErr);
-  
-  console.log('✅ Friendship chat created successfully!');
-  return { success: true, chatId: chat.id };
-};
-
-/**
- * Fetch likes and requests data
+ * Fetch likes (רומנטיים ו־friend) + matches + active chats.
  */
 export const fetchLikesAndRequests = async (userId) => {
   try {
     console.log('🔍 Fetching likes and requests for user:', userId);
-    
-    // Get users who liked me
-    const { data: likedYou, error: likedError } = await supabase
+
+    // 1. מי שלח לנו לייק או בקשת חברות
+    const { data: likedYouRaw, error: likedError } = await supabase
       .from('interactions')
       .select(`
         id,
+        type,
         created_at,
         user:users!interactions_user_id_fkey (
           id, name, image, birth_date
         )
       `)
       .eq('target_id', userId)
-      .eq('type', 'like')
+      .in('type', ['like', 'friend'])
       .order('created_at', { ascending: false });
 
     if (likedError) {
-      console.error('❌ Error fetching liked you:', likedError);
+      console.error('❌ Error fetching liked you / friend requests:', likedError);
     }
 
-    // Filter out users I already responded to
-    const { data: myInteractions, error: myIntError } = await supabase
-      .from('interactions')
-      .select('target_id')
-      .eq('user_id', userId);
-
-    const myTargets = new Set(myInteractions?.map(i => i.target_id) || []);
-    const filteredLikedYou = likedYou?.filter(like => !myTargets.has(like.user.id)) || [];
-
-    // Get chat requests from match_notifications
-    const { data: chatRequests, error: requestError } = await supabase
-      .from('match_notifications')
-      .select(`
-        id,
-        created_at,
-        type,
-        metadata,
-        actor:users!match_notifications_actor_id_fkey (
-          id, name, image, birth_date
-        )
-      `)
-      .eq('user_id', userId)
-      .eq('type', 'chat_request') // ✅ עכשיו מותר
-      .eq('read', false)
-      .order('created_at', { ascending: false });
-
-    if (requestError) {
-      console.error('❌ Error fetching chat requests:', requestError);
-    }
-
-    // Get matches
+    // 2. מי ההתאמות שלנו
     const { data: matches, error: matchError } = await supabase
       .from('matches')
       .select(`
@@ -526,20 +591,20 @@ export const fetchLikesAndRequests = async (userId) => {
       console.error('❌ Error fetching matches:', matchError);
     }
 
-    // Get user details for matches
     const matchesWithDetails = [];
+    const matchedUserIds = new Set();
+
     if (matches) {
       for (const match of matches) {
         const otherUserId = match.user1 === userId ? match.user2 : match.user1;
-        
+        matchedUserIds.add(otherUserId);
+
         const { data: otherUser, error: userErr } = await supabase
           .from('users')
           .select('id, name, image, birth_date')
           .eq('id', otherUserId)
           .single();
-
         if (!userErr && otherUser) {
-          // Find corresponding chat
           const [u1, u2] = [userId, otherUserId].sort();
           const { data: chat, error: chatErr } = await supabase
             .from('chats')
@@ -552,13 +617,19 @@ export const fetchLikesAndRequests = async (userId) => {
             id: match.id,
             user: otherUser,
             chatId: chat?.id || null,
-            created_at: match.created_at
+            created_at: match.created_at,
           });
         }
       }
     }
 
-    // Get active chats
+    // 3. מסננים את likedYouRaw כדי להסיר משתמשים שיש להם כבר match
+    const likedYou = (likedYouRaw || []).filter((entry) => {
+      const fromUserId = entry.user.id;
+      return !matchedUserIds.has(fromUserId);
+    });
+
+    // 4. שאילתא לצ'אטים פעילים (חברויות/התאמות קיימות)
     const { data: activeChats, error: chatError } = await supabase
       .from('chats')
       .select(`
@@ -576,181 +647,75 @@ export const fetchLikesAndRequests = async (userId) => {
       console.error('❌ Error fetching active chats:', chatError);
     }
 
-    // Get user details for active chats
     const chatsWithDetails = [];
     if (activeChats) {
       for (const chat of activeChats) {
         const otherUserId = chat.user1_id === userId ? chat.user2_id : chat.user1_id;
-        
         const { data: otherUser, error: userErr } = await supabase
           .from('users')
           .select('id, name, image, birth_date')
           .eq('id', otherUserId)
           .single();
-
         if (!userErr && otherUser) {
           chatsWithDetails.push({
             id: chat.id,
             user: otherUser,
             last_message: chat.last_message,
             updated_at: chat.updated_at,
-            created_at: chat.created_at
+            created_at: chat.created_at,
           });
         }
       }
     }
 
     const result = {
-      liked_you: filteredLikedYou || [],
-      chat_requests: chatRequests || [],
+      liked_you: likedYou || [],
       matches: matchesWithDetails || [],
-      active_chats: chatsWithDetails || []
+      active_chats: chatsWithDetails || [],
     };
 
     console.log('📊 Likes data summary:', {
       liked_you: result.liked_you.length,
-      chat_requests: result.chat_requests.length,
       matches: result.matches.length,
-      active_chats: result.active_chats.length
+      active_chats: result.active_chats.length,
     });
 
     return result;
-
   } catch (error) {
     console.error('❌ Error in fetchLikesAndRequests:', error);
     return {
       liked_you: [],
-      chat_requests: [],
       matches: [],
-      active_chats: []
+      active_chats: [],
     };
   }
 };
 
-export const likeUserBack = async (userId, targetId) => {
-  console.log('💕 Liking user back:', { userId, targetId });
-  
-  try {
-    const { data: likeRow, error: likeError } = await supabase
-      .from('interactions')
-      .insert({ user_id: userId, target_id: targetId, type: 'like' })
-      .select('id')
-      .single();
-    
-    if (likeError) {
-      console.error('❌ Error creating like back:', likeError);
-      return { matched: false };
-    }
-
-    // Create match since we know other user liked us
-    const [u1, u2] = [userId, targetId].sort();
-    
-    const { data: chat, error: chatErr } = await supabase
-      .from('chats')
-      .upsert({ user1_id: u1, user2_id: u2 }, { onConflict: 'user1_id,user2_id' })
-      .select('id')
-      .single();
-    
-    if (chatErr) {
-      console.error('❌ Chat creation error:', chatErr);
-      return { matched: false };
-    }
-    
-    const { error: matchErr } = await supabase
-      .from('matches')
-      .upsert({ user1: u1, user2: u2 }, { onConflict: 'user1,user2' });
-    
-    if (matchErr) console.error('❌ Match creation error:', matchErr);
-    
-    console.log('🎉 Match created successfully!');
-    return { matched: true, chatId: chat.id };
-
-  } catch (error) {
-    console.error('❌ Error in likeUserBack:', error);
-    return { matched: false };
-  }
-};
-
-export const respondToChatRequest = async (userId, actorId, approved) => {
-  console.log('📋 Responding to chat request:', { userId, actorId, approved });
-  
-  try {
-    if (!approved) {
-      // Mark as read and rejected
-      const { error: updateError } = await supabase
-        .from('match_notifications')
-        .update({ 
-          read: true,
-          metadata: { 
-            status: 'rejected', 
-            rejected_at: new Date().toISOString() 
-          }
-        })
-        .eq('user_id', userId)
-        .eq('actor_id', actorId)
-        .eq('type', 'chat_request');
-
-      if (updateError) {
-        console.error('❌ Error updating rejection:', updateError);
-      }
-
-      console.log('❌ Chat request declined');
-      return { success: true, chatCreated: false };
-    }
-
-    // User approved - create chat
-    console.log('🎉 Chat request approved! Creating chat...');
-    
-    const [u1, u2] = [userId, actorId].sort();
-    const { data: chat, error: chatError } = await supabase
-      .from('chats')
-      .upsert({ user1_id: u1, user2_id: u2 }, { onConflict: 'user1_id,user2_id' })
-      .select('id')
-      .single();
-    
-    if (chatError) {
-      console.error('❌ Chat creation error:', chatError);
-      return { success: false };
-    }
-
-    // Mark notification as read and approved
-    await supabase
-      .from('match_notifications')
-      .update({ 
-        read: true,
-        metadata: { 
-          status: 'approved', 
-          approved_at: new Date().toISOString(),
-          chat_id: chat.id
-        }
-      })
-      .eq('user_id', userId)
-      .eq('actor_id', actorId)
-      .eq('type', 'chat_request');
-
-    console.log('✅ Chat created successfully!');
-    return { 
-      success: true, 
-      chatCreated: true, 
-      chatId: chat.id 
-    };
-
-  } catch (error) {
-    console.error('❌ Error in respondToChatRequest:', error);
-    return { success: false };
-  }
-};
-
+/**
+ * דחיית משתמש (עדכון typה ל־'reject').
+ */
 export const rejectUser = async (userId, targetId) => {
-  const { error } = await supabase
+  console.log('❌ Rejecting user:', targetId);
+
+  const { data, error } = await supabase
     .from('interactions')
     .upsert(
       { user_id: userId, target_id: targetId, type: 'reject' },
-      { onConflict: ['user_id', 'target_id', 'type'] }
-    );
-  if (error) console.error('rejectUser error:', error);
+      { onConflict: 'user_id,target_id,type' }
+    )
+    .select('id')
+    .single();
+
+  if (error) {
+    console.error('rejectUser error:', error);
+    return { matched: false, error: error.message };
+  }
+  return { matched: false, interaction_id: data.id };
 };
 
+/**
+ * שליפת כל האינטראקציות שהמשתמש עשה.
+ */
 export const fetchMyInteractions = async (userId) => {
   const { data, error } = await supabase
     .from('interactions')
