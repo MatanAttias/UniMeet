@@ -26,7 +26,7 @@ import {
 import BottomBar from '../../components/BottomBar';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = (SCREEN_WIDTH - wp(6)) / 2; // 2 קלפים בשורה
+const CARD_WIDTH = (SCREEN_WIDTH - wp(8)) / 2; // 2 קלפים בשורה
 
 export default function Likes() {
   const router = useRouter();
@@ -41,10 +41,10 @@ export default function Likes() {
   });
 
   const tabs = [
-    { id: 'liked_you', title: 'עשו לייק', icon: 'heart' },
-    { id: 'chat_requests', title: 'בקשות צ\'אט', icon: 'message-text' },
-    { id: 'matches', title: 'התאמות', icon: 'heart-multiple' },
-    { id: 'active_chats', title: 'צ\'אטים פעילים', icon: 'chat' }
+    { id: 'liked_you', title: 'עשו לייק', icon: 'heart', color: theme.colors.rose },
+    { id: 'chat_requests', title: 'בקשות צ\'אט', icon: 'message-text', color: '#4ECDC4' },
+    { id: 'matches', title: 'התאמות', icon: 'heart-multiple', color: '#FFD93D' },
+    { id: 'active_chats', title: 'צ\'אטים פעילים', icon: 'chat', color: theme.colors.primary }
   ];
 
   useEffect(() => {
@@ -101,7 +101,7 @@ export default function Likes() {
           ]
         );
       } else {
-        loadLikesData(); // Refresh the data
+        loadLikesData();
       }
     } catch (error) {
       console.error('Error liking back:', error);
@@ -136,7 +136,7 @@ export default function Likes() {
           [{ text: 'הבנתי', onPress: () => loadLikesData() }]
         );
       } else {
-        loadLikesData(); // Just refresh for reject
+        loadLikesData();
       }
     } catch (error) {
       console.error('Error responding to chat request:', error);
@@ -146,68 +146,54 @@ export default function Likes() {
 
   const renderLikedYouCard = (likeData) => (
     <View key={likeData.id} style={styles.card}>
-      <Image
-        source={{ uri: likeData.user.image }}
-        style={styles.cardImage}
-        contentFit="cover"
-      />
-      <View style={styles.cardOverlay}>
+      {likeData.user.image ? (
+        <Image
+          source={{ uri: likeData.user.image }}
+          style={styles.cardImage}
+          contentFit="cover"
+        />
+      ) : (
+        <View style={[styles.cardImage, styles.placeholderImage]}>
+          <MaterialCommunityIcons name="account" size={wp(15)} color="#666" />
+        </View>
+      )}
+      <View style={[styles.cardOverlay, { backgroundColor: 'rgba(255, 79, 147, 0.9)' }]}>
         <MaterialCommunityIcons 
           name="heart" 
-          size={wp(6)} 
-          color={theme.colors.rose} 
-          style={styles.likeIcon}
+          size={wp(5)} 
+          color="white"
         />
       </View>
       <View style={styles.cardInfo}>
-        <Text style={styles.cardName}>{likeData.user.name}</Text>
-        <Text style={styles.cardSubtitle}>עשה לייק לתמונה שלך</Text>
+        <Text style={styles.cardName} numberOfLines={1}>{likeData.user.name}</Text>
+        <Text style={styles.cardSubtitle} numberOfLines={1}>עשה לייק לתמונה שלך</Text>
       </View>
       <Pressable 
-        style={styles.likeBackBtn}
+        style={[styles.actionBtn, { backgroundColor: theme.colors.rose }]}
         onPress={() => handleLikeBack(likeData.user)}
       >
-        <MaterialCommunityIcons name="heart" size={wp(5)} color="white" />
+        <MaterialCommunityIcons name="heart" size={wp(4)} color="white" />
       </Pressable>
     </View>
   );
 
-  const renderChatRequestCard = (requestData) => {
-    const isLikeVsFriend = requestData.metadata?.user_preference === 'like' && 
-                          requestData.metadata?.actor_preference === 'friend';
-    const isFriendVsLike = requestData.metadata?.user_preference === 'friend' && 
-                          requestData.metadata?.actor_preference === 'like';
-    
-    let title, subtitle;
-    if (isLikeVsFriend) {
-      title = `${requestData.actor.name} רוצה חברות`;
-      subtitle = 'אתה רצית רומנטיקה - רוצה לנסות חברות?';
-    } else if (isFriendVsLike) {
-      title = `${requestData.actor.name} רוצה רומנטיקה`;
-      subtitle = 'אתה רצית חברות - רוצה לנסות?';
-    } else {
-      title = `בקשת צ'אט מ-${requestData.actor.name}`;
-      subtitle = 'העדפות שונות - רוצה לנסות בכל זאת?';
-    }
-
-    return (
-      <View key={requestData.id} style={styles.requestCard}>
-        <Image
-          source={{ uri: requestData.actor.image }}
-          style={styles.cardImage}
-          contentFit="cover"
-        />
-        <View style={styles.cardOverlay}>
-          <MaterialCommunityIcons 
-            name="message-question" 
-            size={wp(6)} 
-            color={theme.colors.primary} 
-            style={styles.likeIcon}
+  const renderChatRequestCard = (requestData) => (
+    <View key={requestData.id} style={[styles.card, styles.fullWidthCard]}>
+      <View style={styles.requestCardContent}>
+        {requestData.actor.image ? (
+          <Image
+            source={{ uri: requestData.actor.image }}
+            style={styles.requestCardImage}
+            contentFit="cover"
           />
-        </View>
-        <View style={styles.cardInfo}>
-          <Text style={styles.cardName}>{title}</Text>
-          <Text style={styles.cardSubtitle}>{subtitle}</Text>
+        ) : (
+          <View style={[styles.requestCardImage, styles.placeholderRequestImage]}>
+            <MaterialCommunityIcons name="account" size={wp(8)} color="#666" />
+          </View>
+        )}
+        <View style={styles.requestCardInfo}>
+          <Text style={styles.cardName} numberOfLines={1}>{requestData.actor.name}</Text>
+          <Text style={styles.cardSubtitle} numberOfLines={2}>רוצה להתחיל צ'אט איתך</Text>
         </View>
         <View style={styles.requestActions}>
           <Pressable 
@@ -224,63 +210,73 @@ export default function Likes() {
           </Pressable>
         </View>
       </View>
-    );
-  };
+    </View>
+  );
 
   const renderMatchCard = (matchData) => (
     <View key={matchData.id} style={styles.card}>
-      <Image
-        source={{ uri: matchData.user.image }}
-        style={styles.cardImage}
-        contentFit="cover"
-      />
-      <View style={styles.cardOverlay}>
+      {matchData.user.image ? (
+        <Image
+          source={{ uri: matchData.user.image }}
+          style={styles.cardImage}
+          contentFit="cover"
+        />
+      ) : (
+        <View style={[styles.cardImage, styles.placeholderImage]}>
+          <MaterialCommunityIcons name="account" size={wp(15)} color="#666" />
+        </View>
+      )}
+      <View style={[styles.cardOverlay, { backgroundColor: 'rgba(255, 217, 61, 0.9)' }]}>
         <MaterialCommunityIcons 
           name="heart-multiple" 
-          size={wp(6)} 
-          color={theme.colors.primary} 
-          style={styles.likeIcon}
+          size={wp(5)} 
+          color="white"
         />
       </View>
       <View style={styles.cardInfo}>
-        <Text style={styles.cardName}>{matchData.user.name}</Text>
-        <Text style={styles.cardSubtitle}>התאמה!</Text>
+        <Text style={styles.cardName} numberOfLines={1}>{matchData.user.name}</Text>
+        <Text style={styles.cardSubtitle} numberOfLines={1}>התאמה מושלמת! 🎉</Text>
       </View>
       <Pressable 
-        style={styles.chatBtn}
+        style={[styles.actionBtn, { backgroundColor: theme.colors.primary }]}
         onPress={() => navigateToChat(matchData.chatId, matchData.user)}
       >
-        <MaterialCommunityIcons name="chat" size={wp(5)} color="white" />
+        <MaterialCommunityIcons name="chat" size={wp(4)} color="white" />
       </Pressable>
     </View>
   );
 
   const renderActiveChatCard = (chatData) => (
     <View key={chatData.id} style={styles.card}>
-      <Image
-        source={{ uri: chatData.user.image }}
-        style={styles.cardImage}
-        contentFit="cover"
-      />
-      <View style={styles.cardOverlay}>
+      {chatData.user.image ? (
+        <Image
+          source={{ uri: chatData.user.image }}
+          style={styles.cardImage}
+          contentFit="cover"
+        />
+      ) : (
+        <View style={[styles.cardImage, styles.placeholderImage]}>
+          <MaterialCommunityIcons name="account" size={wp(15)} color="#666" />
+        </View>
+      )}
+      <View style={[styles.cardOverlay, { backgroundColor: `rgba(228, 113, 163, 0.9)` }]}>
         <MaterialCommunityIcons 
           name="chat" 
-          size={wp(6)} 
-          color={theme.colors.primary} 
-          style={styles.likeIcon}
+          size={wp(5)} 
+          color="white"
         />
       </View>
       <View style={styles.cardInfo}>
-        <Text style={styles.cardName}>{chatData.user.name}</Text>
-        <Text style={styles.cardSubtitle}>
-          {chatData.last_message ? chatData.last_message.substring(0, 30) + '...' : 'צ\'אט פעיל'}
+        <Text style={styles.cardName} numberOfLines={1}>{chatData.user.name}</Text>
+        <Text style={styles.cardSubtitle} numberOfLines={1}>
+          {chatData.last_message ? chatData.last_message.substring(0, 25) + '...' : 'צ\'אט פעיל'}
         </Text>
       </View>
       <Pressable 
-        style={styles.chatBtn}
+        style={[styles.actionBtn, { backgroundColor: theme.colors.primary }]}
         onPress={() => navigateToChat(chatData.id, chatData.user)}
       >
-        <MaterialCommunityIcons name="chat" size={wp(5)} color="white" />
+        <MaterialCommunityIcons name="chat" size={wp(4)} color="white" />
       </Pressable>
     </View>
   );
@@ -298,26 +294,51 @@ export default function Likes() {
 
     if (currentData.length === 0) {
       const emptyMessages = {
-        liked_you: 'אין לייקים חדשים כרגע',
-        chat_requests: 'אין בקשות צ\'אט ממתינות',
-        matches: 'אין התאמות עדיין',
-        active_chats: 'אין צ\'אטים פעילים'
+        liked_you: { 
+          icon: 'heart-broken',
+          title: 'אין לייקים חדשים',
+          subtitle: 'כשמישהו יעשה לך לייק, תראה אותו כאן'
+        },
+        chat_requests: {
+          icon: 'message-question',
+          title: 'אין בקשות צ\'אט',
+          subtitle: 'בקשות לצ\'אט יופיעו כאן'
+        },
+        matches: {
+          icon: 'heart-multiple',
+          title: 'אין התאמות עדיין',
+          subtitle: 'המשך לעשות לייקים למצוא התאמות!'
+        },
+        active_chats: {
+          icon: 'chat-sleep',
+          title: 'אין צ\'אטים פעילים',
+          subtitle: 'התחל שיחות חדשות עם ההתאמות שלך'
+        }
       };
+      
+      const emptyConfig = emptyMessages[selectedTab];
       
       return (
         <View style={styles.center}>
-          <MaterialCommunityIcons 
-            name={tabs.find(t => t.id === selectedTab)?.icon || 'heart'} 
-            size={wp(15)} 
-            color="#666" 
-          />
-          <Text style={styles.emptyText}>{emptyMessages[selectedTab]}</Text>
+          <View style={styles.emptyContainer}>
+            <MaterialCommunityIcons 
+              name={emptyConfig.icon} 
+              size={wp(20)} 
+              color="#444" 
+            />
+            <Text style={styles.emptyTitle}>{emptyConfig.title}</Text>
+            <Text style={styles.emptySubtitle}>{emptyConfig.subtitle}</Text>
+          </View>
         </View>
       );
     }
 
     return (
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         <View style={styles.grid}>
           {currentData.map(item => {
             switch (selectedTab) {
@@ -339,54 +360,56 @@ export default function Likes() {
   };
 
   return (
-    <ScreenWrapper>
-      <Header title="לייקים" />
-      
-      {/* Filter Tabs */}
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false} 
-        style={styles.tabsContainer}
-        contentContainerStyle={styles.tabsContent}
-      >
-        {tabs.map(tab => (
-          <Pressable
-            key={tab.id}
-            style={[
-              styles.tab,
-              selectedTab === tab.id && styles.activeTab
-            ]}
-            onPress={() => setSelectedTab(tab.id)}
-          >
-            <MaterialCommunityIcons 
-              name={tab.icon} 
-              size={wp(5)} 
-              color={selectedTab === tab.id ? theme.colors.primary : '#666'} 
-            />
-            <Text style={[
-              styles.tabText,
-              selectedTab === tab.id && styles.activeTabText
-            ]}>
-              {tab.title}
-            </Text>
-            {likesData[tab.id]?.length > 0 && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{likesData[tab.id].length}</Text>
-              </View>
-            )}
-          </Pressable>
-        ))}
-      </ScrollView>
+    <ScreenWrapper bg={theme.colors.background}>
+      <View style={styles.headerContainer}>
+        <Header title="לייקים" />
+        
+        {/* Filter Tabs */}
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          style={styles.tabsContainer}
+          contentContainerStyle={styles.tabsContent}
+        >
+          {tabs.map(tab => (
+            <Pressable
+              key={tab.id}
+              style={[
+                styles.tab,
+                selectedTab === tab.id && [styles.activeTab, { borderColor: tab.color }]
+              ]}
+              onPress={() => setSelectedTab(tab.id)}
+            >
+              <MaterialCommunityIcons 
+                name={tab.icon} 
+                size={wp(5)} 
+                color={selectedTab === tab.id ? tab.color : '#666'} 
+              />
+              <Text style={[
+                styles.tabText,
+                selectedTab === tab.id && [styles.activeTabText, { color: tab.color }]
+              ]}>
+                {tab.title}
+              </Text>
+              {likesData[tab.id]?.length > 0 && (
+                <View style={[styles.badge, { backgroundColor: tab.color }]}>
+                  <Text style={styles.badgeText}>{likesData[tab.id].length}</Text>
+                </View>
+              )}
+            </Pressable>
+          ))}
+        </ScrollView>
 
-      {/* Tip */}
-      <View style={styles.tip}>
-        <MaterialCommunityIcons name="lightbulb" size={wp(4)} color="#666" />
-        <Text style={styles.tipText}>
-          {selectedTab === 'liked_you' && 'ככל שתגיב מהר יותר, כך הסיכויים שלך טובים יותר'}
-          {selectedTab === 'chat_requests' && 'בקשות צ\'אט נוצרות כשיש העדפות שונות'}
-          {selectedTab === 'matches' && 'התאמות מושלמות! זמן לפתוח צ\'אט'}
-          {selectedTab === 'active_chats' && 'הצ\'אטים הפעילים שלך'}
-        </Text>
+        {/* Tip */}
+        <View style={styles.tip}>
+          <MaterialCommunityIcons name="lightbulb-on" size={wp(4)} color={theme.colors.primary} />
+          <Text style={styles.tipText}>
+            {selectedTab === 'liked_you' && 'ככל שתגיב מהר יותר, כך הסיכויים שלך טובים יותר'}
+            {selectedTab === 'chat_requests' && 'בקשות צ\'אט נוצרות כשיש העדפות שונות'}
+            {selectedTab === 'matches' && 'התאמות מושלמות! זמן לפתוח צ\'אט'}
+            {selectedTab === 'active_chats' && 'הצ\'אטים הפעילים שלך'}
+          </Text>
+        </View>
       </View>
 
       {renderContent()}
@@ -397,9 +420,12 @@ export default function Likes() {
 }
 
 const styles = StyleSheet.create({
+  headerContainer: {
+    paddingBottom: hp(1),
+  },
   tabsContainer: {
     maxHeight: hp(8),
-    marginVertical: hp(2),
+    marginVertical: hp(1),
   },
   tabsContent: {
     paddingHorizontal: wp(4),
@@ -408,27 +434,29 @@ const styles = StyleSheet.create({
   tab: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: theme.colors.card,
     paddingHorizontal: wp(4),
-    paddingVertical: hp(1.5),
-    borderRadius: 25,
+    paddingVertical: hp(1.2),
+    borderRadius: theme.radius.xl,
     gap: wp(2),
     position: 'relative',
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   activeTab: {
-    backgroundColor: theme.colors.primaryLight,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 2,
   },
   tabText: {
     color: '#666',
-    fontSize: hp(1.8),
+    fontSize: hp(1.6),
     fontWeight: '600',
   },
   activeTabText: {
-    color: theme.colors.primary,
+    fontWeight: 'bold',
   },
   badge: {
-    backgroundColor: theme.colors.rose,
-    borderRadius: 10,
+    borderRadius: wp(3),
     minWidth: wp(5),
     height: wp(5),
     justifyContent: 'center',
@@ -439,24 +467,31 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: 'white',
-    fontSize: hp(1.2),
+    fontSize: hp(1.1),
     fontWeight: 'bold',
   },
   tip: {
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: wp(4),
-    marginBottom: hp(2),
+    marginBottom: hp(1),
     gap: wp(2),
+    backgroundColor: theme.colors.card,
+    padding: wp(3),
+    borderRadius: theme.radius.lg,
   },
   tipText: {
-    color: '#666',
-    fontSize: hp(1.6),
+    color: theme.colors.textSecondary,
+    fontSize: hp(1.4),
     flex: 1,
+    textAlign: 'right',
   },
   content: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: wp(4),
+    paddingBottom: hp(12), // מקום לבוטום בר
   },
   grid: {
     flexDirection: 'row',
@@ -466,90 +501,95 @@ const styles = StyleSheet.create({
   },
   card: {
     width: CARD_WIDTH,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: theme.colors.card,
     borderRadius: theme.radius.xl,
     overflow: 'hidden',
     marginBottom: hp(2),
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  requestCard: {
+  fullWidthCard: {
     width: '100%',
-    backgroundColor: '#2a2a2a',
-    borderRadius: theme.radius.xl,
-    overflow: 'hidden',
-    marginBottom: hp(2),
-    flexDirection: 'row',
-    height: hp(12),
   },
   cardImage: {
     width: '100%',
-    height: hp(15),
+    height: hp(20), // הגדלנו את גובה התמונה
     position: 'relative',
   },
-  cardOverlay: {
-    position: 'absolute',
-    top: hp(1),
-    left: wp(3),
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    borderRadius: wp(6),
-    width: wp(8),
-    height: wp(8),
+  placeholderImage: {
+    backgroundColor: '#333',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  likeIcon: {
-    // Icon styles handled by the component
+  requestCardImage: {
+    width: hp(14), // הגדלנו את התמונה של בקשות צ'אט
+    height: hp(14),
+    borderRadius: theme.radius.lg,
+  },
+  placeholderRequestImage: {
+    backgroundColor: '#333',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardOverlay: {
+    position: 'absolute',
+    top: hp(1.5),
+    left: wp(4),
+    borderRadius: wp(6),
+    width: wp(9),
+    height: wp(9),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cardInfo: {
     padding: wp(3),
     flex: 1,
+    minHeight: hp(7), // מינימום גובה לאזור המידע
   },
   cardName: {
-    color: 'white',
+    color: theme.colors.textPrimary,
     fontSize: hp(2),
     fontWeight: 'bold',
     marginBottom: hp(0.5),
   },
   cardSubtitle: {
-    color: '#666',
-    fontSize: hp(1.6),
+    color: theme.colors.textSecondary,
+    fontSize: hp(1.5),
+    lineHeight: hp(2),
   },
-  likeBackBtn: {
+  actionBtn: {
     position: 'absolute',
     bottom: wp(3),
     right: wp(3),
-    backgroundColor: theme.colors.rose,
     borderRadius: wp(6),
     width: wp(10),
     height: wp(10),
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
-  chatBtn: {
-    position: 'absolute',
-    bottom: wp(3),
-    right: wp(3),
-    backgroundColor: theme.colors.primary,
-    borderRadius: wp(6),
-    width: wp(10),
-    height: wp(10),
-    justifyContent: 'center',
+  requestCardContent: {
+    flexDirection: 'row',
     alignItems: 'center',
+    padding: wp(4),
+    gap: wp(3),
+  },
+  requestCardInfo: {
+    flex: 1,
   },
   requestActions: {
     flexDirection: 'row',
-    padding: wp(3),
     gap: wp(2),
-    alignItems: 'center',
-  },
-  actionBtn: {
-    borderRadius: wp(6),
-    width: wp(10),
-    height: wp(10),
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   acceptBtn: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#4ECDC4',
   },
   rejectBtn: {
     backgroundColor: '#666',
@@ -558,11 +598,23 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: hp(2),
   },
-  emptyText: {
-    color: '#666',
-    fontSize: hp(2),
+  emptyContainer: {
+    alignItems: 'center',
+    padding: wp(8),
+  },
+  emptyTitle: {
+    color: theme.colors.textPrimary,
+    fontSize: hp(2.5),
+    fontWeight: 'bold',
     textAlign: 'center',
+    marginTop: hp(2),
+    marginBottom: hp(1),
+  },
+  emptySubtitle: {
+    color: theme.colors.textSecondary,
+    fontSize: hp(1.8),
+    textAlign: 'center',
+    lineHeight: hp(2.5),
   },
 });
