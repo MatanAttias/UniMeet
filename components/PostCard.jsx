@@ -38,15 +38,15 @@ const PostCard = (props) => {
   const { item, currentUser, router, hasShadow = true, showMoreIcon = true, showDelete = false, onDelete = () => {}, onEdit = () => {} } = props;
 
   if (!item || typeof item !== 'object') {
+    console.warn('Invalid post item:', item);  // להוספת לוג
     return (
       <View style={{ padding: 10 }}>
         <Text style={{ color: 'red', textAlign: 'center' }}>
-          ⚠️ פוסט לא תקין
+          ⚠️ פוסט לא תקין ({typeof item})
         </Text>
       </View>
     );
   }
-
   if (!currentUser?.id || !item.id) {
     return (
       <View style={{ padding: 10 }}>

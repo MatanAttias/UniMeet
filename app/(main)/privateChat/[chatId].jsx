@@ -24,6 +24,8 @@ import {
   import Avatar from '../../../components/Avatar';
   import { useFocusEffect } from '@react-navigation/native';
   import { useCallback } from 'react';
+  import * as FileSystem from 'expo-file-system';
+  import { Buffer } from 'buffer'; // ודא שהתקנת את זה: npm i buffer
 
   const Settings = () => {
     const { user } = useAuth();
@@ -139,7 +141,7 @@ import {
         }
       };
       
-      
+              
   
     useEffect(() => {
         if (user && chatObj) {
@@ -224,11 +226,82 @@ import {
         useNativeDriver: true,
       }).start();
     };
-  
+   
+    
+
+    const uploadImageAndSendMessage = async (imageUri) => {
+      if (!imageUri) return;
+    
+      const fileName = `chat_${Date.now()}.jpg`;
+      const filePath = `chatImages/${fileName}`;
+    
+      try {
+        const fileInfo = await FileSystem.getInfoAsync(imageUri);
+        if (!fileInfo.exists || fileInfo.size === 0) {
+          console.log('❌ File does not exist or is empty.');
+          return;
+        }
+    
+        const base64 = await FileSystem.readAsStringAsync(imageUri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+    
+        const buffer = Buffer.from(base64, 'base64');
+    
+        const { error: uploadError } = await supabase.storage
+          .from('uploads')
+          .upload(filePath, buffer, {
+            contentType: 'image/jpeg',
+            upsert: true,
+          });
+    
+        if (uploadError) {
+          console.log('❌ Upload error:', uploadError);
+          return;
+        }
+    
+        const { data: publicUrlData } = supabase.storage
+          .from('uploads')
+          .getPublicUrl(filePath);
+    
+        const imageUrl = publicUrlData?.publicUrl;
+    
+        if (!imageUrl) {
+          console.log('❌ Failed to get public URL');
+          return;
+        }
+    
+        const receiverId = chatObj.user1_id === user.id ? chatObj.user2_id : chatObj.user1_id;
+    
+        const { error: insertError } = await supabase.from('messages').insert({
+          chat_id: chatObj.id,
+          sender_id: user.id,
+          receiver_id: receiverId,
+          message_type: 'image',
+          content: imageUrl,
+        });
+    
+        if (insertError) {
+          console.log('❌ Insert message error:', insertError);
+        } else {
+          console.log('✅ Image message sent!');
+        }
+      } catch (err) {
+        console.log('❌ Upload exception:', err);
+      }
+    };
     const pickImage = async () => {
-      const result = await ImagePicker.launchImageLibraryAsync();
-      if (!result.canceled) {
-        console.log('בחרת תמונה:', result.assets[0].uri);
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 1,
+      });
+    
+      if (!result.canceled && result.assets.length > 0) {
+        const imageUri = result.assets[0].uri;
+        console.log('Picked image:', imageUri);
+        await uploadImageAndSendMessage(imageUri);
+        setModalVisible(false);
       }
     };
     useEffect(() => {
@@ -237,12 +310,17 @@ import {
         }
       }, [messages]);
   
-    const takePhoto = async () => {
-      const result = await ImagePicker.launchCameraAsync();
-      if (!result.canceled) {
-        console.log('צולמה תמונה:', result.assets[0].uri);
-      }
-    };
+      const takePhoto = async () => {
+        const result = await ImagePicker.launchCameraAsync({
+          quality: 0.7,
+        });
+      
+        if (!result.canceled && result.assets.length > 0) {
+          const imageUri = result.assets[0].uri;
+          await uploadImageAndSendMessage(imageUri);
+          setModalVisible(false);
+        }
+      };
     useEffect(() => {
         Animated.timing(sendButtonAnim, {
           toValue: messageText.trim().length > 0 ? 1 : 0,
@@ -334,11 +412,28 @@ import {
   data={messages}
   keyExtractor={(item, index) => `${item.id || item.created_at}-${index}`}  renderItem={({ item }) => {
     const isMine = item.sender_id === user.id;
+
     return (
-      <View style={isMine ? styles.messageBubbleMine : styles.messageBubbleOther}>
-        <Text style={styles.messageText}>{item.content}</Text>
+          <View style={
+            item.message_type === 'image'
+              ? (isMine ? styles.imageBubbleMine : styles.imageBubbleOther)
+              : (isMine ? styles.messageBubbleMine : styles.messageBubbleOther)
+          }>        {item.message_type === 'image' ? (
+              <Image
+                source={{ uri: item.content }}
+                style={{
+                  width: 250,
+                  height: 370,
+                  borderRadius: 20,
+                }}
+                resizeMode="cover"
+              />
+            ) : (
+      <Text Text style={styles.messageText}>{String(item.content)}</Text>      
+      )}
       </View>
     );
+    
   }}
   contentContainerStyle={{
     flexGrow: 1,
@@ -542,6 +637,22 @@ import {
         padding: 10, // או כל ערך מתאים
         backgroundColor: '#2c2c2e',
         borderRadius: 20,
+      },
+      imageBubbleMine: {
+        alignSelf: 'flex-end',
+        backgroundColor: 'transparent',
+        marginVertical: 6,
+        padding: 0,
+        borderRadius: 20,
+        maxWidth: '75%',
+      },
+      imageBubbleOther: {
+        alignSelf: 'flex-start',
+        backgroundColor: 'transparent',
+        marginVertical: 6,
+        padding: 0,
+        borderRadius: 20,
+        maxWidth: '75%',
       },
   });
   
