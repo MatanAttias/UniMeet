@@ -55,6 +55,7 @@ const TopTraits = () => {
        wantsNotifications = 'false',
        location,
        preferredMatch,
+       role,
   } = useLocalSearchParams();
 
   const animationRefs = useRef(
@@ -109,6 +110,7 @@ const TopTraits = () => {
         preferredMatch,
         traits: JSON.stringify(selectedTraits),
         showTraits: showOnProfile,
+        role,
       },
     });
   };

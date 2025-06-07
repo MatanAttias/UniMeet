@@ -15,7 +15,8 @@ const EmailSignUp = () => {
   const router = useRouter();
   const emailRef = useRef('');
   const [loading, setLoading] = useState(false);
-  const { fullName } = useLocalSearchParams();
+  const { fullName, role } = useLocalSearchParams();
+
 
   const goToPreviousStep = () => {
     router.back();
@@ -38,12 +39,12 @@ const EmailSignUp = () => {
   // אם הכל טוב, ממשיכים
   router.push({
     pathname: '/signUp/passSignUp',
-    params: { email, fullName },
+    params: { email, fullName, role },
   });
 
     router.push({
       pathname: '/signUp/passSignUp',
-      params: { email, fullName },
+      params: { email, fullName, role },
     });
   };
 

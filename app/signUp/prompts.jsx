@@ -29,6 +29,7 @@ const Prompts = () => {
       connectionTypes,
       image,
       wantsNotifications = 'false',
+      role,
       location,
       preferredMatch,
       traits,
@@ -47,7 +48,9 @@ const Prompts = () => {
   const goBack = () => router.back();
 
   const skipForNow = () => {
+
     router.push({
+
       pathname: '/signUp/status',
       params: {
         fullName,
@@ -61,6 +64,7 @@ const Prompts = () => {
           location,
           preferredMatch,
           traits,
+          role,
           showTraits,
           hobbies,
           showHobbies,
@@ -74,7 +78,7 @@ const Prompts = () => {
   };
 
   const handlePromptSelected = (prompt) => {
-   
+
     setModalVisible(false);
     router.push({
       pathname: '/signUp/recordPrompt',
@@ -85,6 +89,7 @@ const Prompts = () => {
           birth_date,
           gender,
           connectionTypes,
+          role,
           image,
           wantsNotifications,
           location,

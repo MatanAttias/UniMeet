@@ -17,6 +17,7 @@ const BuildProfile = () => {
      wantsNotifications = 'false',
      location,
      preferredMatch,
+     role,
    } = useLocalSearchParams()
 
   const onNext = () => {
@@ -35,6 +36,7 @@ const BuildProfile = () => {
         wantsNotifications,
         location,
         preferredMatch,
+        role,
       },
     });
   };

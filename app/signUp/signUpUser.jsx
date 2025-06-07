@@ -1,6 +1,6 @@
 import React, { useRef } from 'react'
 import { View, Text, Alert, StyleSheet, Pressable } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import Input from '../../components/input'
 import Button from '../../components/Button'
 import { hp, wp } from '../../constants/helpers/common'
@@ -11,6 +11,7 @@ export default function SignUpUser() {
 
   const nameRef = useRef('')
   const lastNameRef = useRef('')
+   const { role } = useLocalSearchParams()
 
   const handleNext = () => {
     const name = nameRef.current.trim();
@@ -28,7 +29,7 @@ export default function SignUpUser() {
   
     router.push({
       pathname: '/signUp/emailSignUp',
-      params: { fullName },
+      params: { role, fullName },
     });
   };
 

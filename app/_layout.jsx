@@ -108,19 +108,12 @@ const MainLayout = () => {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Stack.Screen
-        name="(main)/postDetails"
-        options={{
-          presentation: 'modal',
-        }}
-      />
-    </Stack>
-  );
-};
+  <Stack
+    screenOptions={{
+      headerShown: false,
+    }}
+  />
+);
+}
 
 export default _layout;

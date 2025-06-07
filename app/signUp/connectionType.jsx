@@ -8,7 +8,7 @@ import Button from '../../components/Button';
 
 const ConnectionType = () => {
   const router = useRouter();
-  const { fullName, email, password, birth_date, wantsNotifications } = useLocalSearchParams();
+  const { fullName, email, password, birth_date, wantsNotifications, role } = useLocalSearchParams();
 
   // המרה של wantsNotifications מ-string ל-boolean
   const wantsNotificationsBool = wantsNotifications === 'true';
@@ -35,6 +35,7 @@ const ConnectionType = () => {
       params: {
         fullName,
         email,
+        role,
         password,
         birth_date,
         wantsNotifications: wantsNotificationsBool, // מועבר כערך בוליאני
@@ -191,5 +192,5 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontSize: hp(2),
     fontWeight: theme.fonts.semibold,
-  },
+  },
 });

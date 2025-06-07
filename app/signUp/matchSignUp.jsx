@@ -18,6 +18,7 @@ const MatchSignUp = () => {
     image,
     wantsNotifications = 'false',
     location,
+    role,
   } = useLocalSearchParams();
   const wantsNotificationsBool = wantsNotifications === 'true';
 
@@ -47,6 +48,7 @@ const MatchSignUp = () => {
         wantsNotificationsBool,
         location,
         preferredMatch, // העברה נכונה
+        role,
       },
     });
   };

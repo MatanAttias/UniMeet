@@ -17,6 +17,7 @@ const GenderSignUp = () => {
     location,
     image,
     wantsNotifications = 'false',
+    role,
   } = useLocalSearchParams();
 
   const onNext = () => {
@@ -28,6 +29,7 @@ const GenderSignUp = () => {
     }
 
     router.push({
+
       pathname: '/signUp/matchSignUp',
       params: {
         fullName,
@@ -39,6 +41,7 @@ const GenderSignUp = () => {
         image,
         location,
         gender: selectedGender,
+        role,
       },
     });
   };

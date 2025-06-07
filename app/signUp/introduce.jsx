@@ -34,6 +34,7 @@ const Introduce = () => {
         identities,
         showIdentities = 'false',
         supportNeeds,
+        role,
         showSupportNeeds = 'false',
     } = useLocalSearchParams();
 
@@ -51,6 +52,7 @@ const Introduce = () => {
         wantsNotifications,
         location,
         preferredMatch,
+        role,
         traits,
         showTraits,
         hobbies,

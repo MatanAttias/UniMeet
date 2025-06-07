@@ -54,6 +54,7 @@ const Identify = () => {
     showTraits = 'false',
     hobbies,
     showHobbies = 'false',
+    role,
   } = useLocalSearchParams();
 
   const animationRefs = useRef(
@@ -111,6 +112,7 @@ const Identify = () => {
         showHobbies,
         identities: JSON.stringify(selectedTraits),
         showIdentities: showOnProfile,
+        role,
       },
     });
   };

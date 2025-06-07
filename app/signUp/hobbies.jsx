@@ -67,6 +67,7 @@ const Hobbies = () => {
     preferredMatch,
     traits,
     showTraits = 'false',
+    role,
   } = useLocalSearchParams();
 
   const animationRefs = useRef(
@@ -122,6 +123,7 @@ const Hobbies = () => {
         showTraits,
         hobbies: JSON.stringify(selectedHobbies),
         showHobbies: showOnProfile,
+        role,
       },
     });
   };

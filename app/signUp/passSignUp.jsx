@@ -8,7 +8,7 @@ import Button from '../../components/Button';
 
 const PassSignUp = () => {
   const router = useRouter();
-  const { fullName, email } = useLocalSearchParams();
+  const { fullName, email, role } = useLocalSearchParams();
 
   const [password, setPassword] = useState(''); // שינוי מ-useRef ל-useState
   const [confirmPassword, setConfirmPassword] = useState(''); // שינוי מ-useRef ל-useState
@@ -43,7 +43,8 @@ const PassSignUp = () => {
       params: { 
         fullName, 
         email, 
-        password: trimmedPassword // שימוש בערך מה-state
+        password: trimmedPassword, // שימוש בערך מה-state
+        role,
       },
     });
   };

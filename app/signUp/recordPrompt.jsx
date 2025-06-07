@@ -38,6 +38,7 @@ export default function RecordPrompt() {
     supportNeeds,
     showSupportNeeds = 'false',
     introduction,
+    role,
     prompt,
   } = useLocalSearchParams();
   const decodedPrompt = decodeURIComponent(prompt || '');
@@ -169,6 +170,7 @@ export default function RecordPrompt() {
             wantsNotifications,
             location,
             preferredMatch,
+            role,
             traits,
             showTraits,
             hobbies,
