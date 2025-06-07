@@ -124,13 +124,21 @@ const PostCard = (props) => {
   return (
     <View style={[styles.container, hasShadow && styles.shadow]}>
       <View style={styles.header}>
-        <View style={styles.userInfo}>
-          <Avatar size={hp(4.5)} uri={item.user?.image} rounded={theme.radius.md} />
-          <View style={styles.nameTime}>
-            <Text style={styles.username}>{item.user?.name || 'משתמש'}</Text>
-            <Text style={styles.postTime}>{createdAt}</Text>
-          </View>
+      <TouchableOpacity
+        style={styles.userInfo}
+        onPress={() =>
+          router.push({
+            pathname: 'visitedProfile',
+            params: { userId: item.user?.id }
+          })
+        }
+      >
+        <Avatar size={hp(4.5)} uri={item.user?.image} rounded={theme.radius.md} />
+        <View style={styles.nameTime}>
+          <Text style={styles.username}>{item.user?.name || 'משתמש'}</Text>
+          <Text style={styles.postTime}>{createdAt}</Text>
         </View>
+      </TouchableOpacity>
         <View style={styles.actionsRight}>
           {showMoreIcon && (
             <TouchableOpacity onPress={() => setShowOptions(true)}>

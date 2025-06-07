@@ -38,10 +38,8 @@ export default function Home() {
   });
 
   useEffect(() => {
-    // אם אין user, לא מנויים בכלל
     if (!user?.id) return;
-
-
+  
     const postChannel = supabase
       .channel('posts')
       .on(
@@ -53,7 +51,7 @@ export default function Home() {
         if (error) console.error('postChannel error', error);
         else console.log('postChannel status', status);
       });
-
+  
     const notificationChannel = supabase
       .channel('notifications')
       .on(
@@ -70,9 +68,8 @@ export default function Home() {
         if (error) console.error('notificationChannel error', error);
         else console.log('notificationChannel status', status);
       });
-
+  
     const commentsChannel = supabase
-    
       .channel('comments')
       .on(
         'postgres_changes',
@@ -83,15 +80,14 @@ export default function Home() {
         if (error) console.error('commentsChannel error', error);
         else console.log('commentsChannel status', status);
       });
-
-
-      return () => {
-        supabase.removeChannel(commentsChannel);
-      };
-      
-    // נסנכרן רק כש־user.id משתנה
+  
+    // ניקוי כל הערוצים
+    return () => {
+      supabase.removeChannel(postChannel);
+      supabase.removeChannel(notificationChannel);
+      supabase.removeChannel(commentsChannel);
+    };
   }, [user?.id]);
-
   async function handlePostEvent(payload) {
     if (payload.eventType === 'INSERT' && payload.new?.id) {
       let newPost = { ...payload.new, postLikes: [], comments: [{ count: 0 }] };
