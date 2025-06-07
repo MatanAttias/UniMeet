@@ -300,7 +300,7 @@ export default function MatchUserProfile({
           onPress={() => onReject(user.id)}
         >
           <MaterialCommunityIcons name="close" size={28} color="white" />
-          <Text style={styles.actionButtonText}>דחה</Text>
+          <Text style={styles.actionButtonText}>דלג</Text>
         </Pressable>
 
         <Pressable

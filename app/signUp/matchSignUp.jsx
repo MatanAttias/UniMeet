@@ -18,6 +18,7 @@ const MatchSignUp = () => {
     image,
     wantsNotifications = 'false',
     location,
+    role,
   } = useLocalSearchParams();
   const wantsNotificationsBool = wantsNotifications === 'true';
 
@@ -47,6 +48,7 @@ const MatchSignUp = () => {
         wantsNotificationsBool,
         location,
         preferredMatch, // העברה נכונה
+        role,
       },
     });
   };
@@ -145,7 +147,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: hp(2),
     fontWeight: theme.fonts.semibold,
-    color: theme.colors.primary,
+    color: theme.colors.textSecondary,
     marginTop: hp(1),
   },
   selectedText: {
@@ -159,7 +161,7 @@ const styles = StyleSheet.create({
     marginTop: hp(3),
   },
   nextButtonText: {
-    color: theme.colors.white,
+    color: theme.colors.textSecondary,
     fontSize: hp(2.5),
     fontWeight: theme.fonts.semibold,
   },

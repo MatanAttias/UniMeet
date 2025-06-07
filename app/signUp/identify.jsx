@@ -35,6 +35,23 @@ const IDENTITY_TRAITS = [
   'גמגום',
   'אפילפסיה',
   'כאב כרוני',
+  'אוטיזם',
+  'אפילפסיה',
+  'דיכאון',
+  'דיסלקציה',
+  'דיספרקסיה',
+  'הפרעה דו-קוטבית',
+  'OCD (הפרעה כפייתית-טורדנית)',
+  'הפרעת חרדה',
+  'ADHD (הפרעת קשב וריכוז)',
+  'כאב כרוני',
+  'לקות ראייה',
+  'לקות שמיעה',
+  'לקות תנועה',
+  'מוגבלות שכלית התפתחותית',
+  'תסמונת דאון',
+  'תסמונת טורט',
+  'תסמונת SLO – Smith Lemli Optiz',
 ];
 
 
@@ -44,20 +61,21 @@ const Identify = () => {
   const [showOnProfile, setShowOnProfile] = useState(true);
   const router = useRouter();
   const {
-      fullName,
-      email,
-      password,
-      birth_date,
-      gender,
-      connectionTypes,
-      image,
-      wantsNotifications = 'false',
-      location,
-      preferredMatch,
-      traits,
-      showTraits = 'false',
-      hobbies,
-      showHobbies = 'false',
+    fullName,
+    email,
+    password,
+    birth_date,
+    gender,
+    connectionTypes,
+    image,
+    wantsNotifications = 'false',
+    location,
+    preferredMatch,
+    traits,
+    showTraits = 'false',
+    hobbies,
+    showHobbies = 'false',
+    role,
   } = useLocalSearchParams();
 
   const animationRefs = useRef(
@@ -66,16 +84,6 @@ const Identify = () => {
       return acc;
     }, {})
   );
-
-  const toggleTrait = (trait) => {
-    if (selectedTraits.includes(trait)) {
-      setSelectedTraits(selectedTraits.filter(t => t !== trait));
-    } else if (selectedTraits.length < 5) {
-      setSelectedTraits([...selectedTraits, trait]);
-    } else {
-      Alert.alert('מקסימום תוויות', 'ניתן לבחור עד 5 תוויות זהות בלבד');
-    }
-  };
 
   const animatePress = (trait) => {
     Animated.sequence([
@@ -91,12 +99,21 @@ const Identify = () => {
     ]).start();
   };
 
-  const filteredTraits = IDENTITY_TRAITS.filter(trait =>
+  const toggleTrait = (trait) => {
+    if (selectedTraits.includes(trait)) {
+      setSelectedTraits(selectedTraits.filter((t) => t !== trait));
+    } else if (selectedTraits.length < 5) {
+      setSelectedTraits([...selectedTraits, trait]);
+    } else {
+      Alert.alert('מקסימום תוויות', 'ניתן לבחור עד 5 תוויות זהות בלבד');
+    }
+  };
+
+  const filteredTraits = IDENTITY_TRAITS.filter((trait) =>
     trait.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const goToNextStep = () => {
-
     router.push({
       pathname: '/signUp/supportNeeds',
       params: {
@@ -116,6 +133,7 @@ const Identify = () => {
         showHobbies,
         identities: JSON.stringify(selectedTraits),
         showIdentities: showOnProfile,
+        role,
       },
     });
   };

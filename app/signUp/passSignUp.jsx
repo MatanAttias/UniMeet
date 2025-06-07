@@ -8,7 +8,7 @@ import Button from '../../components/Button';
 
 const PassSignUp = () => {
   const router = useRouter();
-  const { fullName, email } = useLocalSearchParams();
+  const { fullName, email, role } = useLocalSearchParams();
 
   const [password, setPassword] = useState(''); // שינוי מ-useRef ל-useState
   const [confirmPassword, setConfirmPassword] = useState(''); // שינוי מ-useRef ל-useState
@@ -43,7 +43,8 @@ const PassSignUp = () => {
       params: { 
         fullName, 
         email, 
-        password: trimmedPassword // שימוש בערך מה-state
+        password: trimmedPassword, // שימוש בערך מה-state
+        role,
       },
     });
   };
@@ -59,22 +60,22 @@ const PassSignUp = () => {
         <Text style={styles.punchline}>אנחנו ממליצים על סיסמה חזקה</Text>
 
         <Input
-          placeholder="סיסמה"
+          placeholder="סיסמה..."
           secureTextEntry
           onChangeText={(text) => setPassword(text)} // שימוש ב-setState במקום ref
           containerStyle={styles.inputContainer}
           inputStyle={styles.inputText}
-          placeholderTextColor="white"
+          placeholderTextColor="gray"
           value={password} // הוספת ערך מקושר ל-state
         />
 
         <Input
-          placeholder="אימות סיסמה"
+          placeholder="אימות סיסמה..."
           secureTextEntry
           onChangeText={(text) => setConfirmPassword(text)} // שימוש ב-setState במקום ref
           containerStyle={styles.inputContainer}
           inputStyle={styles.inputText}
-          placeholderTextColor="white"
+          placeholderTextColor="gray"
           value={confirmPassword} // הוספת ערך מקושר ל-state
         />
       </View>

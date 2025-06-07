@@ -35,6 +35,27 @@ const TRAITS = [
   'עצמאי/ת',
   'שותף/פה לתמיכה',
   'מעודד/ת',
+  'אופטימי/ת',
+  'אכפתי/ת',
+  'אמפתי/ת',
+  'אסרטיבי/ת',
+  'בעל/ת חוש הומור',
+  'זקוק/ה לשגרה',
+  'חברותי/ת',
+  'יוזם/ת',
+  'יציב/ה רגשית',
+  'יצירתי/ת',
+  'מחפש/ת עצמאות',
+  'ממוקד/ת במשימה',
+  'מעודד/ת',
+  'משפחתי/ת',
+  'מתלהב/ת מלמידה חדשה',
+  'מתמודד/ת עם שינויים',
+  'מתמצא/ת בטכנולוגיה',
+  'סבלני/ת',
+  'ספונטני/ת',
+  'רגיש/ה חושית',
+  'תומך/ת',
 ];
 
 
@@ -54,6 +75,7 @@ const TopTraits = () => {
        wantsNotifications = 'false',
        location,
        preferredMatch,
+       role,
   } = useLocalSearchParams();
 
   const animationRefs = useRef(
@@ -108,6 +130,7 @@ const TopTraits = () => {
         preferredMatch,
         traits: JSON.stringify(selectedTraits),
         showTraits: showOnProfile,
+        role,
       },
     });
   };
@@ -245,7 +268,8 @@ const styles = StyleSheet.create({
       backgroundColor: theme.colors.surface,
       padding: wp(3),
       borderRadius: theme.radius.md,
-      marginVertical: hp(0.5),
+      marginVertical: hp(1),
+      marginHorizontal: wp(1),
     },
     traitSelected: {
       backgroundColor: theme.colors.primaryDark,
@@ -279,7 +303,7 @@ const styles = StyleSheet.create({
       marginBottom: hp(6),
     },
     saveText: {
-      color: theme.colors.white,
+      color: theme.colors.textSecondary,
       fontSize: hp(2.2),
       fontWeight: 'bold',
     },

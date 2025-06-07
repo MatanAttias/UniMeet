@@ -293,6 +293,6 @@ const styles = StyleSheet.create({
   backText: {
     color: theme.colors.primary,
     fontSize: hp(2),
-    fontWeight: '600',
-  },
+    fontWeight: '600',
+  },
 })

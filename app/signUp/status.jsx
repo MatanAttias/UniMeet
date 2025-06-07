@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { theme } from '../../constants/theme';
 import { hp, wp } from '../../constants/helpers/common';
+import React, { useState, useEffect } from 'react';
 
-const STATUS_OPTIONS = ['רווק/ה', 'בזוגיות', 'לא בלעדי'];
+const STATUS_OPTIONS = ['רווק/ה', 'בזוגיות'];
 
 const Status = () => {
   const router = useRouter();
@@ -14,6 +14,7 @@ const Status = () => {
         password,
         birth_date,
         gender,
+        role,
         connectionTypes,
         image,
         wantsNotifications = 'false',
@@ -32,16 +33,16 @@ const Status = () => {
         audio,
     } = useLocalSearchParams();
 
+
   const [selected, setSelected] = useState(null);
   const [customText, setCustomText] = useState('');
 
   const isNextEnabled = selected !== null || customText.trim() !== '';
   const goBack = () => router.back();
 
-  const handleNext = () => {
-              console.log('location before upsert:', location)
 
-    
+  const handleNext = () => {
+
     const status = selected !== null ? STATUS_OPTIONS[selected] : customText.trim();
     router.push({
       pathname: '/signUp/finalStep',
@@ -51,6 +52,7 @@ const Status = () => {
         password,
         birth_date,
         gender,
+        role,
         connectionTypes,
         image,
         wantsNotifications,

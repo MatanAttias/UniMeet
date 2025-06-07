@@ -17,6 +17,7 @@ const ProfilePicture = () => {
     birth_date,
     wantsNotifications,
     connectionTypes,
+    role,
   } = useLocalSearchParams();
 
   const [image, setImage] = useState(null);
@@ -48,7 +49,7 @@ const ProfilePicture = () => {
         return;
       }
 
-      // פתיחת הגלריה - ✅ תוקן כאן
+      // פתיחת הגלריה
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -74,7 +75,6 @@ const ProfilePicture = () => {
       Alert.alert('נא להוסיף תמונה', 'אנא בחר/י תמונת פרופיל להמשך');
       return;
     }
-
     router.push({
       pathname: '/signUp/getLocation',
       params: {
@@ -85,6 +85,7 @@ const ProfilePicture = () => {
         wantsNotifications: wantsNotifications === 'true',
         connectionTypes,
         image: image.uri,
+        role,
       },
     });
   };

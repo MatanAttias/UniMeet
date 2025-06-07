@@ -8,13 +8,14 @@ import { theme } from '../../constants/theme';
 
 const GetNotify = () => {
   const router = useRouter();
-  const { fullName, email, password, birth_date } = useLocalSearchParams();
+  const { fullName, email, password, birth_date, role } = useLocalSearchParams();
 
   const goToPreviousStep = () => {
     router.back();
   };
 
   const goToNextStep = (wantsNotifications) => {
+
     router.push({
       pathname: '/signUp/connectionType',
       params: {
@@ -23,6 +24,7 @@ const GetNotify = () => {
         password,
         birth_date,
         wantsNotifications,
+        role,
       },
     });
   };

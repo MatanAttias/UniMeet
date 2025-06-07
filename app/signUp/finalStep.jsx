@@ -18,154 +18,131 @@ const FinalStep = () => {
   const router = useRouter();
   const rawParams = useLocalSearchParams();
 
-  const [
-    {
-      fullName,
-      email,
-      password,
-      birth_date,
-      gender,
-      connectionTypes,
-      image,
-      wantsNotifications,
-      location,
-      preferredMatch,
-      traits,
-      showTraits,
-      hobbies,
-      showHobbies,
-      identities,
-      showIdentities,
-      supportNeeds,
-      showSupportNeeds,
-      introduction,
-      audio,
-      prompt,
-      status,
-    },
-    setParams
-  ] = useState(() => {
-    // פרסינג של ערכים מה-params
+  // פרסינג ערכים מהפרמטרים
+  const [formData] = useState(() => {
     const parseBool = (val) => val === 'true';
     const parseJson = (val) => {
       try {
         return typeof val === 'string' ? JSON.parse(val) : val;
-      } catch (e) {
+      } catch {
         return null;
       }
     };
-
     return {
       fullName: rawParams.fullName ?? '',
       email: rawParams.email ?? '',
       password: rawParams.password ?? '',
       birth_date: rawParams.birth_date ?? '',
       gender: rawParams.gender ?? '',
-      connectionTypes: rawParams.connectionTypes ?? '',
+      connectionTypes: rawParams.connectionTypes ?? '',
       image: rawParams.image ?? '',
       wantsNotifications: parseBool(rawParams.wantsNotifications),
-      location: parseJson(rawParams.location), 
+      location: parseJson(rawParams.location),
       preferredMatch: rawParams.preferredMatch ?? '',
-      traits: parseJson(rawParams.traits),
+      traits: parseJson(rawParams.traits) ?? [],
       showTraits: parseBool(rawParams.showTraits),
-      hobbies: parseJson(rawParams.hobbies),
+      hobbies: parseJson(rawParams.hobbies) ?? [],
       showHobbies: parseBool(rawParams.showHobbies),
-      identities: parseJson(rawParams.identities),
+      identities: parseJson(rawParams.identities) ?? [],
       showIdentities: parseBool(rawParams.showIdentities),
-      supportNeeds: parseJson(rawParams.supportNeeds),
+      supportNeeds: parseJson(rawParams.supportNeeds) ?? [],
       showSupportNeeds: parseBool(rawParams.showSupportNeeds),
       introduction: rawParams.introduction ?? '',
       audio: rawParams.audio ?? '',
       prompt: rawParams.prompt ?? '',
       status: rawParams.status ?? '',
+      role: rawParams.role ?? 'user',
+      
     };
   });
+
+  const {
+    fullName,
+    email,
+    password,
+    birth_date,
+    gender,
+    connectionTypes,
+    image,
+    wantsNotifications,
+    location,
+    preferredMatch,
+    traits,
+    showTraits,
+    hobbies,
+    showHobbies,
+    identities,
+    showIdentities,
+    supportNeeds,
+    showSupportNeeds,
+    introduction,
+    audio,
+    prompt,
+    status,
+    role,
+  } = formData;
 
   const [loading, setLoading] = useState(false);
 
   const onNext = async () => {
-    // ולידציה
-    if (
-      !email ||
-      !password ||
-      !fullName ||
-      !birth_date ||
-      !gender ||
-      !connectionTypes
-    ) {
+    // ולידציה של שדות חובה
+    if (!email || !password || !fullName || !birth_date || !gender || !connectionTypes) {
       Alert.alert('שגיאה', 'נא לוודא שכל שדות החובה מולאו');
       return;
     }
-  
+
     try {
       setLoading(true);
-  
+
+      // רישום ב־Auth עם role דינמי
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            name: fullName,
-            role: 'user',
-          },
+        role: {
+          data: { name: fullName, role },
         },
       });
-  
       if (error) throw error;
-      if (!data?.user) throw new Error('User not returned from signUp');
-  
-      // 🧠 טיפול בפרמטר מיקום שמגיע כמחרוזת JSON
+      const user = data.user;
+      if (!user) throw new Error('User not returned from signUp');
+
+      // עיבוד location
       let parsedLocation = null;
       if (location) {
-        try {
-          parsedLocation =
-            typeof location === 'string' ? JSON.parse(location) : location;
-  
-          if (
-            typeof parsedLocation !== 'object' ||
-            parsedLocation.latitude == null ||
-            parsedLocation.longitude == null
-          ) {
-            console.warn('Invalid location structure:', parsedLocation);
-            parsedLocation = null;
-          }
-        } catch (parseErr) {
-          console.warn('Failed to parse location JSON:', parseErr);
-          parsedLocation = null;
-        }
+        parsedLocation = location;
       }
-  
+
+      // upsert לטבלת public.users
+      const profile = {
+        id: user.id,
+        email,
+        name: fullName,
+        role,
+        birth_date,
+        gender,
+        connectionTypes,
+        image,
+        wantsNotifications,
+        location: parsedLocation,
+        preferredMatch,
+        traits,
+        showTraits,
+        hobbies,
+        showHobbies,
+        identities,
+        showIdentities,
+        supportNeeds,
+        showSupportNeeds,
+        introduction,
+        audio,
+        prompt,
+        status,
+      };
       const { error: upsertError } = await supabase
         .from('users')
-        .upsert([
-          {
-            id: data.user.id,
-            email,
-            name: fullName,
-            birth_date,
-            gender,
-            connectionTypes,
-            image,
-            wantsNotifications,
-            location: parsedLocation, // 👈 בדיוק כמו שביקשת - נשמר כ-jsonb רגיל
-            preferredMatch,
-            traits,
-            showTraits,
-            hobbies,
-            showHobbies,
-            identities,
-            showIdentities,
-            supportNeeds,
-            showSupportNeeds,
-            introduction,
-            audio,
-            prompt,
-            status,
-          },
-        ]);
-  
+        .upsert([profile], { onConflict: 'id' });
       if (upsertError) throw upsertError;
-  
+
       Alert.alert('הצלחה', 'נרשמת בהצלחה!');
       router.push('/(main)/profile');
     } catch (err) {
@@ -225,12 +202,8 @@ const FinalStep = () => {
 
 export default FinalStep;
 
-// styles (לא השתנה)
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.white,
-  },
+  container: { flex: 1, backgroundColor: theme.colors.white },
   scroll: {
     paddingBottom: hp(10),
     paddingHorizontal: wp(8),
@@ -260,12 +233,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     gap: wp(2),
   },
-  tipText: {
-    fontSize: hp(2),
-    color: '#FF2D7A',
-    textAlign: 'right',
-    flex: 1,
-  },
+  tipText: { fontSize: hp(2), color: '#FF2D7A', textAlign: 'right', flex: 1 },
   nextButton: {
     backgroundColor: '#FF2D7A',
     paddingVertical: hp(2),

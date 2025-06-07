@@ -17,6 +17,7 @@ const GenderSignUp = () => {
     location,
     image,
     wantsNotifications = 'false',
+    role,
   } = useLocalSearchParams();
 
   const onNext = () => {
@@ -28,6 +29,7 @@ const GenderSignUp = () => {
     }
 
     router.push({
+
       pathname: '/signUp/matchSignUp',
       params: {
         fullName,
@@ -39,6 +41,7 @@ const GenderSignUp = () => {
         image,
         location,
         gender: selectedGender,
+        role,
       },
     });
   };
@@ -160,14 +163,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: wp(5),
-    width: '100%',
-    marginBottom: hp(4),
+    marginBottom: hp(3),
   },
   genderButton: {
-    flex: 1,
     marginHorizontal: wp(2),
   },
   button: {
+    width: wp(26),
     height: wp(26),
     borderRadius: wp(13),
     backgroundColor: theme.colors.card,
@@ -185,7 +187,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: hp(2),
     fontWeight: theme.fonts.semibold,
-    color: theme.colors.primary,
+    color: theme.colors.textSecondary,
     marginTop: hp(1),
   },
   selectedText: {
@@ -196,10 +198,10 @@ const styles = StyleSheet.create({
     paddingVertical: hp(2),
     paddingHorizontal: wp(10),
     borderRadius: theme.radius.lg,
-    marginTop: hp(3),
+    marginTop: hp(5),
   },
   nextButtonText: {
-    color: theme.colors.white,
+    color: theme.colors.textSecondary,
     fontSize: hp(2.5),
     fontWeight: theme.fonts.semibold,
   },

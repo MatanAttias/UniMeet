@@ -16,9 +16,11 @@ const LocationPermission = () => {
     connectionTypes,
     image,
     wantsNotifications = 'false', // טיפול במידה ולא הגיע מהעמוד הקודם
+    role,
   } = useLocalSearchParams();
 
   const handleSkip = () => {
+
     const params = {
       fullName,
       email,
@@ -28,6 +30,7 @@ const LocationPermission = () => {
       connectionTypes,
       image,
       location: null,
+      role,
     };
     router.push({ pathname: '/signUp/genderSignUp', params });
   };
@@ -58,6 +61,7 @@ const LocationPermission = () => {
           wantsNotifications: wantsNotifications === 'true',
           connectionTypes,
           image,
+          role,
           location: JSON.stringify(loc),  // stringify the object
         };
         router.push({ pathname: '/signUp/genderSignUp', params });
