@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import {
   View,
@@ -16,12 +15,23 @@ import { theme } from '../../constants/theme';
 import { hp, wp } from '../../constants/helpers/common';
 
 const IDENTITY_TRAITS = [
-  'ADHD', 'ARFID', 'טראומת התקשרות', 'אוטיזם', 'הפרעה דו-קוטבית',
-  'שיתוק מוחין', 'דיכאון', 'תסמונת דאון', 'DPD',
-  'דיסלקציה', 'דיספרקסיה', 'הזיות',
-  'אדם רגיש מאוד', 'מוגבלות שכלית', 'שינויים במצבי רוח',
-  'OCD', 'מרצה בהחלמה', 'הימנעות חברתית',
-  'גמגום', 'תסמונת טורט',
+  'אוטיזם',
+  'אפילפסיה',
+  'דיכאון',
+  'דיסלקציה',
+  'דיספרקסיה',
+  'הפרעה דו-קוטבית',
+  'OCD (הפרעה כפייתית-טורדנית)',
+  'הפרעת חרדה',
+  'ADHD (הפרעת קשב וריכוז)',
+  'כאב כרוני',
+  'לקות ראייה',
+  'לקות שמיעה',
+  'לקות תנועה',
+  'מוגבלות שכלית התפתחותית',
+  'תסמונת דאון',
+  'תסמונת טורט',
+  'תסמונת SLO – Smith Lemli Optiz',
 ];
 
 const Identify = () => {
@@ -30,20 +40,20 @@ const Identify = () => {
   const [showOnProfile, setShowOnProfile] = useState(true);
   const router = useRouter();
   const {
-      fullName,
-      email,
-      password,
-      birth_date,
-      gender,
-      connectionTypes,
-      image,
-      wantsNotifications = 'false',
-      location,
-      preferredMatch,
-      traits,
-      showTraits = 'false',
-      hobbies,
-      showHobbies = 'false',
+    fullName,
+    email,
+    password,
+    birth_date,
+    gender,
+    connectionTypes,
+    image,
+    wantsNotifications = 'false',
+    location,
+    preferredMatch,
+    traits,
+    showTraits = 'false',
+    hobbies,
+    showHobbies = 'false',
   } = useLocalSearchParams();
 
   const animationRefs = useRef(
@@ -52,16 +62,6 @@ const Identify = () => {
       return acc;
     }, {})
   );
-
-  const toggleTrait = (trait) => {
-    if (selectedTraits.includes(trait)) {
-      setSelectedTraits(selectedTraits.filter(t => t !== trait));
-    } else if (selectedTraits.length < 5) {
-      setSelectedTraits([...selectedTraits, trait]);
-    } else {
-      Alert.alert('מקסימום תוויות', 'ניתן לבחור עד 5 תוויות זהות בלבד');
-    }
-  };
 
   const animatePress = (trait) => {
     Animated.sequence([
@@ -77,12 +77,21 @@ const Identify = () => {
     ]).start();
   };
 
-  const filteredTraits = IDENTITY_TRAITS.filter(trait =>
+  const toggleTrait = (trait) => {
+    if (selectedTraits.includes(trait)) {
+      setSelectedTraits(selectedTraits.filter((t) => t !== trait));
+    } else if (selectedTraits.length < 5) {
+      setSelectedTraits([...selectedTraits, trait]);
+    } else {
+      Alert.alert('מקסימום תוויות', 'ניתן לבחור עד 5 תוויות זהות בלבד');
+    }
+  };
+
+  const filteredTraits = IDENTITY_TRAITS.filter((trait) =>
     trait.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const goToNextStep = () => {
-
     router.push({
       pathname: '/signUp/supportNeeds',
       params: {

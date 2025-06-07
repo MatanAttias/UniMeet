@@ -14,43 +14,6 @@ const Welcome = () => {
   const router = useRouter()
   const { debugAuthState, clearAuthStorage } = useAuth()
 
-  // 🔍 כפתור ניפוי - מראה מה קורה מתחת למשטח
-  const handleDebugAuth = async () => {
-    console.log('🔍 Starting debug...')
-    const result = await debugAuthState()
-    
-    // הצגת התוצאות בצורה ברורה
-    Alert.alert(
-      'מצב Authentication', 
-      `Storage Keys: ${result.storageKeys?.length || 0}
-Session: ${result.hasSession ? 'קיימת' : 'לא קיימת'}
-User: ${result.hasUser ? 'קיים' : 'לא קיים'}
-שגיאה: ${result.error || 'אין'}`
-    )
-  }
-
-  // 🧹 כפתור ניקוי - מנקה הכל ומאפס
-  const handleClearAuth = async () => {
-    Alert.alert(
-      'ניקוי נתונים',
-      'זה ימחק את כל נתוני ההתחברות. בטוח?',
-      [
-        { text: 'ביטול', style: 'cancel' },
-        { 
-          text: 'נקה', 
-          style: 'destructive',
-          onPress: async () => {
-            console.log('🧹 Clearing all auth data...')
-            const success = await clearAuthStorage()
-            Alert.alert(
-              success ? 'הצלחה' : 'שגיאה',
-              success ? 'כל נתוני ההתחברות נוקו' : 'בעיה בניקוי הנתונים'
-            )
-          }
-        }
-      ]
-    )
-  }
 
   return (
     <ScreenWrapper bg={theme.colors.dark}>
@@ -100,22 +63,6 @@ User: ${result.hasUser ? 'קיים' : 'לא קיים'}
             מתחברים ויוצרים קהילה אחת תומכת ומכילה.
           </MotiText>
         </View>
-
-        {/* 🛠️ כפתורי ניפוי זמניים - רק בפיתוח */}
-        {__DEV__ && (
-          <View style={styles.debugContainer}>
-            <Text style={styles.debugTitle}>🛠️ כלי פיתוח</Text>
-            
-            <Pressable style={styles.debugButton} onPress={handleDebugAuth}>
-              <Text style={styles.debugButtonText}>🔍 בדוק מצב Auth</Text>
-            </Pressable>
-            
-            <Pressable style={styles.debugButton} onPress={handleClearAuth}>
-              <Text style={styles.debugButtonText}>🧹 נקה נתוני Auth</Text>
-            </Pressable>
-          </View>
-        )}
-
       </View>
 
       {/* bottom actions */}

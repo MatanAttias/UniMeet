@@ -69,7 +69,7 @@ const EmailSignUp = () => {
             color: 'white',
             textAlign: 'right',
           }}
-          placeholderTextColor="white"
+          placeholderTextColor="gray"
         />
       </View>
 

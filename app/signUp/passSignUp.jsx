@@ -59,22 +59,22 @@ const PassSignUp = () => {
         <Text style={styles.punchline}>אנחנו ממליצים על סיסמה חזקה</Text>
 
         <Input
-          placeholder="סיסמה"
+          placeholder="סיסמה..."
           secureTextEntry
           onChangeText={(text) => setPassword(text)} // שימוש ב-setState במקום ref
           containerStyle={styles.inputContainer}
           inputStyle={styles.inputText}
-          placeholderTextColor="white"
+          placeholderTextColor="gray"
           value={password} // הוספת ערך מקושר ל-state
         />
 
         <Input
-          placeholder="אימות סיסמה"
+          placeholder="אימות סיסמה..."
           secureTextEntry
           onChangeText={(text) => setConfirmPassword(text)} // שימוש ב-setState במקום ref
           containerStyle={styles.inputContainer}
           inputStyle={styles.inputText}
-          placeholderTextColor="white"
+          placeholderTextColor="gray"
           value={confirmPassword} // הוספת ערך מקושר ל-state
         />
       </View>

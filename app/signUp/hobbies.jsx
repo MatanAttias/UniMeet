@@ -1,5 +1,3 @@
-// Hobbies.jsx
-
 import React, { useState, useRef } from 'react';
 import {
   View,
@@ -17,12 +15,38 @@ import { theme } from '../../constants/theme';
 import { hp, wp } from '../../constants/helpers/common';
 
 const HOBBIES = [
-  'כדורגל', 'כדורסל', 'מוזיקה', 'ריקוד', 'צילום', 'טיולים', 'קריאה', 'בישול',
-  'אפייה', 'ציור', 'ספורט', 'ריצה', 'כתיבה', 'שחייה', 'משחקי וידאו',
-  'יוגה', 'מדיטציה', 'גינון', 'סדרה טובה', 'בינג\' בנטפליקס', 'עיצוב פנים',
-  'סנובורד', 'גלישה', 'טניס', 'אופניים', 'תכנות', 'השקעות', 'סטארטאפים',
-  'לימוד שפות', 'פודקאסטים', 'גיטרה', 'תופים', 'איפור', 'קוסמטיקה',
-  'אמנות', 'שירה', 'סקסולוגיה', 'אסטרונומיה', 'שחמט',
+  'איפור',
+  'אופניים',
+  'אסטרונומיה',
+  'אמנות',
+  'בישול ואפייה',
+  'בינג\' בנטפליקס',
+  'גינון',
+  'השקעות',
+  'טניס',
+  'טיולים',
+  'יוגה ומדיטציה',
+  'כדורגל',
+  'כדורסל',
+  'כתיבה',
+  'לימוד שפות',
+  'מוזיקה',
+  'נגינה על כלי נגינה',
+  'משחקי קלפים',
+  'משחקי וידאו',
+  'סדרה טובה',
+  'ספורט',
+  'עיצוב פנים',
+  'פודקאסטים',
+  'צילום',
+  'ציור',
+  'קריאת ספרים',
+  'קוסמטיקה',
+  'ריקוד',
+  'ריצה',
+  'שחמט',
+  'שחייה',
+  'שירה',
 ];
 
 const Hobbies = () => {
@@ -31,19 +55,19 @@ const Hobbies = () => {
   const [showOnProfile, setShowOnProfile] = useState(true);
   const router = useRouter();
   const {
-        fullName,
-        email,
-        password,
-        birth_date,
-        gender,
-        connectionTypes,
-        image,
-        wantsNotifications = 'false',
-        location,
-        preferredMatch,
-        traits,
-        showTraits = 'false',
-   } = useLocalSearchParams();
+    fullName,
+    email,
+    password,
+    birth_date,
+    gender,
+    connectionTypes,
+    image,
+    wantsNotifications = 'false',
+    location,
+    preferredMatch,
+    traits,
+    showTraits = 'false',
+  } = useLocalSearchParams();
 
   const animationRefs = useRef(
     HOBBIES.reduce((acc, hobby) => {
@@ -54,7 +78,7 @@ const Hobbies = () => {
 
   const toggleHobby = (hobby) => {
     if (selectedHobbies.includes(hobby)) {
-      setSelectedHobbies(selectedHobbies.filter(h => h !== hobby));
+      setSelectedHobbies(selectedHobbies.filter((h) => h !== hobby));
     } else if (selectedHobbies.length < 5) {
       setSelectedHobbies([...selectedHobbies, hobby]);
     } else {
@@ -76,7 +100,7 @@ const Hobbies = () => {
     ]).start();
   };
 
-  const filteredHobbies = HOBBIES.filter(hobby =>
+  const filteredHobbies = HOBBIES.filter((hobby) =>
     hobby.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -106,6 +130,7 @@ const Hobbies = () => {
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.headerRow}>
         <Pressable onPress={goBack} style={styles.backButton}>
           <Text style={styles.backText}>חזור</Text>
@@ -113,6 +138,7 @@ const Hobbies = () => {
         <Text style={styles.title}>תחביבים</Text>
       </View>
 
+      {/* Search */}
       <TextInput
         placeholder="חפש תחביב או כתוב בעצמך..."
         placeholderTextColor={theme.colors.textSecondary}
@@ -122,10 +148,12 @@ const Hobbies = () => {
         textAlign="right"
       />
 
+      {/* Counter */}
       <Text style={styles.counterText}>
         {selectedHobbies.length} / 5 תחביבים נבחרו
       </Text>
 
+      {/* List of hobbies */}
       <ScrollView contentContainerStyle={styles.traitsContainer}>
         {filteredHobbies.map((hobby) => (
           <Animated.View
@@ -155,6 +183,7 @@ const Hobbies = () => {
         ))}
       </ScrollView>
 
+      {/* Footer */}
       <View style={styles.bottomSection}>
         <View style={styles.toggleRow}>
           <Switch
@@ -165,7 +194,6 @@ const Hobbies = () => {
           />
           <Text style={styles.toggleLabel}>הצג בפרופיל</Text>
         </View>
-
         <Pressable style={styles.saveButton} onPress={goToNextStep}>
           <Text style={styles.saveText}>המשך</Text>
         </Pressable>
@@ -209,34 +237,35 @@ const styles = StyleSheet.create({
   backText: {
     color: '#fff',
     fontSize: hp(2),
-    fontWeight: theme.fonts.bold,
   },
   input: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.md,
-    padding: wp(3),
-    fontSize: hp(2.2),
-    marginBottom: hp(1),
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.radius.lg,
+    paddingVertical: hp(1.8),
+    paddingHorizontal: wp(3),
+    fontSize: hp(2),
     color: theme.colors.text,
+    marginBottom: hp(2),
+    textAlign: 'right',
   },
   counterText: {
-    fontSize: hp(1.8),
-    color: theme.colors.textSecondary,
     textAlign: 'right',
+    color: theme.colors.textSecondary,
+    fontSize: hp(1.8),
     marginBottom: hp(1),
   },
   traitsContainer: {
     flexDirection: 'row-reverse',
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
-    gap: wp(2),
     paddingBottom: hp(2),
   },
   trait: {
     backgroundColor: theme.colors.surface,
     padding: wp(3),
     borderRadius: theme.radius.md,
-    marginVertical: hp(0.5),
+    marginVertical: hp(1),
+    marginHorizontal: wp(1),
   },
   traitSelected: {
     backgroundColor: theme.colors.primaryDark,
@@ -250,27 +279,27 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   bottomSection: {
-    marginTop: hp(2),
+    marginTop: hp(4),
   },
   toggleRow: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
-    marginBottom: hp(1),
+    marginBottom: hp(2),
   },
   toggleLabel: {
     fontSize: hp(2),
     color: theme.colors.text,
-    marginRight: wp(2),
+    marginRight: wp(3),
   },
   saveButton: {
     backgroundColor: theme.colors.primary,
-    paddingVertical: hp(1.5),
-    borderRadius: theme.radius.lg,
+    paddingVertical: hp(1.8),
+    borderRadius: theme.radius.md,
     alignItems: 'center',
     marginBottom: hp(6),
   },
   saveText: {
-    color: '#fff',
+    color: theme.colors.textSecondary,
     fontSize: hp(2.2),
     fontWeight: 'bold',
   },

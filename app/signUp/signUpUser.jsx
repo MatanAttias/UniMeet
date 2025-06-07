@@ -47,14 +47,14 @@ export default function SignUpUser() {
           onChangeText={(text) => (nameRef.current = text)}
           containerStyle={styles.inputContainer}
           inputStyle={styles.inputText}
-          placeholderTextColor="white"
+          placeholderTextColor="gray"
         />
         <Input
           placeholder="שם משפחה..."
           onChangeText={(text) => (lastNameRef.current = text)}
           containerStyle={styles.inputContainer}
           inputStyle={styles.inputText}
-          placeholderTextColor="white"
+          placeholderTextColor="gray"
         />
 
         <Button

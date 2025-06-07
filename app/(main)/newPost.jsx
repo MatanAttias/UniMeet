@@ -16,6 +16,13 @@ import { Video } from 'expo-av'
 import { createOrUpdatePost } from '../../services/PostService'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Animated } from 'react-native'
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
+} from 'react-native';
+
 const NewPost = () => {
   const post = useLocalSearchParams()
   const { user } = useAuth()
@@ -101,15 +108,23 @@ const NewPost = () => {
   console.log("Full user object:", user);
   return (
     <ScreenWrapper bg="black">
-      <View style={styles.container}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backText}>חזור</Text>
-        </Pressable>
-
-        <Text style={styles.title}>יצירת פוסט</Text>
-
-        <View style={styles.content}>
-          <ScrollView contentContainerStyle={{ gap: 20, flexGrow: 1 }}>
+      {/* ✅ עטיפה לסגירת המקלדת בלחיצה בחוץ */}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        {/* ✅ התאמה אוטומטית של האלמנטים כאשר המקלדת פתוחה */}
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
+          <View style={styles.container}>
+            <Pressable style={styles.backButton} onPress={() => router.back()}>
+              <Text style={styles.backText}>חזור</Text>
+            </Pressable>
+  
+            <Text style={styles.title}>יצירת פוסט</Text>
+  
+            <View style={styles.content}>
+              <ScrollView contentContainerStyle={{ gap: 20, flexGrow: 1 }} keyboardShouldPersistTaps="handled">
             <View style={styles.header}>
               <Avatar uri={user?.image} size={hp(6.5)} rounded={theme.radius.xl} />
               <Text style={styles.username}>{user?.name}</Text>
@@ -160,7 +175,9 @@ const NewPost = () => {
           />
         </View>
       </View>
-    </ScreenWrapper>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
+  </ScreenWrapper>
   )
 }
 
@@ -276,6 +293,6 @@ const styles = StyleSheet.create({
   backText: {
     color: theme.colors.primary,
     fontSize: hp(2),
-    fontWeight: '600',
-  },
+    fontWeight: '600',
+  },
 })

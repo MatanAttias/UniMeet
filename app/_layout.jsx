@@ -62,7 +62,7 @@ const MainLayout = () => {
         }
       } catch (error) {
         console.error('Session error:', error);
-        router.replace('/welcome');
+        router.replace('/splash');
       } finally {
         // הסתר את splash screen כשהכל מוכן
         await SplashScreen.hideAsync();
@@ -81,7 +81,7 @@ const MainLayout = () => {
         router.replace('/home');
       } else {
         setAuth(null);
-        router.replace('/welcome');
+        router.replace('/splash');
       }
     });
 
@@ -123,4 +123,4 @@ const MainLayout = () => {
   );
 };
 
-export default _layout;
+export default _layout;
