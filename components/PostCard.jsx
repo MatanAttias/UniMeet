@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, Alert, Share, TextInput } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { theme } from '../constants/theme';
@@ -12,7 +12,6 @@ import { getSupabaseFileUrl } from '../services/imageService';
 import { Video } from 'expo-av';
 import { createPostLike, removePostLike, createComment } from '../services/PostService';
 import { stripHtmlTags } from '../constants/helpers/common';
-import Loading from '../components/Loading';
 import PostOptions from './PostOptions';
 import * as Haptics from 'expo-haptics';
 import { supabase } from '../lib/supabase';
@@ -34,129 +33,223 @@ const tagsStyles = {
   h4: { color: theme.colors.textSecondary, fontSize: hp(1.9) },
 };
 
-const PostCard = (props) => {
-  const { item, currentUser, router, hasShadow = true, showMoreIcon = true, showDelete = false, onDelete = () => {}, onEdit = () => {} } = props;
+const PostCard = React.memo((props) => {
+  const { 
+    item, 
+    currentUser, 
+    router, 
+    hasShadow = true, 
+    showMoreIcon = true, 
+    showDelete = false, 
+    onDelete = () => {}, 
+    onEdit = () => {} 
+  } = props;
 
+  // Early validation with more descriptive error messages
   if (!item || typeof item !== 'object') {
-    console.warn('Invalid post item:', item);  // להוספת לוג
+    console.warn('Invalid post item:', item);
     return (
-      <View style={{ padding: 10 }}>
-        <Text style={{ color: 'red', textAlign: 'center' }}>
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>
           ⚠️ פוסט לא תקין ({typeof item})
         </Text>
       </View>
     );
   }
+
   if (!currentUser?.id || !item.id) {
     return (
-      <View style={{ padding: 10 }}>
-        <Text style={{ color: 'orange', textAlign: 'center' }}>
+      <View style={styles.errorContainer}>
+        <Text style={styles.warningText}>
           ⛔ משתמש לא מזוהה או פוסט חסר מזהה
         </Text>
       </View>
     );
   }
 
+  // State management
   const [likes, setLikes] = useState(item.postLikes || []);
   const [commentCount, setCommentCount] = useState(item.comments?.[0]?.count || 0);
   const [showOptions, setShowOptions] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [sending, setSending] = useState(false);
+  
+  // Animation
   const scale = useSharedValue(1);
-
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
+  // Memoized calculations
+  const createdAt = useMemo(() => 
+    item.created_at ? moment(item.created_at).format('D MMM') : 'לא ידוע', 
+    [item.created_at]
+  );
+  
+  const liked = useMemo(() => 
+    likes.some(l => l.userId === currentUser.id), 
+    [likes, currentUser.id]
+  );
+
+  // Real-time subscriptions with cleanup
   useEffect(() => {
+    if (!item.id) return;
+
     const channel = supabase
-      .channel(`comments_post_${item.id}`)
+      .channel(`comments_post_${item.id}_${Date.now()}`) // Adding timestamp for uniqueness
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'comments', filter: `postId=eq.${item.id}` },
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'comments',
+          filter: `postId=eq.${item.id}`,
+        },
         () => setCommentCount(c => c + 1)
       )
       .on(
         'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'comments', filter: `postId=eq.${item.id}` },
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'comments',
+          filter: `postId=eq.${item.id}`,
+        },
         () => setCommentCount(c => Math.max(0, c - 1))
-      )
-      .subscribe();
-    return () => supabase.removeChannel(channel);
+      );
+
+    channel.subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [item.id]);
 
+  // Update likes when item changes
   useEffect(() => {
     setLikes(item.postLikes || []);
   }, [item.postLikes]);
 
-  const createdAt = item.created_at ? moment(item.created_at).format('D MMM') : 'לא ידוע';
-  const liked = likes.some(l => l.userId === currentUser.id);
+  // Callbacks for performance optimization
+  const onLike = useCallback(async () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      scale.value = 1.3;
+      setTimeout(() => { 
+        scale.value = withSpring(1, { damping: 3 }); 
+      }, 50);
 
-  const onLike = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    scale.value = 1.3;
-    setTimeout(() => { scale.value = withSpring(1, { damping: 3 }); }, 50);
-
-    if (liked) {
-      setLikes(ls => ls.filter(l => l.userId !== currentUser.id));
-      await removePostLike(item.id, currentUser.id);
-    } else {
-      setLikes(ls => [...ls, { userId: currentUser.id }]);
-      await createPostLike({ userId: currentUser.id, postId: item.id });
+      if (liked) {
+        setLikes(ls => ls.filter(l => l.userId !== currentUser.id));
+        await removePostLike(item.id, currentUser.id);
+      } else {
+        setLikes(ls => [...ls, { userId: currentUser.id }]);
+        await createPostLike({ userId: currentUser.id, postId: item.id });
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      Alert.alert('שגיאה', 'לא ניתן לעדכן לייק כרגע');
     }
-  };
+  }, [liked, currentUser.id, item.id, scale]);
 
-  const handleSendComment = async () => {
+  const handleSendComment = useCallback(async () => {
     if (!commentText.trim()) return;
+    
     setSending(true);
-    const res = await createComment({ userId: currentUser.id, postId: item.id, text: commentText.trim() });
-    setSending(false);
-    if (res.success) {
-      setCommentText('');
-      setCommentCount(c => c + 1);
-    } else {
-      Alert.alert('תגובה', 'משהו השתבש בשליחה');
+    try {
+      const res = await createComment({ 
+        userId: currentUser.id, 
+        postId: item.id, 
+        text: commentText.trim() 
+      });
+      
+      if (res.success) {
+        setCommentText('');
+        setCommentCount(c => c + 1);
+      } else {
+        Alert.alert('תגובה', 'משהו השתבש בשליחה');
+      }
+    } catch (error) {
+      console.error('Error sending comment:', error);
+      Alert.alert('שגיאה', 'לא ניתן לשלוח תגובה כרגע');
+    } finally {
+      setSending(false);
     }
-  };
+  }, [commentText, currentUser.id, item.id]);
 
-  const onShare = () => item.body && Share.share({ message: stripHtmlTags(item.body) });
+  const onShare = useCallback(() => {
+    if (item.body) {
+      Share.share({ message: stripHtmlTags(item.body) });
+    }
+  }, [item.body]);
+
+  const handleDeleteConfirm = useCallback(() => {
+    Alert.alert(
+      'אישור',
+      'בטוח שברצונך למחוק?',
+      [
+        { text: 'ביטול', style: 'cancel' },
+        { text: 'מחק', style: 'destructive', onPress: () => onDelete(item) }
+      ]
+    );
+  }, [item, onDelete]);
+
+  const navigateToPostDetails = useCallback(() => {
+    router.push({ pathname: 'postDetails', params: { postId: item.id } });
+  }, [router, item.id]);
 
   return (
     <View style={[styles.container, hasShadow && styles.shadow]}>
+      {/* Header */}
       <View style={styles.header}>
-      <TouchableOpacity
-        style={styles.userInfo}
-        onPress={() =>
-          router.push({
-            pathname: 'visitedProfile',
-            params: { userId: item.user?.id }
-          })
-        }
-      >
-        <Avatar size={hp(4.5)} uri={item.user?.image} rounded={theme.radius.md} />
-        <View style={styles.nameTime}>
-          <Text style={styles.username}>{item.user?.name || 'משתמש'}</Text>
-          <Text style={styles.postTime}>{createdAt}</Text>
+        <View style={styles.userInfo}>
+          <Avatar 
+            size={hp(4.5)} 
+            uri={item.user?.image} 
+            rounded={theme.radius.md} 
+          />
+          <View style={styles.nameTime}>
+            <Text style={styles.username}>
+              {item.user?.name || 'משתמש'}
+            </Text>
+            <Text style={styles.postTime}>{createdAt}</Text>
+          </View>
         </View>
-      </TouchableOpacity>
+        
         <View style={styles.actionsRight}>
           {showMoreIcon && (
             <TouchableOpacity onPress={() => setShowOptions(true)}>
-              <Icon name="threeDotsHorizontal" size={hp(3.4)} strokeWidth={3} color={theme.colors.textSecondary} />
+              <Icon 
+                name="threeDotsHorizontal" 
+                size={hp(3.4)} 
+                strokeWidth={3} 
+                color={theme.colors.textSecondary} 
+              />
             </TouchableOpacity>
           )}
+          
           {showDelete && currentUser.id === item.userId && (
             <>
               <TouchableOpacity onPress={() => onEdit(item)}>
-                <Icon name="edit" size={hp(2.5)} color={theme.colors.textSecondary} />
+                <Icon 
+                  name="edit" 
+                  size={hp(2.5)} 
+                  color={theme.colors.textSecondary} 
+                />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => Alert.alert('אישור','בטוח שברצונך למחוק?',[{ text:'ביטול', style:'cancel' },{ text:'מחק', style:'destructive', onPress:()=>onDelete(item) }])}>
-                <Icon name="delete" size={hp(2.5)} color={theme.colors.rose} />
+              <TouchableOpacity onPress={handleDeleteConfirm}>
+                <Icon 
+                  name="delete" 
+                  size={hp(2.5)} 
+                  color={theme.colors.rose} 
+                />
               </TouchableOpacity>
             </>
           )}
         </View>
       </View>
+
+      {/* Content */}
       <View style={styles.content}>
         {item.body && (
           <RenderHtml
@@ -167,34 +260,57 @@ const PostCard = (props) => {
             defaultTextProps={{ selectable: true }}
           />
         )}
+        
         {item.file?.includes('postImages') && (
-          <Image source={getSupabaseFileUrl(item.file)} style={styles.postMedia} contentFit="cover" />
+          <Image 
+            source={getSupabaseFileUrl(item.file)} 
+            style={styles.postMedia} 
+            contentFit="cover" 
+          />
         )}
+        
         {item.file?.includes('postVideos') && (
-          <Video style={[styles.postMedia, { height: hp(30) }]} source={{ uri: getSupabaseFileUrl(item.file)?.uri }} useNativeControls resizeMode="cover" isLooping />
+          <Video 
+            style={[styles.postMedia, { height: hp(30) }]} 
+            source={{ uri: getSupabaseFileUrl(item.file)?.uri }} 
+            useNativeControls 
+            resizeMode="cover" 
+            isLooping 
+          />
         )}
       </View>
+
+      {/* Footer with actions */}
       <View style={styles.footer}>
         <View style={styles.footerButton}>
           <Animated.View style={animatedStyle}>
             <TouchableOpacity onPress={onLike}>
-              <Icon name="heart" size={24} fill={liked ? theme.colors.rose : 'transparent'} color={liked ? theme.colors.rose : theme.colors.textSecondary} />
+              <Icon 
+                name="heart" 
+                size={24} 
+                fill={liked ? theme.colors.rose : 'transparent'} 
+                color={liked ? theme.colors.rose : theme.colors.textSecondary} 
+              />
             </TouchableOpacity>
           </Animated.View>
           <Text style={styles.count}>{likes.length}</Text>
         </View>
+        
         <View style={styles.footerButton}>
-          <TouchableOpacity onPress={() => router.push({ pathname: 'postDetails', params: { postId: item.id } })}>
+          <TouchableOpacity onPress={navigateToPostDetails}>
             <Icon name="comment" size={24} color={theme.colors.textLight} />
           </TouchableOpacity>
           <Text style={styles.count}>{commentCount}</Text>
         </View>
+        
         <View style={styles.footerButton}>
           <TouchableOpacity onPress={onShare}>
             <Icon name="share" size={24} color={theme.colors.textLight} />
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Quick reply */}
       <View style={styles.quickReplyContainer}>
         <TextInput
           placeholder="הגב לפוסט..."
@@ -202,15 +318,35 @@ const PostCard = (props) => {
           value={commentText}
           onChangeText={setCommentText}
           style={styles.quickReplyInput}
+          multiline
         />
-        <TouchableOpacity disabled={!commentText.trim() || sending} onPress={handleSendComment}>
-          <Icon name="send" size={20} color={theme.colors.primary} />
+        <TouchableOpacity 
+          disabled={!commentText.trim() || sending} 
+          onPress={handleSendComment}
+          style={[
+            styles.sendButton,
+            (!commentText.trim() || sending) && styles.sendButtonDisabled
+          ]}
+        >
+          <Icon 
+            name="send" 
+            size={20} 
+            color={!commentText.trim() || sending ? theme.colors.textLight : theme.colors.primary} 
+          />
         </TouchableOpacity>
       </View>
-      <PostOptions visible={showOptions} onClose={() => setShowOptions(false)} postId={item.id} />
+
+      {/* Options modal */}
+      <PostOptions 
+        visible={showOptions} 
+        onClose={() => setShowOptions(false)} 
+        postId={item.id} 
+      />
     </View>
   );
-};
+});
+
+PostCard.displayName = 'PostCard';
 
 export default PostCard;
 
@@ -223,7 +359,6 @@ const styles = StyleSheet.create({
     padding: hp(2),
     marginBottom: hp(2),
     gap: hp(2),
-    marginTop: 40,
   },
   shadow: {
     shadowColor: '#000',
@@ -231,19 +366,32 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 4,
-    
+  },
+  errorContainer: {
+    padding: hp(2),
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.radius.md,
+    marginBottom: hp(1),
+  },
+  errorText: {
+    color: theme.colors.rose,
+    textAlign: 'center',
+    fontSize: hp(1.8),
+  },
+  warningText: {
+    color: theme.colors.warning,
+    textAlign: 'center',
+    fontSize: hp(1.8),
   },
   header: {
     flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
-    
   },
   userInfo: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: wp(2),
-    
   },
   nameTime: {
     flexDirection: 'row-reverse',
@@ -262,24 +410,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: wp(3),
-    
   },
   content: {
     gap: hp(1),
     marginBottom: hp(1),
-    
   },
   postMedia: {
     width: '100%',
     borderRadius: theme.radius.xxl,
     height: hp(40),
-    
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    
   },
   footerButton: {
     flexDirection: 'row',
@@ -298,8 +442,6 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1),
     paddingHorizontal: wp(3),
     gap: wp(2),
-    
-    
   },
   quickReplyInput: {
     flex: 1,
@@ -307,11 +449,17 @@ const styles = StyleSheet.create({
     fontSize: hp(1.6),
     paddingVertical: hp(0.8),
     paddingHorizontal: wp(2),
-    backgroundColor: theme.colors.card,
+    backgroundColor: theme.colors.card, // ✅ רק אחד!
     borderRadius: theme.radius.md,
     borderWidth: 1,
     borderColor: theme.colors.surface,
-    backgroundColor: theme.colors.background,
-
+    maxHeight: hp(8), // מגביל גובה מקסימלי
+    textAlignVertical: 'top',
+  },
+  sendButton: {
+    padding: hp(0.5),
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
   },
 });

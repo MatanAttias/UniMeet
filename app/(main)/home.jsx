@@ -19,6 +19,7 @@ import PostCard from '../../components/PostCard';
 import Loading from '../../components/Loading';
 import { getUserData } from '../../services/userService';
 import BottomBar from '../../components/BottomBar';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 let limit = 0;
 
@@ -36,6 +37,9 @@ export default function Home() {
     Poppins_700Bold,
     Poppins_400Regular,
   });
+
+  // בדיקה אם המשתמש הוא הורה
+  const isParent = user?.role === 'parent';
 
   useEffect(() => {
     if (!user?.id) return;
@@ -88,6 +92,7 @@ export default function Home() {
       supabase.removeChannel(commentsChannel);
     };
   }, [user?.id]);
+
   async function handlePostEvent(payload) {
     if (payload.eventType === 'INSERT' && payload.new?.id) {
       let newPost = { ...payload.new, postLikes: [], comments: [{ count: 0 }] };
@@ -185,7 +190,38 @@ export default function Home() {
         <Pressable style={[styles.tab, selectedTab === 'matches' && styles.tabActive]} onPress={() => setSelectedTab('matches')}>
           <Text style={[styles.tabText, selectedTab === 'matches' && styles.tabTextActive]}>התאמות</Text>
         </Pressable>
+        
+        {/* Tab נוסף להורים */}
+        {isParent && (
+          <Pressable 
+            style={[styles.tab, selectedTab === 'parentTips' && styles.tabActive]} 
+            onPress={() => {
+              setSelectedTab('parentTips');
+              router.push('/parentTips');
+            }}
+          >
+            <Text style={[styles.tabText, selectedTab === 'parentTips' && styles.tabTextActive]}>
+              טיפים להורים
+            </Text>
+          </Pressable>
+        )}
       </View>
+
+      {/* הודעת ברוכים הבאים מיוחדת להורים */}
+      {isParent && selectedTab === 'home' && (
+        <View style={styles.parentWelcome}>
+          <MaterialCommunityIcons name="lightbulb-on" size={24} color={theme.colors.primary} />
+          <Text style={styles.parentWelcomeText}>
+            ברוך הבא! גלה טיפים מועילים לחינוך וגידול ילדים
+          </Text>
+          <Pressable 
+            style={styles.parentWelcomeButton}
+            onPress={() => router.push('/parentTips')}
+          >
+            <Text style={styles.parentWelcomeButtonText}>צפה בטיפים</Text>
+          </Pressable>
+        </View>
+      )}
 
       {/* Content */}
       {selectedTab === 'home' ? (
@@ -301,17 +337,58 @@ const styles = StyleSheet.create({
   tabActive: {
     borderBottomWidth: 2,
     borderBottomColor: theme.colors.primary,
-    
   },
   tabText: {
     fontSize: hp(1.8),
     color: theme.colors.textSecondary,
     fontFamily: 'Poppins_600SemiBold',
-    
   },
   tabTextActive: {
     color: theme.colors.primary,
     fontFamily: 'Poppins_700Bold',
+  },
+  parentWelcome: {
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.radius.xl,
+    paddingVertical: hp(2.5),
+    paddingHorizontal: wp(4),
+    marginHorizontal: wp(4),
+    marginBottom: hp(2),
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.primary + '30',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  parentWelcomeText: {
+    flex: 1,
+    fontSize: hp(1.9),
+    color: theme.colors.textPrimary,
+    fontFamily: 'Poppins_400Regular',
+    textAlign: 'right',
+    marginRight: wp(3),
+    lineHeight: hp(2.4),
+  },
+  parentWelcomeButton: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: hp(1),
+    paddingHorizontal: wp(4),
+    borderRadius: theme.radius.lg,
+    marginLeft: wp(2),
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  parentWelcomeButtonText: {
+    color: '#fff',
+    fontSize: hp(1.7),
+    fontFamily: 'Poppins_600SemiBold',
   },
   list: {
     paddingHorizontal: wp(4),
