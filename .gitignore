@@ -38,5 +38,8 @@ yarn-error.*
 package-lock.json
 package.json
 
+# secret keys
+.env
+
 
 app-example

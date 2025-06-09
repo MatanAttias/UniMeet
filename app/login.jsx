@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   },
   subtext: {
     fontSize: hp(1.6),
-    color: theme.colors.textSecondary,
+    color: theme.colors.textPrimary,
     textAlign: 'right',
   },
   form: {
