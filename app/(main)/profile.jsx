@@ -25,7 +25,7 @@ import PostCard from '../../components/PostCard';
 import Loading from '../../components/Loading';
 import { Audio } from 'expo-av';
 import { AnimatePresence, MotiView } from 'moti';
-
+import UserCityFromLocation from '../../components/UserCityFromLocation'
 
 
 var limit = 0;
@@ -262,13 +262,22 @@ const UserHeader = ({ user, router, handleLogout }) => {
   
  
   const renderTagList = (label, tags) => {
-    if (!tags || tags.length === 0) return null;
+    if (!tags) return null;
+  
+    // אם tags הוא מחרוזת – נפצל לפסיקים
+    const tagList = Array.isArray(tags)
+      ? tags
+      : typeof tags === 'string'
+      ? tags.split(',').map(t => t.trim())
+      : [];
+  
+    if (tagList.length === 0) return null;
   
     return (
       <View style={{ marginBottom: 12 }}>
         <Text style={styles.tagCategory}>{label}</Text>
         <View style={styles.tagList}>
-          {tags.map((tag, index) => (
+          {tagList.map((tag, index) => (
             <View key={index} style={styles.tagPill}>
               <Text style={styles.tagText}>{tag}</Text>
             </View>
@@ -277,13 +286,14 @@ const UserHeader = ({ user, router, handleLogout }) => {
       </View>
     );
   };
-
   const getFormattedTime = (millis) => {
     const totalSeconds = Math.floor(millis / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
+
+ 
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingHorizontal: wp(4) }}>
@@ -307,13 +317,16 @@ const UserHeader = ({ user, router, handleLogout }) => {
             </Pressable>
           )}
           </View>
-
           <View style={{ alignItems: 'center', gap: 4 }}>
-            <Text style={styles.userName}>
-              {user?.fullName || user?.name || 'No name'}
-            </Text>
-            <Text style={styles.infoText}>{user?.address || 'No address'}</Text>
-          </View>
+          <Text style={styles.userName}>
+            {user?.fullName || user?.name || 'No name'}
+          </Text>
+          {user?.location ? (
+            <UserCityFromLocation location={user.location} />
+          ) : (
+            <Text style={styles.infoText}>מיקום לא זמין</Text>
+          )}
+        </View>
 
           {['gender', 'birth_date', 'status', 'connectionTypes'].some(key => !!user?.[key]) && (
         <MotiView
@@ -397,6 +410,13 @@ const UserHeader = ({ user, router, handleLogout }) => {
               <>
                 <Text style={styles.subSectionTitle}>תכונות</Text>
                 {renderTagList('', user.traits)}
+              </>
+            )}
+
+            {user.traits?.length > 0 && (
+              <>
+                <Text style={styles.subSectionTitle}>תחביבים</Text>
+                {renderTagList('', user.hobbies)}
               </>
             )}
           

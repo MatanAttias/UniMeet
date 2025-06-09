@@ -69,8 +69,14 @@ const PostCard = (props) => {
   }));
 
   useEffect(() => {
+    const channelName = `comments_post_${item.id}`;
+    
+    // בדוק אם כבר קיים channel כזה (Supabase לא עושה את זה אוטומטית)
+    const existing = supabase.getChannels().find(c => c.topic === `realtime:${channelName}`);
+    if (existing) return;
+  
     const channel = supabase
-      .channel(`comments_post_${item.id}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'comments', filter: `postId=eq.${item.id}` },
@@ -82,7 +88,10 @@ const PostCard = (props) => {
         () => setCommentCount(c => Math.max(0, c - 1))
       )
       .subscribe();
-    return () => supabase.removeChannel(channel);
+  
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [item.id]);
 
   useEffect(() => {
