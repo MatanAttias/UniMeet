@@ -12,6 +12,7 @@ import { theme } from '../../constants/theme';
 import { hp, wp } from '../../constants/helpers/common';
 import { sendToChat } from '../../services/openai';
 import { supabase } from '../../lib/supabase';
+import { PARENT_TIPS_SYSTEM_PROMPT } from '../../constants/prompts';
 
 // קטגוריות טיפים
 const TIP_CATEGORIES = [
@@ -23,7 +24,7 @@ const TIP_CATEGORIES = [
   { id: 'self_care', title: 'טיפול עצמי להורים', icon: 'heart', color: '#FF6B9D', description: 'שמירה על הבריאות הנפשית שלכם' },
 ];
 
-// Helper functions
+// פונקציות עזר
 const parseJsonField = (value) => {
   if (!value) return [];
   if (typeof value === 'string') {
@@ -48,6 +49,69 @@ const calculateAge = (birthDate) => {
   return age;
 };
 
+// פונקציה לניקוי וניתוח JSON משופרת
+const parseAIResponse = (rawResponse) => {
+  console.log('Raw AI response:', rawResponse);
+  
+  // ניקוי בסיסי
+  let cleaned = rawResponse.trim();
+  
+  // הסרת BOM ותווים בעייתיים
+  cleaned = cleaned.replace(/^\uFEFF/, '');
+  cleaned = cleaned.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+  
+  // מציאת JSON
+  const jsonStart = cleaned.indexOf('{');
+  const jsonEnd = cleaned.lastIndexOf('}');
+  
+  if (jsonStart === -1 || jsonEnd === -1) {
+    throw new Error('No valid JSON found in AI response');
+  }
+  
+  const jsonString = cleaned.substring(jsonStart, jsonEnd + 1);
+  console.log('Extracted JSON string:', jsonString);
+  
+  // ניסיון parsing ראשון
+  try {
+    const parsed = JSON.parse(jsonString);
+    
+    // בדיקת תקינות המבנה
+    if (!parsed.tips || !Array.isArray(parsed.tips)) {
+      throw new Error('Invalid tips structure - no tips array');
+    }
+    
+    if (parsed.tips.length === 0) {
+      throw new Error('Empty tips array received');
+    }
+    
+    return parsed;
+  } catch (parseError) {
+    console.error('First JSON parse failed:', parseError);
+    console.error('Problematic JSON:', jsonString);
+    
+    // ניסיון תיקון וניתוח שני
+    try {
+      const fixedJson = jsonString
+        .replace(/,(\s*[}\]])/g, '$1')  // הסרת פסיקים עודפים
+        .replace(/\n/g, ' ')            // החלפת שורות חדשות ברווחים
+        .replace(/\s+/g, ' ')           // הפחתת רווחים מרובים
+        .replace(/([{,]\s*)(\w+):/g, '$1"$2":'); // הוספת גרשיים למפתחות חסרים
+      
+      console.log('Attempting to parse fixed JSON:', fixedJson);
+      const parsed = JSON.parse(fixedJson);
+      
+      if (!parsed.tips || !Array.isArray(parsed.tips)) {
+        throw new Error('Fixed JSON still has invalid structure');
+      }
+      
+      return parsed;
+    } catch (secondError) {
+      console.error('Second parse attempt failed:', secondError);
+      throw new Error(`Failed to parse AI response: ${parseError.message}`);
+    }
+  }
+};
+
 const ParentTips = () => {
   const { user, setUserData } = useAuth();
   const router = useRouter();
@@ -59,44 +123,45 @@ const ParentTips = () => {
   const [lastFetchTime, setLastFetchTime] = useState(null);
   const [userProfileHash, setUserProfileHash] = useState('');
 
-  const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+  const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 שעות
+
+  // הוספת debug console.log
+  useEffect(() => {
+    console.log('🔍 Current tips state:', tips);
+    console.log('🔍 Selected category:', selectedCategory);
+    console.log('🔍 Search query:', searchQuery);
+    console.log('🔍 Filtered tips count:', filteredTips.length);
+  }, [tips, selectedCategory, searchQuery]);
 
   // שליפת נתונים מלאים מהטבלה
   useEffect(() => {
     const fetchCompleteUserData = async () => {
       if (!user?.id) return;
-      
       console.log('🔍 Fetching complete user data...');
       const { data, error } = await supabase
         .from('users')
-        .select('identities, supportNeeds, traits, birth_date, gender')
+        .select('identities, supportNeeds, birth_date, gender')
         .eq('id', user.id)
         .single();
-      
       if (data && !error) {
         console.log('✅ Complete user data fetched:', data);
-        setUserData({...user, ...data});
+        setUserData({ ...user, ...data });
       } else {
         console.error('❌ Error fetching user data:', error);
       }
     };
-
     fetchCompleteUserData();
   }, [user?.id]);
 
-  // בדיקה והבאת טיפים רק אחרי נתונים מלאים
+  // בדיקה והבאת טיפים לאחר קבלת נתונים
   useEffect(() => {
     const identities = parseJsonField(user?.identities);
     const supportNeeds = parseJsonField(user?.supportNeeds);
-    
     console.log('🔍 Checking user data:', { identities, supportNeeds });
-    
-    // רק אם יש נתונים קליניים או אחרי 3 שניות (לטיפים כלליים)
     if (identities.length > 0 || supportNeeds.length > 0) {
       console.log('✅ Clinical data available, fetching tips...');
       checkAndFetchTips();
     } else {
-      // חכה 3 שניות ואז תביא טיפים כלליים
       const timer = setTimeout(() => {
         console.log('⚠️ No clinical data, fetching general tips...');
         checkAndFetchTips();
@@ -110,21 +175,19 @@ const ParentTips = () => {
       identities: parseJsonField(user?.identities),
       supportNeeds: parseJsonField(user?.supportNeeds),
       age: calculateAge(user?.birth_date),
-      gender: user?.gender
+      gender: user?.gender,
     };
     return JSON.stringify(profile);
   };
 
   const checkAndFetchTips = () => {
     const currentProfileHash = generateProfileHash();
-    const now = new Date().getTime();
-    
-    const shouldFetch = 
-      tips.length === 0 || 
-      currentProfileHash !== userProfileHash || 
-      !lastFetchTime || 
+    const now = Date.now();
+    const shouldFetch =
+      tips.length === 0 ||
+      currentProfileHash !== userProfileHash ||
+      !lastFetchTime ||
       (now - lastFetchTime) > CACHE_DURATION;
-
     if (shouldFetch) {
       console.log('🔄 Fetching new tips from AI');
       setUserProfileHash(currentProfileHash);
@@ -137,104 +200,86 @@ const ParentTips = () => {
   const fetchTipsFromAI = async () => {
     try {
       setLoading(true);
-      
       const userProfile = {
         identities: parseJsonField(user?.identities),
         supportNeeds: parseJsonField(user?.supportNeeds),
         age: calculateAge(user?.birth_date),
         gender: user?.gender || 'לא צוין',
       };
-
       const hasConditions = userProfile.identities.length > 0;
       const hasNeeds = userProfile.supportNeeds.length > 0;
-      
-      let clinicalContext = '';
-      if (hasConditions) clinicalContext = `Diagnosed with: ${userProfile.identities.join(', ')}. `;
-      if (hasNeeds) clinicalContext += `Support needs: ${userProfile.supportNeeds.join(', ')}. `;
-      
+
       const messages = [
         {
           role: 'system',
-          content: `You are a clinical psychologist. Return ONLY valid JSON with this exact structure:
-{
-  "tips": [
-    {
-      "id": 1,
-      "category": "communication",
-      "title": "Hebrew title here",
-      "summary": "Hebrew summary here",
-      "content": "Hebrew content here - max 80 words",
-      "author": "Dr Name - Hebrew title",
-      "readTime": "3 minutes",
-      "likes": 25,
-      "isBookmarked": false,
-      "createdAt": "2024-01-01"
-    }
-  ]
-}
-
-Available categories ONLY: communication, daily_routine, sensory, social, education, self_care
-Keep all Hebrew text short and simple. No special characters outside Hebrew letters.`,
+          content: PARENT_TIPS_SYSTEM_PROMPT,
         },
         {
           role: 'user',
-          content: `Create exactly 4 evidence-based parenting tips in Hebrew for:
+          content: `
+Create exactly 6 evidence-based parenting tips in Hebrew, one for each category: communication, daily_routine, sensory, social, education, self_care.
+
+Ensure proper UTF-8 encoding for all Hebrew text.
 
 Child profile:
-- Age: ${userProfile.age || 'unknown'} years  
+- Age: ${userProfile.age || 'unknown'}
 - Gender: ${userProfile.gender}
 - Conditions: ${hasConditions ? userProfile.identities.join(', ') : 'none'}
-- Support needs: ${hasNeeds ? userProfile.supportNeeds.slice(0, 3).join(', ') : 'general'}
+- Support needs: ${hasNeeds ? userProfile.supportNeeds.join(', ') : 'general'}
 
-${hasConditions ? `Focus specifically on interventions for ${userProfile.identities.join(' and ')}` : 'Provide general positive parenting strategies'}
-
-Requirements:
-- Evidence-based content only
-- Hebrew text in title, summary, content, author fields
-- Keep content under 80 words
-- Professional author credentials
-- Return valid JSON only`,
+Return ONLY the JSON object, starting with { and ending with }.
+Each tip must include: category, title, summary, content, author, source.
+Keep Hebrew text concise and within word limits.
+          `,
         },
       ];
-      
+
       const aiMessage = await sendToChat(messages);
-      console.log('AI Response length:', aiMessage.content.length);
       
-      // ניקוי פשוט יותר
-      let cleanedContent = aiMessage.content.trim();
+      // שימוש בפונקציה המשופרת לניתוח
+      const parsed = parseAIResponse(aiMessage.content);
       
-      // הסר טקסט לפני ואחרי JSON
-      const jsonStart = cleanedContent.indexOf('{');
-      const jsonEnd = cleanedContent.lastIndexOf('}') + 1;
-      
-      if (jsonStart === -1 || jsonEnd <= jsonStart) {
-        throw new Error('No valid JSON structure found');
-      }
-      
-      cleanedContent = cleanedContent.substring(jsonStart, jsonEnd);
-      console.log('Extracted JSON:', cleanedContent);
-      
-      const parsed = JSON.parse(cleanedContent);
-      if (!parsed.tips || !Array.isArray(parsed.tips)) throw new Error('Invalid tips structure');
+      console.log('✅ Parsed AI response:', parsed);
       
       const formattedTips = parsed.tips.map((tip, index) => ({
         ...tip,
-        id: tip.id || (index + 1).toString(),
+        id: tip.id?.toString() || (index + 1).toString(),
         readTime: typeof tip.readTime === 'number' ? `${tip.readTime} דקות` : tip.readTime || '3 דקות',
-        likes: tip.likes || Math.floor(Math.random() * 30) + 10,
-        isBookmarked: tip.isBookmarked || false,
-        createdAt: tip.createdAt || new Date().toISOString()
+        likes: tip.likes ?? Math.floor(Math.random() * 30) + 10,
+        isBookmarked: tip.isBookmarked ?? false,
+        createdAt: tip.createdAt || new Date().toISOString(),
       }));
-      
+
+      console.log('✅ Formatted tips:', formattedTips);
+
+      // בדיקה שיש לנו 6 טיפים כמו שביקשנו
+      if (formattedTips.length < 6) {
+        console.warn(`Received only ${formattedTips.length} tips instead of 6`);
+        // אם יש פחות מ-6, נשלים עם טיפים מקומיים
+        const fallbackTips = generateFallbackTips(userProfile.identities, userProfile.supportNeeds);
+        const missingCount = 6 - formattedTips.length;
+        const additionalTips = fallbackTips.slice(0, missingCount);
+        formattedTips.push(...additionalTips);
+      }
+
       setTips(formattedTips);
-      setLastFetchTime(new Date().getTime());
-      console.log('✅ Tips cached for 24 hours');
-      
+      setLastFetchTime(Date.now());
+      console.log('✅ Tips fetched and cached for 24 hours');
+      console.log('✅ Final tips array:', formattedTips);
     } catch (err) {
       console.error('Error fetching tips:', err);
-      setTips(generateFallbackTips(parseJsonField(user?.identities), parseJsonField(user?.supportNeeds)));
-      setLastFetchTime(new Date().getTime());
-      Alert.alert('שגיאה', 'נטענו טיפים מקומיים');
+      
+      // במקרה של שגיאה, נטען טיפים מקומיים
+      const fallbackTips = generateFallbackTips(parseJsonField(user?.identities), parseJsonField(user?.supportNeeds));
+      console.log('🔄 Using fallback tips:', fallbackTips);
+      setTips(fallbackTips);
+      setLastFetchTime(Date.now());
+      
+      Alert.alert(
+        'שגיאה בטעינת טיפים', 
+        'נטענו טיפים מקומיים. נסה לרענן מאוחר יותר.',
+        [{ text: 'אישור', style: 'default' }]
+      );
     } finally {
       setLoading(false);
     }
@@ -243,53 +288,89 @@ Requirements:
   const generateFallbackTips = (identities, supportNeeds) => {
     const hasConditions = identities.length > 0;
     const conditions = identities.join(', ');
-    
     return [
       {
         id: '1', category: 'communication',
         title: hasConditions ? `תקשורת מותאמת ל${conditions}` : 'תקשורת יעילה',
         summary: hasConditions ? `עקרונות תקשורת ספציפיים ל${conditions}` : 'טכניקות תקשורת מבוססות מחקר',
-        content: hasConditions ? 
+        content: hasConditions ?
           `ילדים עם ${conditions} זקוקים לתקשורת מותאמת. השתמשו בהוראות קצרות, תנו זמן עיבוד, והשתמשו בעזרים חזותיים.` :
           'השתמשו בתקשורת חיובית, קשר עין והאזנה פעילה.',
-        author: 'ד"ר רחל כהן - מומחית התפתחות', readTime: '4 דקות',
+        author: 'ד"ר רחל כהן - מומחית התפתחות', 
+        source: 'מחקר תקשורת 2023',
+        readTime: '4 דקות',
         likes: 24, isBookmarked: false, createdAt: new Date().toISOString()
       },
       {
         id: '2', category: 'sensory',
         title: hasConditions ? `ויסות חושי ב${conditions}` : 'סביבה חושית תומכת',
         summary: hasConditions ? `אסטרטגיות ויסות חושי ל${conditions}` : 'יצירת סביבה חושית מותאמת',
-        content: hasConditions ? 
+        content: hasConditions ?
           `רגישויות חושיות נפוצות ב${conditions}. צרו מרחבים שקטים והשתמשו בכלים מרגיעים.` :
           'זהו העדפות חושיות וצרו סביבה מותאמת עם תאורה רכה ומוזיקה רגועה.',
-        author: 'ד"ר מיכל לוי - ריפוי בעיסוק', readTime: '5 דקות',
+        author: 'ד"ר מיכל לוי - ריפוי בעיסוק', 
+        source: 'מחקר חושי 2023',
+        readTime: '5 דקות',
         likes: 31, isBookmarked: true, createdAt: new Date().toISOString()
       },
       {
         id: '3', category: 'daily_routine',
         title: 'שגרה יומיומית מובנית',
-        summary: 'יצירת יציבות דרך שגרות קבועות',
+        summary: 'יצירת ייצוב דרך שגרות קבועות',
         content: 'שגרה קבועה מספקת ביטחון. השתמשו בלוחות זמנים חזותיים ושמרו על עקביות.',
-        author: 'ד"ר יוסי אברהם - פסיכולוג', readTime: '6 דקות',
+        author: 'ד"ר יוסי אברהם - פסיכולוג', 
+        source: 'מחקר שגרה 2023',
+        readTime: '6 דקות',
         likes: 28, isBookmarked: false, createdAt: new Date().toISOString()
       },
       {
-        id: '4', category: 'self_care',
+        id: '4', category: 'social',
+        title: hasConditions ? `מיומנויות חברתיות ב${conditions}` : 'פיתוח קשרים חברתיים',
+        summary: hasConditions ? `אסטרטגיות חברתיות ל${conditions}` : 'בניית יכולות חברתיות',
+        content: hasConditions ?
+          `ילדים עם ${conditions} זקוקים לתרגול מובנה של מיומנויות חברתיות. השתמשו במשחקי תפקידים ומצבים מבוקרים.` :
+          'עודדו אינטראקציות חיוביות ולמדו כללים חברתיים בסביבה תומכת.',
+        author: 'ד"ר נעמי ברק - טיפול התנהגותי', 
+        source: 'מחקר חברתי 2023',
+        readTime: '5 דקות',
+        likes: 22, isBookmarked: false, createdAt: new Date().toISOString()
+      },
+      {
+        id: '5', category: 'education',
+        title: hasConditions ? `למידה מותאמת ל${conditions}` : 'אסטרטגיות למידה יעילות',
+        summary: hasConditions ? `שיטות הוראה ל${conditions}` : 'טכניקות למידה מבוססות מחקר',
+        content: hasConditions ?
+          `ילדים עם ${conditions} זקוקים לשיטות הוראה מותאמות. פרקו משימות לחלקים קטנים והשתמשו בחיזוקים חיוביים.` :
+          'השתמשו בלמידה רב-חושית, חזרה ותגמול חיובי לשיפור הישגי הלמידה.',
+        author: 'פרופ׳ אלון גולן - חינוך מיוחד', 
+        source: 'מחקר חינוך 2023',
+        readTime: '6 דקות',
+        likes: 26, isBookmarked: false, createdAt: new Date().toISOString()
+      },
+      {
+        id: '6', category: 'self_care',
         title: hasConditions ? `תמיכה הורית ל${conditions}` : 'טיפול עצמי הורי',
         summary: hasConditions ? 'משאבים להורים לילדים עם צרכים מיוחדים' : 'שמירה על בריאות נפשית',
-        content: hasConditions ? 
-          `הורות ל${conditions} מאתגרת. חפשו תמיכה מקצועית ואל תשכחו לטפל בעצמכם.` :
-          'טיפול עצמי חיוני להורות יעילה. הקדישו זמן לעצמכם וביקשו עזרה.',
-        author: 'ד"ר שרה גולן - פסיכולוגיה הורית', readTime: '5 דקות',
+        content: hasConditions ?
+          `הורות ל${conditions} מאתגרת. חפשו תמיכה מקצועית, הצטרפו לקבוצות הורים ואל תשכחו לטפל בעצמכם.` :
+          'טיפול עצמי חיוני להורות יעילה. הקדישו זמן לעצמכם, בקשו עזרה ושמרו על קשרים חברתיים.',
+        author: 'ד"ר שרה גולן - פסיכולוגיה הורית', 
+        source: 'מחקר הורות 2023',
+        readTime: '5 דקות',
         likes: 33, isBookmarked: false, createdAt: new Date().toISOString()
       }
     ];
   };
 
+  // מעבירים את החישוב ל-useMemo או משתנה
   const filteredTips = tips.filter((tip) => {
+    if (!tip) return false;
+    
     const matchesCategory = selectedCategory === 'all' || tip.category === selectedCategory;
-    const matchesSearch = tip.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         tip.summary.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = !searchQuery || 
+      (tip.title && tip.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (tip.summary && tip.summary.toLowerCase().includes(searchQuery.toLowerCase()));
+    
     return matchesCategory && matchesSearch;
   });
 
@@ -314,39 +395,56 @@ Requirements:
     </MotiView>
   );
 
-  const TipCard = ({ tip }) => (
-    <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
-      <Pressable style={styles.tipCard} onPress={() => router.push({ pathname: '/parentTips/tipDetail', params: { tipId: tip.id } })}>
-        <View style={styles.tipHeader}>
-          <View style={[styles.categoryBadge, { backgroundColor: TIP_CATEGORIES.find(c => c.id === tip.category)?.color + '20' }]}>
-            <Text style={[styles.categoryBadgeText, { color: TIP_CATEGORIES.find(c => c.id === tip.category)?.color }]}>
-              {TIP_CATEGORIES.find(c => c.id === tip.category)?.title}
-            </Text>
+  const TipCard = ({ tip }) => {
+    if (!tip) return null;
+    
+    // מציאת הקטגוריה המתאימה
+    const category = TIP_CATEGORIES.find(c => c.id === tip.category);
+    
+    return (
+      <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+        <Pressable 
+          style={styles.tipCard} 
+          onPress={() => {
+            // במקום לנווט לדף שלא קיים, נציג alert עם התוכן
+            Alert.alert(
+              tip.title,
+              `${tip.content}\n\nמחבר: ${tip.author}\nמקור: ${tip.source}`,
+              [{ text: 'סגור', style: 'default' }]
+            );
+          }}
+        >
+          <View style={styles.tipHeader}>
+            <View style={[styles.categoryBadge, { backgroundColor: (category?.color || '#6B73FF') + '20' }]}>
+              <Text style={[styles.categoryBadgeText, { color: category?.color || '#6B73FF' }]}>
+                {category?.title || 'כללי'}
+              </Text>
+            </View>
+            <Pressable onPress={() => setTips(prev => prev.map(t => t.id === tip.id ? { ...t, isBookmarked: !t.isBookmarked } : t))}>
+              <MaterialCommunityIcons
+                name={tip.isBookmarked ? 'bookmark' : 'bookmark-outline'}
+                size={24} color={tip.isBookmarked ? theme.colors.primary : theme.colors.textLight}
+              />
+            </Pressable>
           </View>
-          <Pressable onPress={() => setTips(prev => prev.map(t => t.id === tip.id ? { ...t, isBookmarked: !t.isBookmarked } : t))}>
-            <MaterialCommunityIcons
-              name={tip.isBookmarked ? 'bookmark' : 'bookmark-outline'}
-              size={24} color={tip.isBookmarked ? theme.colors.primary : theme.colors.textLight}
-            />
-          </Pressable>
-        </View>
-        <Text style={styles.tipTitle}>{tip.title}</Text>
-        <Text style={styles.tipSummary}>{tip.summary}</Text>
-        <View style={styles.tipFooter}>
-          <View style={styles.tipMeta}>
-            <MaterialCommunityIcons name="account" size={16} color={theme.colors.textLight} />
-            <Text style={styles.tipAuthor}>{tip.author}</Text>
-            <MaterialCommunityIcons name="clock-outline" size={16} color={theme.colors.textLight} />
-            <Text style={styles.tipReadTime}>{tip.readTime}</Text>
+          <Text style={styles.tipTitle}>{tip.title}</Text>
+          <Text style={styles.tipSummary}>{tip.summary}</Text>
+          <View style={styles.tipFooter}>
+            <View style={styles.tipMeta}>
+              <MaterialCommunityIcons name="account" size={16} color={theme.colors.textLight} />
+              <Text style={styles.tipAuthor}>{tip.author}</Text>
+              <MaterialCommunityIcons name="clock-outline" size={16} color={theme.colors.textLight} />
+              <Text style={styles.tipReadTime}>{tip.readTime}</Text>
+            </View>
+            <View style={styles.tipActions}>
+              <MaterialCommunityIcons name="heart-outline" size={18} color={theme.colors.textLight} />
+              <Text style={styles.tipLikes}>{tip.likes}</Text>
+            </View>
           </View>
-          <View style={styles.tipActions}>
-            <MaterialCommunityIcons name="heart-outline" size={18} color={theme.colors.textLight} />
-            <Text style={styles.tipLikes}>{tip.likes}</Text>
-          </View>
-        </View>
-      </Pressable>
-    </MotiView>
-  );
+        </Pressable>
+      </MotiView>
+    );
+  };
 
   return (
     <ScreenWrapper bg={theme.colors.background}>
@@ -425,6 +523,12 @@ Requirements:
             </View>
           </View>
 
+          {/* Debug Info - רק בזמן פיתוח */}
+          <View style={styles.debugContainer}>
+            <Text style={styles.debugText}>Debug: טיפים כולל {tips.length}, מוצגים {filteredTips.length}</Text>
+            <Text style={styles.debugText}>קטגוריה נבחרה: {selectedCategory}</Text>
+          </View>
+
           {/* Tips */}
           <View style={styles.section}>
             <View style={styles.tipsHeader}>
@@ -451,6 +555,7 @@ Requirements:
               <View style={styles.emptyContainer}>
                 <MaterialCommunityIcons name="lightbulb-outline" size={64} color={theme.colors.textLight} />
                 <Text style={styles.emptyTitle}>אין טיפים להצגה</Text>
+                <Text style={styles.emptySubtitle}>נסה לרענן או לבחור קטגוריה אחרת</Text>
               </View>
             ) : (
               <View style={styles.tipsContainer}>
@@ -535,6 +640,21 @@ const styles = StyleSheet.create({
     lineHeight: hp(2.2),
   },
   
+  debugContainer: {
+    backgroundColor: theme.colors.card,
+    padding: wp(3),
+    marginBottom: hp(2),
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: '#FFA500',
+  },
+  debugText: {
+    fontSize: hp(1.4),
+    color: '#FFA500',
+    textAlign: 'right',
+    marginBottom: hp(0.5),
+  },
+  
   tipsHeader: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', marginBottom: hp(2) },
   refreshButton: { flexDirection: 'row-reverse', alignItems: 'center', backgroundColor: theme.colors.card, paddingHorizontal: wp(3), paddingVertical: hp(1), borderRadius: theme.radius.md, borderWidth: 1, borderColor: theme.colors.primary + '30', gap: wp(1) },
   refreshText: { fontSize: hp(1.6), color: theme.colors.primary, fontWeight: theme.fonts.semibold },
@@ -572,4 +692,5 @@ const styles = StyleSheet.create({
   loadingText: { fontSize: hp(1.8), color: theme.colors.textSecondary, marginTop: hp(1) },
   emptyContainer: { alignItems: 'center', paddingVertical: hp(6) },
   emptyTitle: { fontSize: hp(2.2), fontWeight: theme.fonts.bold, color: theme.colors.textPrimary, textAlign: 'center', marginTop: hp(2) },
+  emptySubtitle: { fontSize: hp(1.8), color: theme.colors.textSecondary, textAlign: 'center', marginTop: hp(1) },
 });

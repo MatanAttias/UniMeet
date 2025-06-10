@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   useFonts,
@@ -31,6 +31,7 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true);
   const [notificationCount, setNotificationCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const subscriptionsRef = useRef({});
 
   const [fontsLoaded] = useFonts({
     Poppins_600SemiBold,
@@ -42,22 +43,31 @@ export default function Home() {
   const isParent = user?.role === 'parent';
 
   useEffect(() => {
-    if (!user?.id) return;
+
+    if (!user?.id || subscriptionsRef.current[user.id]) return;
+
+    console.log('Setting up realtime channels for user:', user.id);
   
     const postChannel = supabase
-      .channel('posts')
+      .channel(`posts-${user.id}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'posts' },
-        handlePostEvent
+        (payload) => {
+          console.log('Post event received:', payload);
+          handlePostEvent(payload);
+        }
       )
-      .subscribe(({ status, error }) => {
-        if (error) console.error('postChannel error', error);
-        else console.log('postChannel status', status);
+      .subscribe((status, error) => {
+        if (error) {
+          console.error('postChannel error:', error);
+        } else {
+          console.log('postChannel status:', status);
+        }
       });
   
     const notificationChannel = supabase
-      .channel('notifications')
+      .channel(`notifications-${user.id}`)
       .on(
         'postgres_changes',
         {
@@ -66,30 +76,54 @@ export default function Home() {
           table: 'notifications',
           filter: `receiverId=eq.${user.id}`,
         },
-        handleNewNotification
+        (payload) => {
+          console.log('Notification event received:', payload);
+          handleNewNotification(payload);
+        }
       )
-      .subscribe(({ status, error }) => {
-        if (error) console.error('notificationChannel error', error);
-        else console.log('notificationChannel status', status);
+      .subscribe((status, error) => {
+        if (error) {
+          console.error('notificationChannel error:', error);
+        } else {
+          console.log('notificationChannel status:', status);
+        }
       });
   
     const commentsChannel = supabase
-      .channel('comments')
+      .channel(`comments-${user.id}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'comments' },
-        handleCommentEvent
+        (payload) => {
+          console.log('Comment event received:', payload);
+          handleCommentEvent(payload);
+        }
       )
-      .subscribe(({ status, error }) => {
-        if (error) console.error('commentsChannel error', error);
-        else console.log('commentsChannel status', status);
+      .subscribe((status, error) => {
+        if (error) {
+          console.error('commentsChannel error:', error);
+        } else {
+          console.log('commentsChannel status:', status);
+        }
       });
   
-    // ניקוי כל הערוצים
+
+    subscriptionsRef.current[user.id] = {
+      postChannel,
+      notificationChannel,
+      commentsChannel,
+    };
+
+    
     return () => {
-      supabase.removeChannel(postChannel);
-      supabase.removeChannel(notificationChannel);
-      supabase.removeChannel(commentsChannel);
+      console.log('Cleaning up realtime channels for user:', user.id);
+      if (subscriptionsRef.current[user.id]) {
+        const { postChannel, notificationChannel, commentsChannel } = subscriptionsRef.current[user.id];
+        supabase.removeChannel(postChannel);
+        supabase.removeChannel(notificationChannel);
+        supabase.removeChannel(commentsChannel);
+        delete subscriptionsRef.current[user.id];
+      }
     };
   }, [user?.id]);
 
