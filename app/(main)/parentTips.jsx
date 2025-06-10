@@ -12,7 +12,7 @@ import { theme } from '../../constants/theme';
 import { hp, wp } from '../../constants/helpers/common';
 import { sendToChat } from '../../services/openai';
 import { supabase } from '../../lib/supabase';
-import { PARENT_TIPS_SYSTEM_PROMPT } from '../../constants/prompts';
+import { PARENT_TIPS_SYSTEM_PROMPT, createAgeAppropriateUserMessage } from '../../constants/prompts';
 
 // קטגוריות טיפים
 const TIP_CATEGORIES = [
@@ -198,92 +198,207 @@ const ParentTips = () => {
   };
 
   const fetchTipsFromAI = async () => {
-    try {
-      setLoading(true);
-      const userProfile = {
-        identities: parseJsonField(user?.identities),
-        supportNeeds: parseJsonField(user?.supportNeeds),
-        age: calculateAge(user?.birth_date),
-        gender: user?.gender || 'לא צוין',
-      };
-      const hasConditions = userProfile.identities.length > 0;
-      const hasNeeds = userProfile.supportNeeds.length > 0;
+  try {
+    setLoading(true);
+    
+    // בניית פרופיל המשתמש עם בדיקות
+    const userProfile = {
+      identities: parseJsonField(user?.identities) || [],
+      supportNeeds: parseJsonField(user?.supportNeeds) || [],
+      age: calculateAge(user?.birth_date) || 'לא ידוע',
+      gender: user?.gender || 'לא צוין',
+    };
+    
+    console.log('User profile for tips:', userProfile);
 
-      const messages = [
-        {
-          role: 'system',
-          content: PARENT_TIPS_SYSTEM_PROMPT,
-        },
-        {
-          role: 'user',
-          content: `
-Create exactly 6 evidence-based parenting tips in Hebrew, one for each category: communication, daily_routine, sensory, social, education, self_care.
-
-Ensure proper UTF-8 encoding for all Hebrew text.
-
-Child profile:
-- Age: ${userProfile.age || 'unknown'}
-- Gender: ${userProfile.gender}
-- Conditions: ${hasConditions ? userProfile.identities.join(', ') : 'none'}
-- Support needs: ${hasNeeds ? userProfile.supportNeeds.join(', ') : 'general'}
-
-Return ONLY the JSON object, starting with { and ending with }.
-Each tip must include: category, title, summary, content, author, source.
-Keep Hebrew text concise and within word limits.
-          `,
-        },
-      ];
-
-      const aiMessage = await sendToChat(messages);
-      
-      // שימוש בפונקציה המשופרת לניתוח
-      const parsed = parseAIResponse(aiMessage.content);
-      
-      console.log('✅ Parsed AI response:', parsed);
-      
-      const formattedTips = parsed.tips.map((tip, index) => ({
-        ...tip,
-        id: tip.id?.toString() || (index + 1).toString(),
-        readTime: typeof tip.readTime === 'number' ? `${tip.readTime} דקות` : tip.readTime || '3 דקות',
-        likes: tip.likes ?? Math.floor(Math.random() * 30) + 10,
-        isBookmarked: tip.isBookmarked ?? false,
-        createdAt: tip.createdAt || new Date().toISOString(),
-      }));
-
-      console.log('✅ Formatted tips:', formattedTips);
-
-      // בדיקה שיש לנו 6 טיפים כמו שביקשנו
-      if (formattedTips.length < 6) {
-        console.warn(`Received only ${formattedTips.length} tips instead of 6`);
-        // אם יש פחות מ-6, נשלים עם טיפים מקומיים
-        const fallbackTips = generateFallbackTips(userProfile.identities, userProfile.supportNeeds);
-        const missingCount = 6 - formattedTips.length;
-        const additionalTips = fallbackTips.slice(0, missingCount);
-        formattedTips.push(...additionalTips);
-      }
-
-      setTips(formattedTips);
-      setLastFetchTime(Date.now());
-      console.log('✅ Tips fetched and cached for 24 hours');
-      console.log('✅ Final tips array:', formattedTips);
-    } catch (err) {
-      console.error('Error fetching tips:', err);
-      
-      // במקרה של שגיאה, נטען טיפים מקומיים
-      const fallbackTips = generateFallbackTips(parseJsonField(user?.identities), parseJsonField(user?.supportNeeds));
-      console.log('🔄 Using fallback tips:', fallbackTips);
-      setTips(fallbackTips);
-      setLastFetchTime(Date.now());
-      
-      Alert.alert(
-        'שגיאה בטעינת טיפים', 
-        'נטענו טיפים מקומיים. נסה לרענן מאוחר יותר.',
-        [{ text: 'אישור', style: 'default' }]
-      );
-    } finally {
-      setLoading(false);
+    // בדיקה שה-prompt קיים
+    if (!ENHANCED_TIPS_SYSTEM_PROMPT) {
+      console.error('ENHANCED_TIPS_SYSTEM_PROMPT is missing!');
+      throw new Error('System prompt is missing');
     }
-  };
+
+    // שימוש בפונקציה החדשה ליצירת הודעת משתמש מותאמת גיל
+    const userMessage = createAgeAppropriateUserMessage(userProfile);
+    
+    // הכנת ההודעות
+    const messages = [
+      {
+        role: 'system',
+        content: ENHANCED_TIPS_SYSTEM_PROMPT
+      },
+      {
+        role: 'user',
+        content: userMessage
+      }
+    ];
+
+    console.log('Sending messages to OpenAI:', messages);
+
+    // קריאה ל-API
+    const aiResponse = await sendToChat(messages);
+    
+    console.log('AI Response received:', aiResponse);
+    
+    // בדיקה שיש תוכן בתגובה
+    if (!aiResponse || !aiResponse.content) {
+      throw new Error('AI returned empty response');
+    }
+
+    // ניתוח התגובה עם טיפול משופר בשגיאות
+    const parsed = parseAIResponse(aiResponse.content);
+    
+    console.log('✅ Parsed AI response:', parsed);
+    
+    // עיבוד הטיפים
+    const formattedTips = parsed.tips.map((tip, index) => ({
+      id: tip.id || (index + 1).toString(),
+      category: tip.category,
+      title: tip.title,
+      summary: tip.summary,
+      content: tip.content,
+      practicalSteps: tip.practicalSteps || '',
+      example: tip.example || '',
+      commonMistakes: tip.commonMistakes || '',
+      scientificBasis: tip.scientificBasis || '',
+      author: tip.author,
+      source: tip.source,
+      readTime: typeof tip.readTime === 'number' ? `${tip.readTime} דקות` : '5 דקות',
+      likes: tip.likes || Math.floor(Math.random() * 30) + 10,
+      isBookmarked: false,
+      createdAt: new Date().toISOString(),
+    }));
+
+    // וידוא שיש 6 טיפים
+    if (formattedTips.length < 6) {
+      console.warn(`Received only ${formattedTips.length} tips instead of 6`);
+      const fallbackTips = generateFallbackTips(userProfile.identities, userProfile.supportNeeds);
+      const missingCount = 6 - formattedTips.length;
+      const additionalTips = fallbackTips.slice(formattedTips.length, formattedTips.length + missingCount);
+      formattedTips.push(...additionalTips);
+    }
+
+    setTips(formattedTips);
+    setLastFetchTime(Date.now());
+    console.log('✅ Tips fetched successfully:', formattedTips.length);
+    
+  } catch (err) {
+    console.error('Error fetching tips:', err);
+    console.error('Error details:', err.message);
+    console.error('Stack trace:', err.stack);
+    
+    // במקרה של שגיאה, נטען טיפים מקומיים
+    const fallbackTips = generateFallbackTips(
+      parseJsonField(user?.identities) || [], 
+      parseJsonField(user?.supportNeeds) || []
+    );
+    
+    console.log('🔄 Using fallback tips:', fallbackTips);
+    setTips(fallbackTips);
+    setLastFetchTime(Date.now());
+    
+    // הודעת שגיאה ידידותית יותר
+    Alert.alert(
+      'שגיאה בטעינת טיפים', 
+      'נטענו טיפים כלליים. נסה לרענן מאוחר יותר.',
+      [{ text: 'אישור', style: 'default' }]
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
+// שיפור של parseAIResponse עם טיפול טוב יותר בשגיאות
+const parseAIResponse = (rawResponse) => {
+  console.log('Raw AI response:', rawResponse);
+  
+  if (!rawResponse || typeof rawResponse !== 'string') {
+    throw new Error('Invalid response: expected string, got ' + typeof rawResponse);
+  }
+  
+  // ניקוי בסיסי
+  let cleaned = rawResponse.trim();
+  
+  // הסרת BOM ותווים בעייתיים
+  cleaned = cleaned.replace(/^\uFEFF/, '');
+  cleaned = cleaned.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+  
+  // מציאת JSON - חיפוש גמיש יותר
+  let jsonStart = cleaned.indexOf('{');
+  let jsonEnd = cleaned.lastIndexOf('}');
+  
+  // אם לא מצאנו, ננסה לחפש array
+  if (jsonStart === -1) {
+    jsonStart = cleaned.indexOf('[');
+    jsonEnd = cleaned.lastIndexOf(']');
+  }
+  
+  if (jsonStart === -1 || jsonEnd === -1) {
+    // ננסה לבדוק אם כל התוכן הוא JSON
+    try {
+      const parsed = JSON.parse(cleaned);
+      if (Array.isArray(parsed)) {
+        return { tips: parsed };
+      }
+      return parsed;
+    } catch {
+      throw new Error('No valid JSON found in AI response');
+    }
+  }
+  
+  const jsonString = cleaned.substring(jsonStart, jsonEnd + 1);
+  console.log('Extracted JSON string:', jsonString.substring(0, 200) + '...');
+  
+  try {
+    const parsed = JSON.parse(jsonString);
+    
+    // טיפול במקרה שה-JSON הוא array ישיר
+    if (Array.isArray(parsed)) {
+      return { tips: parsed };
+    }
+    
+    // בדיקת תקינות המבנה
+    if (!parsed.tips || !Array.isArray(parsed.tips)) {
+      throw new Error('Invalid tips structure - no tips array');
+    }
+    
+    if (parsed.tips.length === 0) {
+      throw new Error('Empty tips array received');
+    }
+    
+    return parsed;
+  } catch (parseError) {
+    console.error('JSON parse failed:', parseError);
+    
+    // ניסיון תיקון אוטומטי
+    try {
+      // תיקונים שונים
+      let fixedJson = jsonString
+        .replace(/,(\s*[}\]])/g, '$1')  // הסרת פסיקים עודפים
+        .replace(/\n/g, ' ')            // החלפת שורות חדשות
+        .replace(/\t/g, ' ')            // החלפת טאבים
+        .replace(/\s+/g, ' ')           // הפחתת רווחים מרובים
+        .replace(/([{,]\s*)(\w+):/g, '$1"$2":') // הוספת גרשיים למפתחות
+        .replace(/:\s*'([^']*)'/g, ': "$1"')     // החלפת גרשיים בודדים לכפולים
+        .replace(/\\'/g, "'");          // תיקון גרשיים בתוך טקסט
+      
+      console.log('Attempting to parse fixed JSON...');
+      const parsed = JSON.parse(fixedJson);
+      
+      if (Array.isArray(parsed)) {
+        return { tips: parsed };
+      }
+      
+      if (!parsed.tips || !Array.isArray(parsed.tips)) {
+        throw new Error('Fixed JSON still has invalid structure');
+      }
+      
+      return parsed;
+    } catch (secondError) {
+      console.error('Second parse attempt failed:', secondError);
+      throw new Error(`Failed to parse AI response: ${parseError.message}`);
+    }
+  }
+};
 
   const generateFallbackTips = (identities, supportNeeds) => {
     const hasConditions = identities.length > 0;
@@ -396,55 +511,61 @@ Keep Hebrew text concise and within word limits.
   );
 
   const TipCard = ({ tip }) => {
-    if (!tip) return null;
-    
-    // מציאת הקטגוריה המתאימה
-    const category = TIP_CATEGORIES.find(c => c.id === tip.category);
-    
-    return (
-      <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
-        <Pressable 
-          style={styles.tipCard} 
-          onPress={() => {
-            // במקום לנווט לדף שלא קיים, נציג alert עם התוכן
-            Alert.alert(
-              tip.title,
-              `${tip.content}\n\nמחבר: ${tip.author}\nמקור: ${tip.source}`,
-              [{ text: 'סגור', style: 'default' }]
-            );
-          }}
-        >
-          <View style={styles.tipHeader}>
-            <View style={[styles.categoryBadge, { backgroundColor: (category?.color || '#6B73FF') + '20' }]}>
-              <Text style={[styles.categoryBadgeText, { color: category?.color || '#6B73FF' }]}>
-                {category?.title || 'כללי'}
-              </Text>
-            </View>
-            <Pressable onPress={() => setTips(prev => prev.map(t => t.id === tip.id ? { ...t, isBookmarked: !t.isBookmarked } : t))}>
-              <MaterialCommunityIcons
-                name={tip.isBookmarked ? 'bookmark' : 'bookmark-outline'}
-                size={24} color={tip.isBookmarked ? theme.colors.primary : theme.colors.textLight}
-              />
-            </Pressable>
+  if (!tip) return null;
+  
+  const category = TIP_CATEGORIES.find(c => c.id === tip.category);
+  
+  return (
+    <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+      <Pressable 
+        style={styles.tipCard} 
+        onPress={() => {
+          // הצגת כל המידע של הטיפ
+          Alert.alert(
+            tip.title,
+            `${tip.content}\n\n` +
+            (tip.practicalSteps ? `צעדים מעשיים:\n${tip.practicalSteps}\n\n` : '') +
+            (tip.example ? `דוגמה:\n${tip.example}\n\n` : '') +
+            (tip.commonMistakes ? `טעויות נפוצות:\n${tip.commonMistakes}\n\n` : '') +
+            (tip.scientificBasis ? `בסיס מדעי:\n${tip.scientificBasis}\n\n` : '') +
+            `מחבר: ${tip.author}\nמקור: ${tip.source}`,
+            [{ text: 'סגור', style: 'default' }],
+            { cancelable: true }
+          );
+        }}
+      >
+        <View style={styles.tipHeader}>
+          <View style={[styles.categoryBadge, { backgroundColor: (category?.color || '#6B73FF') + '20' }]}>
+            <Text style={[styles.categoryBadgeText, { color: category?.color || '#6B73FF' }]}>
+              {category?.title || 'כללי'}
+            </Text>
           </View>
-          <Text style={styles.tipTitle}>{tip.title}</Text>
-          <Text style={styles.tipSummary}>{tip.summary}</Text>
-          <View style={styles.tipFooter}>
-            <View style={styles.tipMeta}>
-              <MaterialCommunityIcons name="account" size={16} color={theme.colors.textLight} />
-              <Text style={styles.tipAuthor}>{tip.author}</Text>
-              <MaterialCommunityIcons name="clock-outline" size={16} color={theme.colors.textLight} />
-              <Text style={styles.tipReadTime}>{tip.readTime}</Text>
-            </View>
-            <View style={styles.tipActions}>
-              <MaterialCommunityIcons name="heart-outline" size={18} color={theme.colors.textLight} />
-              <Text style={styles.tipLikes}>{tip.likes}</Text>
-            </View>
+          <Pressable onPress={() => setTips(prev => prev.map(t => t.id === tip.id ? { ...t, isBookmarked: !t.isBookmarked } : t))}>
+            <MaterialCommunityIcons
+              name={tip.isBookmarked ? 'bookmark' : 'bookmark-outline'}
+              size={24} 
+              color={tip.isBookmarked ? theme.colors.primary : theme.colors.textLight}
+            />
+          </Pressable>
+        </View>
+        <Text style={styles.tipTitle}>{tip.title}</Text>
+        <Text style={styles.tipSummary}>{tip.summary}</Text>
+        <View style={styles.tipFooter}>
+          <View style={styles.tipMeta}>
+            <MaterialCommunityIcons name="account" size={16} color={theme.colors.textLight} />
+            <Text style={styles.tipAuthor}>{tip.author}</Text>
+            <MaterialCommunityIcons name="clock-outline" size={16} color={theme.colors.textLight} />
+            <Text style={styles.tipReadTime}>{tip.readTime}</Text>
           </View>
-        </Pressable>
-      </MotiView>
-    );
-  };
+          <View style={styles.tipActions}>
+            <MaterialCommunityIcons name="heart-outline" size={18} color={theme.colors.textLight} />
+            <Text style={styles.tipLikes}>{tip.likes}</Text>
+          </View>
+        </View>
+      </Pressable>
+    </MotiView>
+  );
+};
 
   return (
     <ScreenWrapper bg={theme.colors.background}>
