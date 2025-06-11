@@ -1,5 +1,7 @@
+תסרוק את הקוד ותבין אותו בצורה מושלמת
+
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, Pressable, Modal, ActivityIndicator, RefreshControl, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Pressable, TextInput, Modal, ActivityIndicator, RefreshControl, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { MotiView } from 'moti';
@@ -109,9 +111,10 @@ const calculateAge = (birthDate) => {
 
 
 const ParentTips = () => {
-  const { user, setUserData, parentTipsCache, updateParentTipsCache, isTipsCacheLoaded } = useAuth();
+  const { user, setUserData } = useAuth();
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [tips, setTips] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -122,21 +125,13 @@ const ParentTips = () => {
 
   const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 שעות
 
-  useEffect(() => {
-  console.log('🔍 Debug - ParentTips state:');
-  console.log('- isTipsCacheLoaded:', isTipsCacheLoaded);
-  console.log('- parentTipsCache.tips.length:', parentTipsCache.tips.length);
-  console.log('- parentTipsCache.lastFetchTime:', parentTipsCache.lastFetchTime);
-  console.log('- tips.length (local state):', tips.length);
-  console.log('- user data loaded:', !!user?.identities);
-}, [isTipsCacheLoaded, parentTipsCache, tips.length, user?.identities]);
-
   // הוספת debug console.log
   useEffect(() => {
     console.log('🔍 Current tips state:', tips);
     console.log('🔍 Selected category:', selectedCategory);
+    console.log('🔍 Search query:', searchQuery);
     console.log('🔍 Filtered tips count:', filteredTips.length);
-  }, [tips, selectedCategory]);
+  }, [tips, selectedCategory, searchQuery]);
 
   // שליפת נתונים מלאים מהטבלה
   useEffect(() => {
@@ -158,6 +153,22 @@ const ParentTips = () => {
     fetchCompleteUserData();
   }, [user?.id]);
 
+  // בדיקה והבאת טיפים לאחר קבלת נתונים
+  useEffect(() => {
+    const identities = parseJsonField(user?.identities);
+    const supportNeeds = parseJsonField(user?.supportNeeds);
+    console.log('🔍 Checking user data:', { identities, supportNeeds });
+    if (identities.length > 0 || supportNeeds.length > 0) {
+      console.log('✅ Clinical data available, fetching tips...');
+      checkAndFetchTips();
+    } else {
+      const timer = setTimeout(() => {
+        console.log('⚠️ No clinical data, fetching general tips...');
+        checkAndFetchTips();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [user?.identities, user?.supportNeeds]);
 
   const generateProfileHash = () => {
     const profile = {
@@ -172,74 +183,24 @@ const ParentTips = () => {
   const checkAndFetchTips = () => {
     const currentProfileHash = generateProfileHash();
     const now = Date.now();
-    
-    // ראשית, בדוק אם יש קאש תקף מה-AuthContext
-    const { tips: cachedTips, lastFetchTime: cachedTime, profileHash } = parentTipsCache;
-    const isCacheFresh = cachedTime && (now - cachedTime) <= CACHE_DURATION;
-    const isSameProfile = profileHash === currentProfileHash;
-    
-    if (cachedTips.length > 0 && isCacheFresh && isSameProfile) {
-      console.log('⚡ Using cached tips from AuthContext');
-      setTips(cachedTips);
-      setLastFetchTime(cachedTime);
-      setUserProfileHash(profileHash);
-      return;
-    }
-    
-    // אם אין קאש תקף, טען מחדש
-    const shouldFetch = 
-      cachedTips.length === 0 ||
-      !isCacheFresh ||
-      !isSameProfile;
-        
+    const shouldFetch =
+      tips.length === 0 ||
+      currentProfileHash !== userProfileHash ||
+      !lastFetchTime ||
+      (now - lastFetchTime) > CACHE_DURATION;
     if (shouldFetch) {
       console.log('🔄 Fetching new tips from AI');
       setUserProfileHash(currentProfileHash);
       fetchTipsFromAI();
+    } else {
+      console.log('✅ Using cached tips');
     }
   };
-
-
-
-useEffect(() => {
-  if (!isTipsCacheLoaded) return;
-
-  // טען קאש מיד כשזמין, ללא תלות ב-tips הנוכחיים
-  const { tips: cachedTips, lastFetchTime: cachedTime, profileHash } = parentTipsCache;
-  const now = Date.now();
-  const isFresh = cachedTime && (now - cachedTime) <= CACHE_DURATION;
-  const currentProfileHash = generateProfileHash();
-  const isSameProfile = profileHash === currentProfileHash;
-
-  if (cachedTips.length > 0 && isFresh && isSameProfile) {
-    console.log('⚡ Loading cached tips immediately');
-    setTips(cachedTips);
-    setLastFetchTime(cachedTime);
-    setUserProfileHash(profileHash);
-  } else {
-    // אם אין קאש תקף, המתן לנתוני משתמש
-    const identities = parseJsonField(user?.identities);
-    const supportNeeds = parseJsonField(user?.supportNeeds);
-    
-    if (identities.length > 0 || supportNeeds.length > 0) {
-      console.log('✅ Clinical data available, fetching tips...');
-      checkAndFetchTips();
-    } else {
-      const timer = setTimeout(() => {
-        console.log('⚠️ No clinical data, fetching general tips...');
-        checkAndFetchTips();
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }
-}, [isTipsCacheLoaded, parentTipsCache]);
-
-
 
 const fetchTipsFromAI = async () => {
   try {
     setLoading(true);
-
+    
     // בניית פרופיל המשתמש עם בדיקות
     const userProfile = {
       identities: parseJsonField(user?.identities) || [],
@@ -247,10 +208,7 @@ const fetchTipsFromAI = async () => {
       age: calculateAge(user?.birth_date) || 'לא ידוע',
       gender: user?.gender || 'לא צוין',
     };
-
-    // חשב hash של הפרופיל כדי לשמור בקאש
-    const currentProfileHash = generateProfileHash();
-
+    
     console.log('User profile for tips:', userProfile);
 
     // בדיקה שה-prompt קיים
@@ -261,11 +219,17 @@ const fetchTipsFromAI = async () => {
 
     // שימוש בפונקציה החדשה ליצירת הודעת משתמש מותאמת גיל
     const userMessage = createAgeAppropriateUserMessage(userProfile);
-
+    
     // הכנת ההודעות
     const messages = [
-      { role: 'system', content: PARENT_TIPS_SYSTEM_PROMPT },
-      { role: 'user',   content: userMessage }
+      {
+        role: 'system',
+        content: PARENT_TIPS_SYSTEM_PROMPT
+      },
+      {
+        role: 'user',
+        content: userMessage
+      }
     ];
 
     console.log('Sending messages to OpenAI:', messages);
@@ -273,89 +237,72 @@ const fetchTipsFromAI = async () => {
     // קריאה ל-API
     const aiResponse = await sendToChat(messages, {
       model: 'gpt-4o-mini',
-      max_tokens: 5500,
-      temperature: 0.1,
-      json_mode: true
+      max_tokens: 5500,      
+      temperature: 0.1,     
+      json_mode: true       
     });
-
+    
     console.log('AI Response received:', aiResponse);
-
-    if (!aiResponse?.content) {
+    
+    // בדיקה שיש תוכן בתגובה
+    if (!aiResponse || !aiResponse.content) {
       throw new Error('AI returned empty response');
     }
 
-    // ניתוח התשובה
+    // ניתוח התגובה עם טיפול משופר בשגיאות
     const parsed = parseAIResponse(aiResponse.content);
+    
     console.log('✅ Parsed AI response:', parsed);
-
+    
     // עיבוד הטיפים
     const formattedTips = parsed.tips.map((tip, index) => ({
-      id:                tip.id || (index + 1).toString(),
-      category:          tip.category,
-      title:             tip.title,
-      summary:           tip.summary,
-      content:           tip.content,
-      practicalSteps:    tip.practicalSteps || '',
-      example:           tip.example       || '',
-      commonMistakes:    tip.commonMistakes|| '',
-      scientificBasis:   tip.scientificBasis|| '',
-      author:            tip.author,
-      source:            tip.source,
-      readTime:          typeof tip.readTime === 'number'
-                           ? `${tip.readTime} דקות`
-                           : '5 דקות',
-      likes:             tip.likes || Math.floor(Math.random() * 30) + 10,
-      isBookmarked:      false,
-      createdAt:         new Date().toISOString(),
+      id: tip.id || (index + 1).toString(),
+      category: tip.category,
+      title: tip.title,
+      summary: tip.summary,
+      content: tip.content,
+      practicalSteps: tip.practicalSteps || '',
+      example: tip.example || '',
+      commonMistakes: tip.commonMistakes || '',
+      scientificBasis: tip.scientificBasis || '',
+      author: tip.author,
+      source: tip.source,
+      readTime: typeof tip.readTime === 'number' ? `${tip.readTime} דקות` : '5 דקות',
+      likes: tip.likes || Math.floor(Math.random() * 30) + 10,
+      isBookmarked: false,
+      createdAt: new Date().toISOString(),
     }));
 
     // וידוא שיש 6 טיפים
     if (formattedTips.length < 6) {
       console.warn(`Received only ${formattedTips.length} tips instead of 6`);
-      const fallbackTips = generateFallbackTips(
-        userProfile.identities,
-        userProfile.supportNeeds
-      );
-      formattedTips.push(
-        ...fallbackTips.slice(formattedTips.length, 6)
-      );
+      const fallbackTips = generateFallbackTips(userProfile.identities, userProfile.supportNeeds);
+      const missingCount = 6 - formattedTips.length;
+      const additionalTips = fallbackTips.slice(formattedTips.length, formattedTips.length + missingCount);
+      formattedTips.push(...additionalTips);
     }
 
-    // עדכון ה-state המקומי
-    const now = Date.now();
     setTips(formattedTips);
-    setLastFetchTime(now);
-    setUserProfileHash(currentProfileHash);
-
-    // **שמירה ב־AuthContext וב־AsyncStorage**
-    updateParentTipsCache({
-      tips:           formattedTips,
-      lastFetchTime:  now,
-      profileHash:    currentProfileHash
-    });
-
-    console.log('✅ Tips fetched and cached successfully:', formattedTips.length);
-
+    setLastFetchTime(Date.now());
+    console.log('✅ Tips fetched successfully:', formattedTips.length);
+    
   } catch (err) {
     console.error('Error fetching tips:', err);
     console.error('Error details:', err.message);
-
-    // טעינת טיפים מקומיים במקרה של שגיאה
+    
+    // במקרה של שגיאה, נטען טיפים מקומיים
     const fallbackTips = generateFallbackTips(
-      parseJsonField(user?.identities) || [],
+      parseJsonField(user?.identities) || [], 
       parseJsonField(user?.supportNeeds) || []
     );
-    const now = Date.now();
+    
+    console.log('🔄 Using fallback tips:', fallbackTips);
     setTips(fallbackTips);
-    setLastFetchTime(now);
-    updateParentTipsCache({
-      tips:           fallbackTips,
-      lastFetchTime:  now,
-      profileHash:    generateProfileHash()
-    });
-
+    setLastFetchTime(Date.now());
+    
+    // הודעת שגיאה ידידותית יותר (וודא שיש import של Alert!)
     Alert.alert(
-      'שגיאה בטעינת טיפים',
+      'שגיאה בטעינת טיפים', 
       'נטענו טיפים כלליים. נסה לרענן מאוחר יותר.',
       [{ text: 'אישור', style: 'default' }]
     );
@@ -538,10 +485,16 @@ const validateAndReturn = (parsed) => {
     ];
   };
 
-  // חישוב הטיפים המסוננים לפי קטגוריה בלבד
+  // מעבירים את החישוב ל-useMemo או משתנה
   const filteredTips = tips.filter((tip) => {
     if (!tip) return false;
-    return selectedCategory === 'all' || tip.category === selectedCategory;
+    
+    const matchesCategory = selectedCategory === 'all' || tip.category === selectedCategory;
+    const matchesSearch = !searchQuery || 
+      (tip.title && tip.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (tip.summary && tip.summary.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    return matchesCategory && matchesSearch;
   });
 
   const CategoryCard = ({ category, isSelected, onPress }) => (
@@ -641,27 +594,26 @@ const validateAndReturn = (parsed) => {
           </Pressable>
         </View>
 
+        {/* Search */}
+        <View style={styles.searchContainer}>
+          <MaterialCommunityIcons name="magnify" size={20} color={theme.colors.textLight} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="🔍 חפש נושא שמעניין אותך..."
+            placeholderTextColor={theme.colors.textLight}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            textAlign="right"
+          />
+        </View>
+
         <ScrollView 
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={async () => {
-              setRefreshing(true);
-              console.log('🔄 Manual refresh triggered');
-              
-              // נקה state מקומי כדי לאלץ טעינה מחדש
-              setTips([]);
-              setLastFetchTime(null);
-              
-              // בדוק קאש או טען מחדש
-              await new Promise(resolve => {
-                checkAndFetchTips();
-                setTimeout(resolve, 500);
-              });
-              
-              setRefreshing(false);
-            }} 
-          />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => {
+            setRefreshing(true);
+            setLastFetchTime(null);
+            fetchTipsFromAI().finally(() => setRefreshing(false));
+          }} />}
         >
           {/* Categories */}
           <View style={styles.section}>
@@ -684,6 +636,12 @@ const validateAndReturn = (parsed) => {
                 />
               ))}
             </View>
+          </View>
+
+          {/* Debug Info - רק בזמן פיתוח */}
+          <View style={styles.debugContainer}>
+            <Text style={styles.debugText}>Debug: טיפים כולל {tips.length}, מוצגים {filteredTips.length}</Text>
+            <Text style={styles.debugText}>קטגוריה נבחרה: {selectedCategory}</Text>
           </View>
 
           {/* Tips */}
@@ -731,7 +689,6 @@ const validateAndReturn = (parsed) => {
           </View>
         </ScrollView>
       </View>
-      
       <Modal
         transparent
         animationType="slide"
@@ -760,18 +717,12 @@ const validateAndReturn = (parsed) => {
               </View>
             </View>
 
-            {/* תוכן הטיפ בתוך ScrollView */}
-            <ScrollView 
-              style={styles.modalContentScrollView} 
-              contentContainerStyle={styles.modalContentContainer}
-              showsVerticalScrollIndicator={false}
-            >
+            {/* תוכן הטיפ */}
+            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
               {/* סיכום */}
-              {selectedTip?.summary && (
-                <View style={styles.modalSection}>
-                  <Text style={styles.modalSummary}>{selectedTip.summary}</Text>
-                </View>
-              )}
+              <View style={styles.modalSection}>
+                <Text style={styles.modalSummary}>{selectedTip?.summary}</Text>
+              </View>
 
               {/* תוכן עיקרי */}
               {selectedTip?.content && (
@@ -812,7 +763,7 @@ const validateAndReturn = (parsed) => {
                     <Text style={styles.modalSectionTitle}>💬 דוגמה מהחיים</Text>
                   </View>
                   <View style={styles.exampleContainer}>
-                    <Text style={styles.modalScientificText}>{selectedTip.example}</Text>
+                    <Text style={styles.modalText}>{selectedTip.example}</Text>
                   </View>
                 </View>
               )}
@@ -825,7 +776,7 @@ const validateAndReturn = (parsed) => {
                     <Text style={styles.modalSectionTitle}>⚠️ כדאי להימנע מ...</Text>
                   </View>
                   <View style={styles.mistakesContainer}>
-                    <Text style={styles.modalScientificText}>{selectedTip.commonMistakes}</Text>
+                    <Text style={styles.modalText}>{selectedTip.commonMistakes}</Text>
                   </View>
                 </View>
               )}
@@ -905,6 +856,9 @@ const styles = StyleSheet.create({
   editButton: { flexDirection: 'row-reverse', alignItems: 'center', backgroundColor: theme.colors.card, paddingHorizontal: wp(3), paddingVertical: hp(1), borderRadius: theme.radius.md, marginTop: hp(1), borderWidth: 1, borderColor: theme.colors.primary + '30', gap: wp(1), alignSelf: 'flex-end' },
   editText: { fontSize: hp(1.6), color: theme.colors.primary, fontWeight: theme.fonts.semibold },
   
+  searchContainer: { flexDirection: 'row-reverse', alignItems: 'center', backgroundColor: theme.colors.card, borderRadius: theme.radius.lg, paddingHorizontal: wp(4), paddingVertical: hp(1.5), marginBottom: hp(3), borderWidth: 1, borderColor: theme.colors.border },
+  searchInput: { flex: 1, fontSize: hp(2), color: theme.colors.textPrimary, textAlign: 'right', marginRight: wp(2) },
+  
   section: { marginBottom: hp(4) },
   sectionTitle: { fontSize: hp(2.4), fontWeight: theme.fonts.bold, color: theme.colors.textPrimary, textAlign: 'right', marginBottom: hp(2) },
   
@@ -958,6 +912,21 @@ const styles = StyleSheet.create({
     lineHeight: hp(2.2),
   },
   
+  debugContainer: {
+    backgroundColor: theme.colors.card,
+    padding: wp(3),
+    marginBottom: hp(2),
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: '#FFA500',
+  },
+  debugText: {
+    fontSize: hp(1.4),
+    color: '#FFA500',
+    textAlign: 'right',
+    marginBottom: hp(0.5),
+  },
+  
   tipsHeader: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', marginBottom: hp(2) },
   refreshButton: { flexDirection: 'row-reverse', alignItems: 'center', backgroundColor: theme.colors.card, paddingHorizontal: wp(3), paddingVertical: hp(1), borderRadius: theme.radius.md, borderWidth: 1, borderColor: theme.colors.primary + '30', gap: wp(1) },
   refreshText: { fontSize: hp(1.6), color: theme.colors.primary, fontWeight: theme.fonts.semibold },
@@ -996,237 +965,60 @@ const styles = StyleSheet.create({
   emptyContainer: { alignItems: 'center', paddingVertical: hp(6) },
   emptyTitle: { fontSize: hp(2.2), fontWeight: theme.fonts.bold, color: theme.colors.textPrimary, textAlign: 'center', marginTop: hp(2) },
   emptySubtitle: { fontSize: hp(1.8), color: theme.colors.textSecondary, textAlign: 'center', marginTop: hp(1) },
-
-modalOverlay: {
+  modalOverlay: {
   flex: 1,
-  backgroundColor: 'rgba(0,0,0,0.6)',
+  backgroundColor: 'rgba(0,0,0,0.5)',
   justifyContent: 'center',
   alignItems: 'center',
   padding: wp(4),
 },
-
-modalContainer: {
+modalContent: {
   width: '100%',
-  maxHeight: '85%',
+  maxHeight: '90%',
   backgroundColor: theme.colors.card,
   borderRadius: theme.radius.xl,
-  overflow: 'hidden',
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 10 },
-  shadowOpacity: 0.3,
-  shadowRadius: 20,
-  elevation: 20,
-  flexDirection: 'column',
+  padding: wp(4),
 },
-
-modalHeader: {
-  backgroundColor: theme.colors.primary,
-  paddingVertical: hp(2),
-  paddingHorizontal: wp(4),
-},
-
-modalHeaderContent: {
-  flexDirection: 'row-reverse',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-},
-
-categoryIconLarge: {
-  width: hp(5),
-  height: hp(5),
-  borderRadius: hp(2.5),
-  backgroundColor: 'rgba(255,255,255,0.2)',
-  alignItems: 'center',
-  justifyContent: 'center',
-},
-
 modalTitle: {
-  flex: 1,
-  fontSize: hp(2.4),
+  fontSize: hp(2.6),
   fontWeight: theme.fonts.bold,
   color: theme.colors.textPrimary,
   textAlign: 'right',
-  marginHorizontal: wp(3),
-},
-
-modalCloseButton: {
-  width: hp(4),
-  height: hp(4),
-  borderRadius: hp(2),
-  backgroundColor: 'rgba(255,255,255,0.2)',
-  alignItems: 'center',
-  justifyContent: 'center',
-},
-
-modalSection: {
-  marginBottom: hp(2),
-},
-
-sectionHeader: {
-  flexDirection: 'row-reverse',
-  alignItems: 'center',
   marginBottom: hp(1),
-  gap: wp(2),
 },
-
 modalSectionTitle: {
   fontSize: hp(2),
-  fontWeight: theme.fonts.bold,
-  color: theme.colors.textPrimary,
-  textAlign: 'right',
-},
-
-modalSummary: {
-  fontSize: hp(2),
-  color: theme.colors.primary,
-  textAlign: 'right',
-  lineHeight: hp(2.6),
   fontWeight: theme.fonts.semibold,
-  backgroundColor: theme.colors.primary + '10',
-  padding: wp(3),
-  borderRadius: theme.radius.md,
-  borderRightWidth: 4,
-  borderRightColor: theme.colors.primary,
+  color: theme.colors.textPrimary,
+  textAlign: 'right',
+  marginTop: hp(1),
+  marginBottom: hp(0.5),
 },
-
 modalText: {
-  fontSize: hp(1.9),
-  color: theme.colors.textPrimary,
-  textAlign: 'right',
-  lineHeight: hp(2.6),
-},
-
-stepsContainer: {
-  gap: hp(1.5),
-},
-
-stepItem: {
-  flexDirection: 'row-reverse',
-  alignItems: 'flex-start',
-  gap: wp(3),
-},
-
-stepNumber: {
-  width: hp(3),
-  height: hp(3),
-  borderRadius: hp(1.5),
-  backgroundColor: theme.colors.primary,
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginTop: hp(0.2),
-},
-
-stepNumberText: {
-  fontSize: hp(1.4),
-  fontWeight: theme.fonts.bold,
-  color: theme.colors.white,
-},
-
-stepText: {
-  flex: 1,
   fontSize: hp(1.8),
-  color: theme.colors.textPrimary,
+  color: theme.colors.textSecondary,
   textAlign: 'right',
   lineHeight: hp(2.4),
 },
-
-exampleContainer: {
-  backgroundColor: '#F0F9FF',
-  padding: wp(3),
-  borderRadius: theme.radius.md,
-  borderLeftWidth: 4,
-  borderLeftColor: '#32D1C3',
-},
-
-mistakesContainer: {
-  backgroundColor: '#FEF2F2',
-  padding: wp(3),
-  borderRadius: theme.radius.md,
-  borderLeftWidth: 4,
-  borderLeftColor: '#FF6B6B',
-},
-
-modalScientificText: {
-  fontSize: hp(1.9),
-  color: theme.colors.dark,
-  textAlign: 'right',
-  lineHeight: hp(2.4),
-  fontStyle: 'italic',
-  backgroundColor: '#F1F5F9',
-  padding: wp(3),
-  borderRadius: theme.radius.md,
-},
-
-modalFooter: {
-  paddingTop: hp(2),
-  borderTopWidth: 1,
-  borderTopColor: theme.colors.border,
-  marginTop: hp(2),
-},
-
-authorSection: {
-  flexDirection: 'row-reverse',
-  alignItems: 'center',
-  gap: wp(2),
-  marginBottom: hp(1),
-},
-
-sourceSection: {
-  flexDirection: 'row-reverse',
-  alignItems: 'center',
-  gap: wp(2),
-},
-
 modalFooterText: {
   fontSize: hp(1.6),
-  color: theme.colors.textPrimary,
-  fontWeight: theme.fonts.medium,
+  color: theme.colors.textLight,
+  textAlign: 'right',
+  marginTop: hp(1),
 },
-
-modalSourceText: {
-  fontSize: hp(1.5),
-  color: theme.colors.textSecondary,
-  fontStyle: 'italic',
-},
-
-modalActions: {
-  flexDirection: 'row-reverse',
-  justifyContent: 'space-between',
-  paddingHorizontal: wp(4),
-  paddingVertical: hp(2),
-  borderTopWidth: 1,
-  borderTopColor: theme.colors.border,
-  backgroundColor: theme.colors.background,
-  gap: wp(3),
-  flexShrink: 0,
-},
-
-actionButton: {
-  flex: 1,
-  flexDirection: 'row-reverse',
-  alignItems: 'center',
-  justifyContent: 'center',
-  paddingVertical: hp(1.5),
-  borderRadius: theme.radius.lg,
-  gap: wp(2),
-},
-
-bookmarkButton: {
-  backgroundColor: '#FF6B9D',
-},
-
-closeActionButton: {
+modalCloseButton: {
+  alignSelf: 'center',
+  marginTop: hp(2),
   backgroundColor: theme.colors.primary,
+  paddingVertical: hp(1.5),
+  paddingHorizontal: wp(6),
+  borderRadius: theme.radius.md,
 },
-
-actionButtonText: {
+modalCloseButtonText: {
   fontSize: hp(1.8),
-  fontWeight: theme.fonts.semibold,
   color: theme.colors.white,
+  fontWeight: theme.fonts.semibold,
 },
 
-modalContentContainer: {
-  padding: wp(4),
-  paddingBottom: hp(1),
-},
+
 });

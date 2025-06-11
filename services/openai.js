@@ -22,7 +22,7 @@ try {
   console.error('Failed to initialize OpenAI:', error);
 }
 
-export async function sendToChat(messages) {
+export async function sendToChat(messages, options = {}) {
   if (!apiKey) {
     throw new Error(
       'Missing OpenAI API key – וודא ש־.env נטען דרך app.config.js'
@@ -48,14 +48,28 @@ export async function sendToChat(messages) {
   console.log('Sending validated messages to OpenAI...');
   
   try {
-    const res = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+    const requestConfig = {
+      model: options.model || 'gpt-4o-mini',
       messages: validatedMessages,
-      temperature: 0.2,
-      max_tokens: 4000, // הגדלנו מ-2000 ל-4000
-      presence_penalty: 0,
-      frequency_penalty: 0,
+      temperature: options.temperature || 0.1,
+      max_tokens: options.max_tokens || 5500,
+      presence_penalty: options.presence_penalty || 0,
+      frequency_penalty: options.frequency_penalty || 0,
+    };
+
+    // הוספת response_format אם זה JSON (לטיפים)
+    if (options.json_mode || validatedMessages[0]?.content?.includes('Return only valid JSON')) {
+      requestConfig.response_format = { type: "json_object" };
+    }
+
+    console.log('Request config:', {
+      model: requestConfig.model,
+      temperature: requestConfig.temperature,
+      max_tokens: requestConfig.max_tokens,
+      json_mode: !!requestConfig.response_format
     });
+    
+    const res = await openai.chat.completions.create(requestConfig);
     
     console.log('OpenAI Response received successfully');
     console.log('Tokens used:', res.usage);
