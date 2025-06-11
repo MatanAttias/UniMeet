@@ -31,8 +31,12 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true);
   const [notificationCount, setNotificationCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+<<<<<<< HEAD
   const subscriptionsRef = useRef({});
 
+=======
+  const isParent = user?.role === 'parent';
+>>>>>>> 4e2f9aa (finish)
   const [fontsLoaded] = useFonts({
     Poppins_600SemiBold,
     Poppins_700Bold,
