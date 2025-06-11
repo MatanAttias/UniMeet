@@ -19,6 +19,8 @@ import PostCard from '../../components/PostCard';
 import Loading from '../../components/Loading';
 import { getUserData } from '../../services/userService';
 import BottomBar from '../../components/BottomBar';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 let limit = 0;
@@ -31,12 +33,9 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true);
   const [notificationCount, setNotificationCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-<<<<<<< HEAD
-  const subscriptionsRef = useRef({});
+ const subscriptionsRef = useRef({});
 
-=======
-  const isParent = user?.role === 'parent';
->>>>>>> 4e2f9aa (finish)
+
   const [fontsLoaded] = useFonts({
     Poppins_600SemiBold,
     Poppins_700Bold,
@@ -44,7 +43,6 @@ export default function Home() {
   });
 
   // בדיקה אם המשתמש הוא הורה
-  const isParent = user?.role === 'parent';
 
   useEffect(() => {
 
