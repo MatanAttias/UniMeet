@@ -119,6 +119,8 @@ const ParentTips = () => {
   const [userProfileHash, setUserProfileHash] = useState('');
   const [selectedTip, setSelectedTip] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+
 
   const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 שעות
 
@@ -130,6 +132,7 @@ const ParentTips = () => {
   console.log('- tips.length (local state):', tips.length);
   console.log('- user data loaded:', !!user?.identities);
 }, [isTipsCacheLoaded, parentTipsCache, tips.length, user?.identities]);
+
 
   // הוספת debug console.log
   useEffect(() => {
@@ -170,75 +173,100 @@ const ParentTips = () => {
   };
 
   const checkAndFetchTips = () => {
-    const currentProfileHash = generateProfileHash();
-    const now = Date.now();
-    
-    // ראשית, בדוק אם יש קאש תקף מה-AuthContext
-    const { tips: cachedTips, lastFetchTime: cachedTime, profileHash } = parentTipsCache;
-    const isCacheFresh = cachedTime && (now - cachedTime) <= CACHE_DURATION;
-    const isSameProfile = profileHash === currentProfileHash;
-    
-    if (cachedTips.length > 0 && isCacheFresh && isSameProfile) {
-      console.log('⚡ Using cached tips from AuthContext');
-      setTips(cachedTips);
-      setLastFetchTime(cachedTime);
-      setUserProfileHash(profileHash);
-      return;
-    }
-    
-    // אם אין קאש תקף, טען מחדש
-    const shouldFetch = 
-      cachedTips.length === 0 ||
-      !isCacheFresh ||
-      !isSameProfile;
-        
-    if (shouldFetch) {
-      console.log('🔄 Fetching new tips from AI');
-      setUserProfileHash(currentProfileHash);
-      fetchTipsFromAI();
-    }
-  };
+  const now = Date.now();
+  const currentProfileHash = generateProfileHash();
+  
+  // בדוק קאש עם validation מלא
+  const { tips: cachedTips, lastFetchTime: cachedTime, profileHash } = parentTipsCache;
+  const isCacheFresh = cachedTime && (now - cachedTime) <= CACHE_DURATION;
+  const isSameProfile = profileHash === currentProfileHash;
+  
+  // רק אם הקאש טרי **וגם** הפרופיל זהה
+  if (cachedTips.length > 0 && isCacheFresh && isSameProfile) {
+    console.log('⚡ Using cached tips - profile and time match perfectly');
+    setTips(cachedTips);
+    setLastFetchTime(cachedTime);
+    setUserProfileHash(profileHash);
+    return;
+  }
+
+  // 🛡️ מניעת קריאות כפולות
+  if (isFetching) {
+    console.log('⏳ Already fetching tips, skipping duplicate request');
+    return;
+  }
+  
+  // אחרת - טען טיפים חדשים
+  if (!isSameProfile) {
+    console.log('🔄 Profile changed, fetching new tips');
+  } else {
+    console.log('🔄 Cache expired, fetching fresh tips');
+  }
+  
+  setUserProfileHash(currentProfileHash);
+  fetchTipsFromAI();
+};
 
 
 
 useEffect(() => {
   if (!isTipsCacheLoaded) return;
 
-  // טען קאש מיד כשזמין, ללא תלות ב-tips הנוכחיים
+  // בדיקה זהירה של קאש עם פרופיל
   const { tips: cachedTips, lastFetchTime: cachedTime, profileHash } = parentTipsCache;
   const now = Date.now();
   const isFresh = cachedTime && (now - cachedTime) <= CACHE_DURATION;
-  const currentProfileHash = generateProfileHash();
-  const isSameProfile = profileHash === currentProfileHash;
-
-  if (cachedTips.length > 0 && isFresh && isSameProfile) {
-    console.log('⚡ Loading cached tips immediately');
-    setTips(cachedTips);
-    setLastFetchTime(cachedTime);
-    setUserProfileHash(profileHash);
-  } else {
-    // אם אין קאש תקף, המתן לנתוני משתמש
-    const identities = parseJsonField(user?.identities);
-    const supportNeeds = parseJsonField(user?.supportNeeds);
-    
-    if (identities.length > 0 || supportNeeds.length > 0) {
-      console.log('✅ Clinical data available, fetching tips...');
-      checkAndFetchTips();
+  
+  
+  // פתרון: אם יש קאש טרי, בדוק אם הפרופיל הבסיסי תואם
+  const basicUserId = user?.id;
+  const cachedUserId = profileHash ? JSON.parse(profileHash)?.userId : null;
+  
+  if (cachedTips.length > 0 && isFresh) {
+    // אם יש קאש טרי, בדוק לפחות שזה אותו משתמש
+    if (basicUserId && cachedUserId && basicUserId === cachedUserId) {
+      console.log('⚡ Loading cached tips - same user, fresh cache');
+      setTips(cachedTips);
+      setLastFetchTime(cachedTime);
+      setUserProfileHash(profileHash);
+      return;
+    } else if (!basicUserId) {
+      // משתמש עדיין נטען - חכה קצת
+      console.log('⏳ User still loading, waiting...');
+      return;
     } else {
-      const timer = setTimeout(() => {
-        console.log('⚠️ No clinical data, fetching general tips...');
-        checkAndFetchTips();
-      }, 1500);
-      return () => clearTimeout(timer);
+      console.log('👤 Different user detected, will fetch new tips');
     }
   }
-}, [isTipsCacheLoaded, parentTipsCache]);
+
+  // אם אין קאש טרי או משתמש שונה - המתן לנתוני משתמש מלאים
+  const identities = parseJsonField(user?.identities);
+  const supportNeeds = parseJsonField(user?.supportNeeds);
+  
+  if (identities.length > 0 || supportNeeds.length > 0) {
+    console.log('✅ Clinical data available, fetching tips...');
+    checkAndFetchTips();
+  } else if (user?.id) {
+    const timer = setTimeout(() => {
+      console.log('⚠️ No clinical data after wait, fetching general tips...');
+      checkAndFetchTips();
+    }, 1500);
+    return () => clearTimeout(timer);
+  }
+}, [isTipsCacheLoaded, parentTipsCache, user?.id, user?.identities, user?.supportNeeds]);
 
 
 
 const fetchTipsFromAI = async () => {
+  // בדיקה אם כבר טוענים
+  if (isFetching) {
+    console.log('⏳ Fetch already in progress, skipping');
+    return;
+  }
+
   try {
     setLoading(true);
+    setIsFetching(true); // 🔒 נעל fetch
 
     // בניית פרופיל המשתמש עם בדיקות
     const userProfile = {
@@ -361,6 +389,7 @@ const fetchTipsFromAI = async () => {
     );
   } finally {
     setLoading(false);
+    setIsFetching(false); // 🔓 שחרר fetch
   }
 };
 

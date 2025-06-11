@@ -31,15 +31,6 @@ export const AuthProvider = ({ children }) => {
     };
 
 
-    useEffect(() => {
-        console.log('🔍 Debug - ParentTips state:');
-        console.log('- isTipsCacheLoaded:', isTipsCacheLoaded);
-        console.log('- parentTipsCache.tips.length:', parentTipsCache.tips.length);
-        console.log('- parentTipsCache.lastFetchTime:', parentTipsCache.lastFetchTime);
-        console.log('- tips.length (local state):', tips.length);
-        console.log('- user data loaded:', !!user?.identities);
-        }, [isTipsCacheLoaded, parentTipsCache, tips.length, user?.identities]);
-
     // טעינת קאש הטיפים מ-AsyncStorage
     useEffect(() => {
         const loadTipsCache = async () => {
