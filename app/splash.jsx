@@ -12,6 +12,12 @@ const SplashScreen = () => {
   const router = useRouter()
 
   useEffect(() => {
+    const hide = async () => {
+      await SplashScreen.hideAsync(); // ✅ הסתרת ה־Splash ה־native ברגע שהמסך שלך מוכן
+    };
+  
+    hide();
+    
     const timer = setTimeout(() => {
       router.replace('/welcome')
     }, 4500)

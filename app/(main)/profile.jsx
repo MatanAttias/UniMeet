@@ -25,8 +25,8 @@ import PostCard from '../../components/PostCard';
 import Loading from '../../components/Loading';
 import { Audio } from 'expo-av';
 import { AnimatePresence, MotiView } from 'moti';
-
-
+import UserCityFromLocation from '../../components/UserCityFromLocation'
+import { MaterialIcons } from '@expo/vector-icons';
 
 var limit = 0;
 const Profile = () => {
@@ -37,6 +37,7 @@ const Profile = () => {
   const [hasMore, setHasMore] = useState(true);
   const [showPosts, setShowPosts] = useState(false);
   const [activeTab, setActiveTab] = useState('profile'); // או 'posts'
+  const [menuVisible, setMenuVisible] = useState(false); // ✅ גם זה פה
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -60,6 +61,7 @@ const Profile = () => {
       fetchUserData();
     }
   }, [user?.id]);
+  
 
   const onLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -90,7 +92,9 @@ const Profile = () => {
   if (loading) {
     return <ActivityIndicator size="large" color={theme.colors.primary} />;
   }
-
+  const handleMenuToggle = () => {
+    setMenuVisible(prev => !prev);
+  };
   const handleLogout = async () => {
     Alert.alert('אישור', 'אתה בטוח שאתה רוצה להתנתק?', [
       {
@@ -108,18 +112,47 @@ const Profile = () => {
   const goToPreviousStep = () => {
     router.back();
   };
-
-
+  
   return (
     
-    <ScreenWrapper bg="black">
+    <ScreenWrapper bg = {theme.colors.background}>
       <Pressable style={styles.backToWelcomeButton} onPress={goToPreviousStep}>
                 <Text style={styles.backToWelcomeText}>חזור</Text>
               </Pressable>
-              <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <MaterialCommunityIcons name="logout" size={20} color={theme.colors.rose} />
-          <Text style={styles.logoutText}>התנתק</Text>
-        </TouchableOpacity>
+              <View>
+              <TouchableOpacity
+  onPress={() => setMenuVisible(!menuVisible)}
+  style={{
+  }}
+>
+  <MaterialCommunityIcons name="dots-vertical" size={28} color="white" />
+</TouchableOpacity>
+
+      {menuVisible && (
+  <View style={styles.menuContainer}>
+    <TouchableOpacity
+      style={styles.menuItem}
+      onPress={() => {
+        setMenuVisible(false);
+        router.push('/settings');
+            }}
+    >
+      <Text style={styles.menuText}>הגדרות</Text>
+    </TouchableOpacity>
+
+    <TouchableOpacity
+      style={styles.menuItem}
+      onPress={() => {
+        setMenuVisible(false);
+        handleLogout();
+      }}
+    >
+
+        <Text style={[styles.menuText, { color: 'red' }]}>התנתק</Text>
+      </TouchableOpacity>
+    </View>
+  )}
+</View>
       <View style={styles.tabsContainer}>
         
         
@@ -173,7 +206,7 @@ const Profile = () => {
             </View>
           ) : (
             <View style={{ marginVertical: 30 }}>
-              <Text style={styles.noPosts}>No more posts</Text>
+              <Text style={styles.noPosts}>אין עוד פוסטים</Text>
             </View>
           )
         ) : null
@@ -262,13 +295,22 @@ const UserHeader = ({ user, router, handleLogout }) => {
   
  
   const renderTagList = (label, tags) => {
-    if (!tags || tags.length === 0) return null;
+    if (!tags) return null;
+  
+    // אם tags הוא מחרוזת – נפצל לפסיקים
+    const tagList = Array.isArray(tags)
+      ? tags
+      : typeof tags === 'string'
+      ? tags.split(',').map(t => t.trim())
+      : [];
+  
+    if (tagList.length === 0) return null;
   
     return (
       <View style={{ marginBottom: 12 }}>
         <Text style={styles.tagCategory}>{label}</Text>
         <View style={styles.tagList}>
-          {tags.map((tag, index) => (
+          {tagList.map((tag, index) => (
             <View key={index} style={styles.tagPill}>
               <Text style={styles.tagText}>{tag}</Text>
             </View>
@@ -277,13 +319,14 @@ const UserHeader = ({ user, router, handleLogout }) => {
       </View>
     );
   };
-
   const getFormattedTime = (millis) => {
     const totalSeconds = Math.floor(millis / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
+
+ 
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingHorizontal: wp(4) }}>
@@ -307,13 +350,16 @@ const UserHeader = ({ user, router, handleLogout }) => {
             </Pressable>
           )}
           </View>
-
           <View style={{ alignItems: 'center', gap: 4 }}>
-            <Text style={styles.userName}>
-              {user?.fullName || user?.name || 'No name'}
-            </Text>
-            <Text style={styles.infoText}>{user?.address || 'No address'}</Text>
-          </View>
+          <Text style={styles.userName}>
+            {user?.fullName || user?.name || 'No name'}
+          </Text>
+          {user?.location ? (
+            <UserCityFromLocation location={user.location} />
+          ) : (
+            <Text style={styles.infoText}>מיקום לא זמין</Text>
+          )}
+        </View>
 
           {['gender', 'birth_date', 'status', 'connectionTypes'].some(key => !!user?.[key]) && (
         <MotiView
@@ -397,6 +443,13 @@ const UserHeader = ({ user, router, handleLogout }) => {
               <>
                 <Text style={styles.subSectionTitle}>תכונות</Text>
                 {renderTagList('', user.traits)}
+              </>
+            )}
+
+            {user.traits?.length > 0 && (
+              <>
+                <Text style={styles.subSectionTitle}>תחביבים</Text>
+                {renderTagList('', user.hobbies)}
               </>
             )}
           
@@ -511,14 +564,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     textAlign: 'right',
   },
-  logoutButton: {
-    position: 'absolute',
-    left: 30,             // במקום right: 0
-    top: 75,             // מרחק מלמעלה – אפשר להתאים לפי הצורך
-    padding: 5,
-    borderRadius: theme.radius.sm,
-    backgroundColor: theme.colors.rose,
-  },
+ 
   listStyle: {
     paddingHorizontal: wp(4),
     paddingBottom: 30,
@@ -716,6 +762,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     borderRadius: 50,
     zIndex: 10,
+    marginTop: -40,
   },
   logoutText: {
     color: theme.colors.primary,
@@ -723,5 +770,38 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.semibold,
     marginLeft: 8,
     fontSize: 16,
+  },
+  menuContainer: {
+    backgroundColor: '#1a1a1a',
+    position: 'absolute',
+    top: 50,
+    left: 10,                 // במקום right: 10
+    borderRadius: 12,
+    elevation: 4, // shadow לאנדרואיד
+    shadowColor: '#000', // shadow לאייפון
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    zIndex: 999,
+  },
+  
+  menuItem: {
+    paddingVertical: 12,
+    paddingRight: 12,
+    paddingLeft: 8,
+    
+  },
+  
+  menuText: {
+    fontSize: 16,
+    color: theme.colors.text, // שים לב שזה קיים אצלך ב־theme
+    textAlign: 'left',        // שינוי חשוב: מימין לשמאל
+    fontWeight: '500',
+  },
+  
+  logoutText: {
+    color: 'red',
   },
 });

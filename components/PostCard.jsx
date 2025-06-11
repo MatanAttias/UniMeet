@@ -66,6 +66,8 @@ const PostCard = React.memo((props) => {
       </View>
     );
   }
+  
+
 
   // State management
   const [likes, setLikes] = useState(item.postLikes || []);
@@ -93,10 +95,14 @@ const PostCard = React.memo((props) => {
 
   // Real-time subscriptions with cleanup
   useEffect(() => {
-    if (!item.id) return;
-
+    const channelName = `comments_post_${item.id}`;
+    
+    // בדוק אם כבר קיים channel כזה (Supabase לא עושה את זה אוטומטית)
+    const existing = supabase.getChannels().find(c => c.topic === `realtime:${channelName}`);
+    if (existing) return;
+  
     const channel = supabase
-      .channel(`comments_post_${item.id}_${Date.now()}`) // Adding timestamp for uniqueness
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -116,10 +122,9 @@ const PostCard = React.memo((props) => {
           filter: `postId=eq.${item.id}`,
         },
         () => setCommentCount(c => Math.max(0, c - 1))
-      );
-
-    channel.subscribe();
-
+      )
+      .subscribe();
+  
     return () => {
       supabase.removeChannel(channel);
     };

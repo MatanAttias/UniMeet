@@ -44,6 +44,40 @@ export default function Home() {
 
   // בדיקה אם המשתמש הוא הורה
 
+  // בדיקה אם המשתמש הוא הורה
+
+  useFocusEffect(
+    useCallback(() => {
+      setPosts([]);
+      setHasMore(true);
+  
+      // טען את המשתמש
+      const fetchUserData = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user?.id)
+          .single();
+  
+        if (error) {
+          console.error('Error fetching user data:', error);
+          Alert.alert('Error', 'Failed to fetch user data.');
+        } else {
+          setUserData(data);
+        }
+        setLoading(false);
+      };
+  
+      if (user?.id) {
+        fetchUserData();
+      }
+  
+      return () => {
+        // ניקוי אופציונלי
+      };
+    }, [user?.id])
+  );
   useEffect(() => {
 
     if (!user?.id || subscriptionsRef.current[user.id]) return;

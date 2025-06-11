@@ -45,13 +45,13 @@ const MainLayout = () => {
 
   useEffect(() => {
     if (!fontsLoaded) return;
-
-    const getSession = async () => {
+  
+    const init = async () => {
       try {
         const {
           data: { session },
         } = await supabase.auth.getSession();
-
+  
         if (session) {
           setAuth(session.user);
           await updateUserData(session.user, session.user.email);
@@ -64,17 +64,14 @@ const MainLayout = () => {
         console.error('Session error:', error);
         router.replace('/splash');
       } finally {
-        // הסתר את splash screen כשהכל מוכן
+        // ✅ חשוב: להסתיר את splash רק אחרי שהכל נטען
         await SplashScreen.hideAsync();
       }
     };
-
-    getSession();
-
+  
+    init();
+  
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth change event:', _event);
-      console.log('Session user:', session?.user?.id);
-
       if (session) {
         setAuth(session.user);
         updateUserData(session.user, session.user.email);
@@ -84,7 +81,7 @@ const MainLayout = () => {
         router.replace('/splash');
       }
     });
-
+  
     return () => {
       listener.subscription?.unsubscribe();
     };

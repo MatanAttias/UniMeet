@@ -6,6 +6,7 @@ import {
   Text,
   View,
   Alert,
+  I18nManager,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -260,6 +261,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: wp(2),
     marginTop: -700,
+    direction: I18nManager.isRTL ? 'rtl' : 'ltr', // תמיכה בכיוון עברי
+
   },
   center: {
     flex: 1,

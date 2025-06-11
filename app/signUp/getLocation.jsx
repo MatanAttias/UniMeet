@@ -20,7 +20,6 @@ const LocationPermission = () => {
   } = useLocalSearchParams();
 
   const handleSkip = () => {
-
     const params = {
       fullName,
       email,
@@ -36,23 +35,28 @@ const LocationPermission = () => {
   };
 
   const handleLocationPermission = async () => {
-    // 1. בדוק סטטוס נוכחי
-    let { status } = await Location.getForegroundPermissionsAsync();
+    try {
+      // בקש הרשאת מיקום (אם לא נתנה עדיין)
+      let { status } = await Location.getForegroundPermissionsAsync();
 
-    // 2. אם עוד לא התבקשה הרשאה – בקש אותה
-    if (status === Location.PermissionStatus.UNDETERMINED) {
-      const res = await Location.requestForegroundPermissionsAsync();
-      status = res.status;
-    }
+      if (status !== Location.PermissionStatus.GRANTED) {
+        const res = await Location.requestForegroundPermissionsAsync();
+        status = res.status;
+      }
 
-    // 3. אם קיבלת הרשאה
-    if (status === Location.PermissionStatus.GRANTED) {
-      try {
-        const { coords } = await Location.getCurrentPositionAsync({});
+      if (status === Location.PermissionStatus.GRANTED) {
+        // קבל מיקום מדויק ביותר, timeout של 10 שניות, maxAge 5 שניות
+        const { coords } = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Highest,
+          timeout: 10000,
+          maximumAge: 5000,
+        });
+
         const loc = {
           latitude: coords.latitude,
           longitude: coords.longitude,
         };
+
         const params = {
           fullName,
           email,
@@ -62,26 +66,24 @@ const LocationPermission = () => {
           connectionTypes,
           image,
           role,
-          location: JSON.stringify(loc),  // stringify the object
+          location: JSON.stringify(loc),
         };
         router.push({ pathname: '/signUp/genderSignUp', params });
-      } catch (error) {
+      } else {
         Alert.alert(
-          'שגיאה',
-          'לא הצלחנו לקבל את המיקום שלך.',
-          [{ text: 'המשך ללא מיקום', onPress: handleSkip }]
+          'גישה למיקום חסומה',
+          'כדי להמשיך עם חווית משתמש מלאה, אנא אפשר גישה למיקום בהגדרות האפליקציה.',
+          [
+            { text: 'פתח הגדרות', onPress: () => Linking.openSettings() },
+            { text: 'המשך בלי', style: 'cancel', onPress: handleSkip },
+          ]
         );
       }
-
-    // 4. אם הרשאה סורבה
-    } else {
+    } catch (error) {
       Alert.alert(
-        'גישה למיקום חסומה',
-        'כדי להמשיך עם חווית משתמש מלאה, אנא אפשר גישה למיקום בהגדרות האפליקציה.',
-        [
-          { text: 'פתח הגדרות', onPress: () => Linking.openSettings() },
-          { text: 'המשך בלי', style: 'cancel', onPress: handleSkip },
-        ]
+        'שגיאה',
+        'לא הצלחנו לקבל את המיקום שלך.',
+        [{ text: 'המשך ללא מיקום', onPress: handleSkip }]
       );
     }
   };
