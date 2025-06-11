@@ -16,18 +16,16 @@ export const AuthProvider = ({ children }) => {
 
     const setUserData = userData => {
         console.log('Updating user data:', userData);
-        setUser(prev => ({ 
-            ...prev, 
-            ...userData 
+        setUser(prev => ({
+            ...prev,
+            ...userData
         }));
     };
 
-    // פונקציה לניקוי מלא של Auth storage
     const clearAuthStorage = async () => {
         try {
             console.log('Clearing auth storage...');
-            
-            // רשימת מפתחות שקשורים ל-authentication
+
             const authKeys = [
                 'supabase.auth.token',
                 'sb-dlkxwivlcbnlukylcceq-auth-token', // מפתח ספציפי לפרויקט שלך
@@ -36,9 +34,8 @@ export const AuthProvider = ({ children }) => {
                 'user-session'
             ];
 
-            // נקה את כל המפתחות הרלוונטיים
             const allKeys = await AsyncStorage.getAllKeys();
-            const keysToRemove = allKeys.filter(key => 
+            const keysToRemove = allKeys.filter(key =>
                 authKeys.some(authKey => key.includes(authKey)) ||
                 key.includes('supabase') ||
                 key.includes('auth')
@@ -49,12 +46,10 @@ export const AuthProvider = ({ children }) => {
                 console.log('Removed auth keys:', keysToRemove);
             }
 
-            // התנתק מ-Supabase
             await supabase.auth.signOut();
-            
-            // אפס את המשתמש
+
             setUser(null);
-            
+
             console.log('Auth storage cleared successfully');
             return true;
         } catch (error) {
@@ -63,16 +58,14 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // פונקציה לבדיקת תקינות session
     const validateSession = async () => {
         try {
             const { data: { session }, error } = await supabase.auth.getSession();
-            
+
             if (error) {
                 console.error('Session validation error:', error);
-                
-                // אם זו שגיאת refresh token, נקה הכל
-                if (error.message?.includes('Refresh Token') || 
+
+                if (error.message?.includes('Refresh Token') ||
                     error.message?.includes('Invalid') ||
                     error.message?.includes('expired')) {
                     await clearAuthStorage();
@@ -80,7 +73,7 @@ export const AuthProvider = ({ children }) => {
                 }
                 return false;
             }
-            
+
             return !!session?.user;
         } catch (error) {
             console.error('Session validation failed:', error);
@@ -88,24 +81,23 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // פונקציה לרענון session
     const refreshSession = async () => {
         try {
             console.log('Attempting to refresh session...');
             const { data, error } = await supabase.auth.refreshSession();
-            
+
             if (error) {
                 console.error('Session refresh failed:', error);
                 await clearAuthStorage();
                 return false;
             }
-            
+
             if (data?.session?.user) {
                 setAuth(data.session.user);
                 console.log('Session refreshed successfully');
                 return true;
             }
-            
+
             return false;
         } catch (error) {
             console.error('Session refresh error:', error);
@@ -114,13 +106,11 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // פונקציה לטיפול בשגיאות auth
     const handleAuthError = async (error) => {
         console.error('Handling auth error:', error);
-        
+
         const errorMessage = error?.message || '';
-        
-        // שגיאות שדורשות ניקוי מלא
+
         const criticalErrors = [
             'Refresh Token Not Found',
             'Invalid Refresh Token',
@@ -128,47 +118,44 @@ export const AuthProvider = ({ children }) => {
             'invalid_grant',
             'invalid_token'
         ];
-        
-        const isCriticalError = criticalErrors.some(criticalError => 
+
+        const isCriticalError = criticalErrors.some(criticalError =>
             errorMessage.includes(criticalError)
         );
-        
+
         if (isCriticalError) {
             console.log('Critical auth error detected, clearing storage');
             await clearAuthStorage();
-            return true; // מציין שהשגיאה טופלה
+            return true;
         }
-        
-        return false; // השגיאה לא טופלה
+
+        return false;
     };
 
-    // פונקציה לניפוי מצב Auth (למפתחים)
     const debugAuthState = async () => {
         try {
             console.log('=== AUTH DEBUG ===');
-            
-            // בדיקת AsyncStorage
+
             const allKeys = await AsyncStorage.getAllKeys();
-            const authKeys = allKeys.filter(key => 
+            const authKeys = allKeys.filter(key =>
                 key.includes('auth') || key.includes('supabase')
             );
-            
+
             console.log('Auth keys in storage:', authKeys);
-            
+
             for (const key of authKeys) {
                 const value = await AsyncStorage.getItem(key);
                 console.log(`${key}:`, value ? 'EXISTS' : 'NULL');
             }
-            
-            // בדיקת Supabase session
+
             const { data: { session }, error } = await supabase.auth.getSession();
             console.log('Current session exists:', !!session);
             console.log('Session error:', error?.message || 'None');
             console.log('User in context:', !!user);
             console.log('User ID:', user?.id || 'None');
-            
+
             console.log('=== END DEBUG ===');
-            
+
             return {
                 storageKeys: authKeys,
                 hasSession: !!session,
@@ -181,20 +168,19 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // פונקציה לאתחול מלא
     const initializeAuth = async () => {
         if (isInitialized) return;
-        
+
         try {
             setIsLoading(true);
             console.log('Initializing auth...');
-            
+
             const isValid = await validateSession();
             if (!isValid) {
                 console.log('No valid session found during init');
                 setUser(null);
             }
-            
+
             setIsInitialized(true);
         } catch (error) {
             console.error('Auth initialization error:', error);
@@ -204,13 +190,32 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    // *** הוספת useEffect לניהול מנוי authStateChange עם ניקוי מנוי ***
+    useEffect(() => {
+        // מגדירים מנוי לשינויים ב-auth של supabase
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+            console.log('Auth state changed:', event);
+            if (session?.user) {
+                setAuth(session.user);
+            } else {
+                setAuth(null);
+            }
+        });
+
+        // ניקוי המנוי בעת פירוק הקומפוננטה / שינוי
+        return () => {
+            console.log('Cleaning up auth listener subscription');
+            authListener.subscription.unsubscribe();
+        };
+    }, []);
+
     return (
-        <AuthContext.Provider value={{ 
-            user, 
+        <AuthContext.Provider value={{
+            user,
             isLoading,
             isInitialized,
-            setAuth, 
-            setUserData, 
+            setAuth,
+            setUserData,
             clearAuthStorage,
             validateSession,
             refreshSession,

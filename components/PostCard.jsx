@@ -56,6 +56,7 @@ const PostCard = (props) => {
       </View>
     );
   }
+  
 
   const [likes, setLikes] = useState(item.postLikes || []);
   const [commentCount, setCommentCount] = useState(item.comments?.[0]?.count || 0);

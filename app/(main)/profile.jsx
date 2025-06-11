@@ -61,6 +61,7 @@ const Profile = () => {
       fetchUserData();
     }
   }, [user?.id]);
+  
 
   const onLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -114,7 +115,7 @@ const Profile = () => {
   
   return (
     
-    <ScreenWrapper bg="black">
+    <ScreenWrapper bg = {theme.colors.background}>
       <Pressable style={styles.backToWelcomeButton} onPress={goToPreviousStep}>
                 <Text style={styles.backToWelcomeText}>חזור</Text>
               </Pressable>
@@ -133,8 +134,8 @@ const Profile = () => {
       style={styles.menuItem}
       onPress={() => {
         setMenuVisible(false);
-        navigation.navigate('Settings');
-      }}
+        router.push('/settings');
+            }}
     >
       <Text style={styles.menuText}>הגדרות</Text>
     </TouchableOpacity>
@@ -205,7 +206,7 @@ const Profile = () => {
             </View>
           ) : (
             <View style={{ marginVertical: 30 }}>
-              <Text style={styles.noPosts}>No more posts</Text>
+              <Text style={styles.noPosts}>אין עוד פוסטים</Text>
             </View>
           )
         ) : null

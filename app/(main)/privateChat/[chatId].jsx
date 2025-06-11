@@ -331,13 +331,7 @@ import {
       const goBack = () => {
         router.replace('/chats?refresh=true');
       };  
-    if (!chatObj || !user) {
-        return (
-          <ScreenWrapper bg="black">
-            <Text style={{ color: 'white', textAlign: 'center', marginTop: hp(10) }}>טוען...</Text>
-          </ScreenWrapper>
-        );
-      }
+    
       useEffect(() => {
         if (!chatObj?.id) return;
       
@@ -410,30 +404,48 @@ import {
   <FlatList
   ref={flatListRef}
   data={messages}
-  keyExtractor={(item, index) => `${item.id || item.created_at}-${index}`}  renderItem={({ item }) => {
+  keyExtractor={(item, index) => `${item.id || item.created_at}-${index}`} 
+  renderItem={({ item }) => {
     const isMine = item.sender_id === user.id;
-
+  
+    const bubbleStyle =
+      item.message_type === 'image'
+        ? isMine
+          ? styles.imageBubbleMine
+          : styles.imageBubbleOther
+        : isMine
+          ? styles.messageBubbleMine
+          : styles.messageBubbleOther;
+  
+    const renderMessageContent = () => {
+      if (item.message_type === 'image') {
+        return (
+          <Image
+            source={{ uri: item.content }}
+            style={{
+              width: 250,
+              height: 370,
+              borderRadius: 20,
+            }}
+            resizeMode="cover"
+          />
+        );
+      }
+  
+      // הגנה: רק טקסט תקין יוצג, אחרת שגיאה תימנע
+      if (typeof item.content === 'string' || typeof item.content === 'number') {
+        return <Text style={styles.messageText}>{item.content}</Text>;
+      }
+  
+      // במקרה של תוכן לא חוקי
+      return <Text style={styles.messageText}>[תוכן לא זמין]</Text>;
+    };
+  
     return (
-          <View style={
-            item.message_type === 'image'
-              ? (isMine ? styles.imageBubbleMine : styles.imageBubbleOther)
-              : (isMine ? styles.messageBubbleMine : styles.messageBubbleOther)
-          }>        {item.message_type === 'image' ? (
-              <Image
-                source={{ uri: item.content }}
-                style={{
-                  width: 250,
-                  height: 370,
-                  borderRadius: 20,
-                }}
-                resizeMode="cover"
-              />
-            ) : (
-      <Text Text style={styles.messageText}>{String(item.content)}</Text>      
-      )}
+      <View style={bubbleStyle}>
+        {renderMessageContent()}
       </View>
     );
-    
   }}
   contentContainerStyle={{
     flexGrow: 1,
@@ -456,11 +468,7 @@ import {
     placeholder="כתוב הודעה..."
     style={[styles.input, { color: theme.colors.textSecondary }]}
     />
-  <TouchableOpacity onPress={sendMessage} disabled={!messageText.trim()}>
-    <Animated.Text style={[styles.sendButtonText, { color: animatedSendColor }]}>
-      שלח
-    </Animated.Text>
-  </TouchableOpacity>
+  
 
   {/* כפתור השליחה - בצד ימין */}
   <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>

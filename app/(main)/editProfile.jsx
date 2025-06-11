@@ -914,13 +914,13 @@ const onCancel = () => {
             </ScrollView>
 
             <Pressable
-              style={styles.saveButton}
+              style={styles.fancyButton}
               onPress={() => {
                 setForm(f => ({ ...f, traits: selectedTraits }));
                 setTraitsModalVisible(false);
               }}
             >
-              <Text style={styles.saveText}>שמור</Text>
+              <Text style={styles.fancyText}>שמור</Text>
             </Pressable>
           </View>
         </Modal>
@@ -1009,13 +1009,13 @@ const onCancel = () => {
         ))}
       </ScrollView>
       <Pressable
-        style={styles.saveButton}
+        style={styles.fancyButton}
         onPress={() => {
           setForm(f => ({ ...f, hobbies: selectedHobbies }));
           setHobbiesModalVisible(false);
         }}
       >
-        <Text style={styles.saveText}>שמור</Text>
+        <Text style={styles.fancyText}>שמור</Text>
       </Pressable>
       </View>
     </Modal>
@@ -1100,13 +1100,13 @@ const onCancel = () => {
               </ScrollView>
 
               <Pressable
-                style={styles.saveButton}
+                style={styles.fancyButton}
                 onPress={() => {
                   setForm(f => ({ ...f, identities: selectedIdentities }));
                   setIdentitiesModalVisible(false);
                 }}
               >
-                <Text style={styles.saveText}>שמור</Text>
+                <Text style={styles.fancyText}>שמור</Text>
               </Pressable>
             </View>
             </Modal>
@@ -1139,61 +1139,63 @@ const onCancel = () => {
                   )}
                 </>
                  )}
-                 <Modal
-                visible={isSupportNeedsModalVisible}
-                animationType="slide"
-                transparent={false}
-                onRequestClose={() => setSupportNeedsModalVisible(false)}
-              >
-                <Pressable onPress={() => setSupportNeedsModalVisible(false)} style={styles.backButton}>
-                  <Text style={styles.backText}>חזור</Text>
-                </Pressable>
-                
-                <View style={styles.modalContainer}>
-                  <TextInput
-                    placeholder="חפש צורך או כתוב בעצמך..."
-                    placeholderTextColor="#aaa"
-                    value={searchSupportNeed}
-                    onChangeText={setSearchSupportNeed}
-                    style={styles.input}
-                    textAlign="right"
-                  />
-
-                  <Text style={styles.counterText}>
-                    {selectedSupportNeeds.length} / 5 צרכים נבחרו
-                  </Text>
-
-                  <ScrollView contentContainerStyle={styles.traitsContainer}>
-                    {filteredSupportNeeds.map(need => (
-                      <Animated.View
-                        key={need}
-                        style={[
-                          styles.trait,
-                          selectedSupportNeeds.includes(need) && styles.traitSelected,
-                          { transform: [{ scale: animationRefs.current[need] }] },
-                        ]}
-                      >
-                        <Pressable
-                          onPress={() => {
-                            animatePress2(need); // השתמש בפונקציה שאתה כבר משתמש ב־identities/hobbies
-                            toggleSupportNeed(need);
-                          }}
-                        >
-                          <Text style={styles.traitText}>{need}</Text>
-                        </Pressable>
-                      </Animated.View>
-                    ))}
-                  </ScrollView>
-
-                  <Pressable
-                    style={styles.saveButton}
-                    onPress={() => {
-                      setForm(f => ({ ...f, supportNeeds: selectedSupportNeeds }));
-                      setSupportNeedsModalVisible(false);
-                    }}
-                  >
-                    <Text style={styles.saveText}>שמור</Text>
+               <Modal
+                  visible={isSupportNeedsModalVisible}
+                  animationType="slide"
+                  transparent={false}
+                  onRequestClose={() => setSupportNeedsModalVisible(false)}
+                >
+                <View style={{ flex: 1, backgroundColor: 'black' }}>
+                  <Pressable onPress={() => setSupportNeedsModalVisible(false)} style={styles.backButton}>
+                    <Text style={styles.backText}>חזור</Text>
                   </Pressable>
+
+                  <View style={styles.modalContainer}>
+                    <TextInput
+                      placeholder="חפש צורך או כתוב בעצמך..."
+                      placeholderTextColor="#aaa"
+                      value={searchSupportNeed}
+                      onChangeText={setSearchSupportNeed}
+                      style={styles.input}
+                      textAlign="right"
+                    />
+
+                    <Text style={styles.counterText}>
+                      {selectedSupportNeeds.length} / 5 צרכים נבחרו
+                    </Text>
+
+                    <ScrollView contentContainerStyle={styles.traitsContainer}>
+                      {filteredSupportNeeds.map(need => (
+                        <Animated.View
+                          key={need}
+                          style={[
+                            styles.trait,
+                            selectedSupportNeeds.includes(need) && styles.traitSelected,
+                            { transform: [{ scale: animationRefs.current[need] }] },
+                          ]}
+                        >
+                          <Pressable
+                            onPress={() => {
+                              animatePress2(need);
+                              toggleSupportNeed(need);
+                            }}
+                          >
+                            <Text style={styles.traitText}>{need}</Text>
+                          </Pressable>
+                        </Animated.View>
+                      ))}
+                    </ScrollView>
+
+                    <Pressable
+                      style={styles.fancyButton}
+                      onPress={() => {
+                        setForm(f => ({ ...f, supportNeeds: selectedSupportNeeds }));
+                        setSupportNeedsModalVisible(false);
+                      }}
+                    >
+                      <Text style={styles.fancyText}>שמור</Text>
+                    </Pressable>
+                  </View>
                 </View>
               </Modal>
       
@@ -1266,15 +1268,15 @@ const onCancel = () => {
                   </View>
 
                   <View style={styles.actionButtons}>
-                    <Pressable style={styles.cancelButton} onPress={onCancel}>
-                      <Text style={styles.cancelText}>ביטול</Text>
+                    <Pressable style={styles.cancelButton2} onPress={onCancel}>
+                      <Text style={styles.cancelText2}>ביטול</Text>
                     </Pressable>
                     <Pressable
-                      style={[styles.saveButton, !selectedStatus && styles.disabledButton]}
+                      style={[styles.fancyButton, !selectedStatus && styles.disabledButton]}
                       onPress={onSave}
                       disabled={!selectedStatus}
                     >
-                      <Text style={styles.saveText}>שמור</Text>
+                      <Text style={styles.fancyText}>שמור</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -1283,12 +1285,12 @@ const onCancel = () => {
             
               {/* prompt */}
               <View style={styles.promptRow}>
-              <View style={styles.promptRow}>
-                <Text style={styles.promptText}>הקליטו משהו על עצמכם...</Text>
-                <TouchableOpacity style={styles.micButton} onPress={() => setPromptModalVisible(true)}>
-                  <Ionicons name="mic" size={20} color="white" />
-                </TouchableOpacity>
-              </View>
+                <View style={styles.promptRow}>
+                  <Text style={styles.promptText}>הקליטו משהו על עצמכם...</Text>
+                  <TouchableOpacity style={styles.micButton} onPress={() => setPromptModalVisible(true)}>
+                    <Ionicons name="mic" size={20} color="white" />
+                  </TouchableOpacity>
+                </View>
                 <View style={styles.promptInputContainer}>
                   <Input
                     placeholder="הוסיפו טקסט חופשי..."
@@ -1387,7 +1389,7 @@ const onCancel = () => {
           fontSize: 18,
           fontWeight: 'bold',
           marginBottom: 8,
-          color:theme.colors.textLight,
+          color:theme.colors.primaryDark,
           textAlign: 'right', // כי עברית
         },
         avatarContainer: {
@@ -1415,11 +1417,13 @@ const onCancel = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           marginVertical: 10, // או hp(1) אם אתה משתמש בזה
+          
         },
         switchLabel: {
           fontSize: 16,
           color: 'white', // או theme.colors.textPrimary אם יש לך theme
           textAlign: 'right',
+          
         },
         dateInput: {
           borderWidth: 1,
@@ -1645,6 +1649,7 @@ const onCancel = () => {
           shadowOpacity: 0.15,
           shadowRadius: 6,
           elevation: 4,
+          marginTop: -30,
         },
         backText: {
           color: theme.colors.primary,
@@ -1669,13 +1674,15 @@ const onCancel = () => {
           backgroundColor: 'rgba(0, 0, 0, 0.8)', // רקע שחור עם שקיפות 80%
           justifyContent: 'center',
           paddingHorizontal: 30,
+          
         },
         modalContainer: {
           backgroundColor: 'rgba(84, 81, 85, 0.7)', // רקע שחור עם שקיפות 80%
           borderRadius: 12,
           padding: 20,
-          elevation: 10,
-          
+          elevation: 10,    
+          marginBottom: 230,
+          marginTop: 100,      
         },
         buttonsContainer: {
           flexDirection: 'row',
@@ -1710,6 +1717,20 @@ const onCancel = () => {
           justifyContent: 'space-between',
           marginTop: 10,
         },
+        cancelButton2: {
+          backgroundColor: '#2C2C2E',
+          paddingVertical: hp(1.6),         // גובה אלגנטי ועדין
+          paddingHorizontal: hp(3.5),       // רוחב דומה ל־fancyButton
+          borderRadius: 12,                 // פינות מעוגלות כמו fancyButton
+          alignItems: 'center',
+          justifyContent: 'center',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.2,
+          shadowRadius: 4,
+          elevation: 4,                     // עומק נחמד באנדרואיד
+          marginTop: hp(2),
+        },
         cancelButton: {
           flex: 1,                   // כפתור ריבוע קטן פרופורציונלי
           marginRight: 10,
@@ -1729,6 +1750,13 @@ const onCancel = () => {
         },
         disabledButton: {
           backgroundColor: '#aaa',
+        },
+        cancelText2: {
+          color: '#fff',
+          fontSize: hp(2.2),
+          fontWeight: '600',
+          fontFamily: 'Poppins_600SemiBold',
+          letterSpacing: 0.5,
         },
         cancelText: {
           color: '#ff5555',
@@ -1837,5 +1865,28 @@ const onCancel = () => {
         saveButtonText: {
           color: 'white',
           fontSize: 16,
+        },
+        fancyButton: {
+          backgroundColor: theme.colors.primaryDark,
+          paddingVertical: hp(2),
+          paddingHorizontal: hp(4),
+          borderRadius: 12,
+          alignItems: 'center',
+          justifyContent: 'center',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.2,
+          shadowRadius: 4,
+          elevation: 5, // עבור אנדרואיד
+          marginTop: hp(2),
+          marginTop: 30,
+        },
+        
+        fancyText: {
+          color: '#fff',
+          fontSize: hp(2.4),
+          fontWeight: '600',
+          fontFamily: 'Poppins_600SemiBold',
+          letterSpacing: 0.5,
         },
       });
