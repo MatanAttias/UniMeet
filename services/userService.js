@@ -7,11 +7,19 @@ export const getUserData = async (userId) => {
   try {
     const { data, error } = await supabase
       .from('users')
-      .select('id, name, role')
+      .select('id, name, role, image, birth_date, gender, identities, supportNeeds') // 🔧 הוסף image ושדות נוספים
       .eq('id', userId)
       .single();
 
     if (error) return { success: false, msg: error.message };
+    
+    // 🔧 הוסף debug לראות מה חזר
+    console.log('📦 getUserData result:', {
+      hasImage: !!data.image,
+      imageValue: data.image,
+      allFields: Object.keys(data)
+    });
+    
     return { success: true, data };
   } catch (err) {
     console.error('getUserData error:', err);

@@ -28,7 +28,7 @@ const HomeHeader = ({ activeTab, onTabChange }) => {
   <Pressable onPress={() => router.push('search')} style={styles.iconButton}>
     <Ionicons name="search-outline" size={24} color={theme.colors.pink} />
   </Pressable>
-  <Pressable onPress={() => rrouter.push('/bookMark')} style={styles.iconButton}>
+  <Pressable onPress={() => router.push('/bookMark')} style={styles.iconButton}>
     <Ionicons name="bookmark-outline" size={24} color={theme.colors.pink} />
   </Pressable>
   <Pressable onPress={() => router.push('/notifications')} style={styles.iconButton}>

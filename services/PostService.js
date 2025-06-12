@@ -191,34 +191,207 @@ export const removePost = async (postId) => {
   }
 };
 
-
 // שליפת פוסטים שמורים
 export const fetchSavedPosts = async (userId) => {
+  if (!userId) return { success: false, msg: 'Missing user ID' };
+
   try {
     const { data, error } = await supabase
       .from('saved_posts')
       .select(`
-        post: posts (
-          *,
-          user: users (id, name, image),
-          postLikes (*),
-          comments (count)
+        id,
+        created_at,
+        posts (
+          id,
+          body,
+          file,
+          userId,
+          created_at,
+          users (
+            id,
+            name,
+            image
+          ),
+          postLikes:postLikes(count),
+          comments:comments(count)
         )
       `)
-      .eq('userId', userId)
+      .eq('userid', userId)
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('fetchSavedPosts error:', error);
-      return { success: false, msg: 'שליפת פוסטים שמורים נכשלה' };
+      console.error('Fetch saved posts error:', error);
+      return { success: false, msg: error.message };
     }
 
-    // החזרת רק הפוסטים מתוך המערך
-    const posts = data.map((entry) => entry.post);
+    // פרמט את הנתונים
+    const formattedPosts = data.map(savedPost => ({
+      ...savedPost.posts,
+      user: savedPost.posts.users,
+      savedAt: savedPost.created_at,
+      isSaved: true
+    }));
 
-    return { success: true, data: posts };
+    return { success: true, data: formattedPosts };
   } catch (error) {
-    console.error('fetchSavedPosts error:', error);
-    return { success: false, msg: 'שגיאה בשליפת פוסטים שמורים' };
+    console.error('Fetch saved posts error:', error);
+    return { success: false, msg: error.message };
+  }
+};
+
+// שמירת פוסט
+export const savePost = async (userId, postId) => {
+  try {
+    const { data, error } = await supabase
+      .from('saved_posts')
+      .insert([{
+        userid: userId,
+        postid: postId
+      }]);
+
+    if (error) {
+      return { success: false, msg: error.message };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Save post error:', error);
+    return { success: false, msg: error.message };
+  }
+};
+
+// בדיקה אם פוסט שמור
+export const isPostSaved = async (userId, postId) => {
+  try {
+    const { data, error } = await supabase
+      .from('saved_posts')
+      .select('id')
+      .eq('userid', userId)
+      .eq('postid', postId)
+      .single();
+
+    return { success: true, isSaved: !!data };
+  } catch (error) {
+    return { success: true, isSaved: false };
+  }
+};
+
+// הסרת פוסט מהשמורים
+export const unsavePost = async (userId, postId) => {
+  try {
+    const { data, error } = await supabase
+      .from('saved_posts')
+      .delete()
+      .eq('userid', userId)
+      .eq('postid', postId)
+      .select();
+
+    if (error) {
+      console.error('Unsave post error:', error);
+      return { success: false, msg: error.message };
+    }
+
+    console.log('✅ Post unsaved successfully:', data);
+    return { success: true, data };
+  } catch (error) {
+    console.error('Unsave post error:', error);
+    return { success: false, msg: error.message };
+  }
+};
+
+// בדיקה אם טיפ שמור
+export const isParentTipSaved = async (userId, tipId) => {
+  try {
+    const { data, error } = await supabase
+      .from('saved_tips')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('tip_id', tipId)
+      .single();
+
+    return { success: true, isSaved: !!data };
+  } catch (error) {
+    return { success: true, isSaved: false };
+  }
+};
+
+// שמירת טיפ להורים
+export const saveParentTip = async (userId, tipData) => {
+  try {
+    console.log('🔄 Attempting to save tip:', { userId, tipData });
+    
+    const { data, error } = await supabase
+      .from('saved_tips')
+      .insert([{
+        user_id: userId,
+        tip_id: tipData.id,
+        tip_title: tipData.title,
+        tip_content: tipData.content || tipData.summary,
+        tip_category: tipData.category,
+        saved_at: new Date().toISOString()
+      }])
+      .select();
+
+    if (error) {
+      console.error('Save tip error:', error);
+      
+      // טיפול בשגיאת duplicate
+      if (error.code === '23505') {
+        return { success: false, msg: 'הטיפ כבר שמור ברשימה שלך' };
+      }
+      
+      return { success: false, msg: error.message };
+    }
+
+    console.log('✅ Tip saved successfully:', data);
+    return { success: true, data };
+  } catch (error) {
+    console.error('Save tip error:', error);
+    return { success: false, msg: error.message };
+  }
+};
+
+// הסרת טיפ מהשמורים
+export const unsaveParentTip = async (userId, tipId) => {
+  try {
+    console.log('🗑️ Attempting to unsave tip:', { userId, tipId });
+    
+    const { data, error } = await supabase
+      .from('saved_tips')
+      .delete()
+      .eq('user_id', userId)
+      .eq('tip_id', tipId)
+      .select();
+
+    if (error) {
+      console.error('Unsave tip error:', error);
+      return { success: false, msg: error.message };
+    }
+
+    console.log('✅ Tip unsaved successfully:', data);
+    return { success: true, data };
+  } catch (error) {
+    console.error('Unsave tip error:', error);
+    return { success: false, msg: error.message };
+  }
+};
+
+// שליפת טיפים שמורים
+export const fetchSavedTips = async (userId) => {
+  try {
+    const { data, error } = await supabase
+      .from('saved_tips')
+      .select('*')
+      .eq('user_id', userId)
+      .order('saved_at', { ascending: false });
+
+    if (error) {
+      return { success: false, msg: error.message };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Fetch saved tips error:', error);
+    return { success: false, msg: error.message };
   }
 };

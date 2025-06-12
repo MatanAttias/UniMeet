@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
+import { getUserData } from '../services/userService'; // הוסף את זה
 
 const AuthContext = createContext();
 
@@ -16,10 +17,46 @@ export const AuthProvider = ({ children }) => {
 
     const [isTipsCacheLoaded, setIsTipsCacheLoaded] = useState(false);
 
-
     const setAuth = authUser => {
         console.log('Setting auth user:', authUser?.id || 'null');
         setUser(authUser);
+    };
+
+    // 🔧 פונקציה חדשה שטוענת נתונים מלאים
+    const setAuthWithFullData = async (authUser) => {
+        console.log('Setting auth user with full data:', authUser?.id || 'null');
+        
+        if (authUser) {
+            try {
+                // שמור נתונים בסיסיים מיד
+                setUser(authUser);
+                
+                // טען נתונים מלאים
+                console.log('🔄 Loading complete user data...');
+                const res = await getUserData(authUser.id);
+                
+                if (res.success) {
+                    console.log('✅ Complete user data loaded:', {
+                        hasImage: !!res.data.image,
+                        hasName: !!res.data.name,
+                        hasRole: !!res.data.role,
+                        imageUrl: res.data.image
+                    });
+                    
+                    setUser({
+                        ...authUser,
+                        ...res.data,
+                        email: authUser.email
+                    });
+                } else {
+                    console.warn('⚠️ Using basic user data only:', res.msg);
+                }
+            } catch (error) {
+                console.error('❌ Error loading user data:', error);
+            }
+        } else {
+            setUser(null);
+        }
     };
 
     const setUserData = userData => {
@@ -30,6 +67,26 @@ export const AuthProvider = ({ children }) => {
         }));
     };
 
+    // 🔧 פונקציה לרענון נתוני משתמש
+    const refreshUserData = async () => {
+        if (!user?.id) return false;
+        
+        console.log('🔄 Refreshing user data...');
+        try {
+            const res = await getUserData(user.id);
+            if (res.success) {
+                console.log('✅ User data refreshed');
+                setUser(prev => ({ 
+                    ...prev, 
+                    ...res.data 
+                }));
+                return true;
+            }
+        } catch (error) {
+            console.error('❌ Error refreshing user data:', error);
+        }
+        return false;
+    };
 
     // טעינת קאש הטיפים מ-AsyncStorage
     useEffect(() => {
@@ -72,7 +129,6 @@ export const AuthProvider = ({ children }) => {
         loadTipsCache();
     }, []);
 
-
     // עדכון קאש הטיפים ב-state וב-AsyncStorage
     const updateParentTipsCache = async ({ tips, lastFetchTime, profileHash }) => {
         console.log('💾 Saving tips cache:', {
@@ -101,7 +157,6 @@ export const AuthProvider = ({ children }) => {
             console.error('❌ Failed saving tips cache to AsyncStorage:', e);
         }
     };
-
 
     // פונקציה לניקוי מלא של Auth storage
     const clearAuthStorage = async () => {
@@ -137,7 +192,6 @@ export const AuthProvider = ({ children }) => {
             return false;
         }
     };
-    
 
     // פונקציה לבדיקת תקינות session
     const validateSession = async () => {
@@ -286,7 +340,9 @@ export const AuthProvider = ({ children }) => {
             isLoading,
             isInitialized,
             setAuth, 
+            setAuthWithFullData, // 🔧 הוסף את זה
             setUserData, 
+            refreshUserData, // 🔧 הוסף את זה
             clearAuthStorage,
             validateSession,
             refreshSession,

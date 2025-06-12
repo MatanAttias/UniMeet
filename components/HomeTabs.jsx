@@ -3,9 +3,10 @@ import { View, Pressable, Text, StyleSheet } from 'react-native';
 import { theme } from '../constants/theme';
 import { hp, wp } from '../constants/helpers/common';
 
-const HomeTabs = ({ selectedTab, onSelectTab }) => {
+const HomeTabs = ({ selectedTab, onSelectTab, isParent = false }) => {
   return (
     <View style={styles.tabContainer}>
+      {/* דף הבית */}
       <Pressable
         style={[styles.tab, selectedTab === 'home' && styles.activeTab]}
         onPress={() => onSelectTab('home')}
@@ -14,14 +15,28 @@ const HomeTabs = ({ selectedTab, onSelectTab }) => {
           דף הבית
         </Text>
       </Pressable>
+
+      {/* שמורים - זמין לכולם */}
       <Pressable
-        style={[styles.tab, selectedTab === 'matches' && styles.activeTab]}
-        onPress={() => onSelectTab('matches')}
+        style={[styles.tab, selectedTab === 'saved' && styles.activeTab]}
+        onPress={() => onSelectTab('saved')}
       >
-        <Text style={[styles.tabText, selectedTab === 'matches' && styles.activeTabText]}>
-          התאמות
+        <Text style={[styles.tabText, selectedTab === 'saved' && styles.activeTabText]}>
+          שמורים
         </Text>
       </Pressable>
+
+      {/* טיפים להורים - רק להורים */}
+      {isParent && (
+        <Pressable
+          style={[styles.tab, selectedTab === 'parentTips' && styles.activeTab]}
+          onPress={() => onSelectTab('parentTips')}
+        >
+          <Text style={[styles.tabText, selectedTab === 'parentTips' && styles.activeTabText]}>
+            טיפים להורים
+          </Text>
+        </Pressable>
+      )}
     </View>
   );
 };
@@ -31,25 +46,27 @@ export default HomeTabs;
 const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row-reverse',
+    justifyContent: 'center',  // מרכז את הtabs
     paddingHorizontal: wp(4),
     paddingBottom: hp(1),
     borderBottomWidth: 1,
-    borderColor: theme.colors.gray,
+    borderColor: theme.colors.surface,
     marginBottom: hp(1),
   },
   tab: {
-    marginLeft: wp(4),
-    paddingVertical: hp(0.8),
-    borderBottomWidth: 3,
+    marginHorizontal: wp(2),  // שינוי מmarginLeft לmarginHorizontal לחלוקה שווה
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(4),  // הגדלת padding לכפתורים יותר גדולים
+    borderBottomWidth: 2,
     borderColor: 'transparent',
   },
   activeTab: {
     borderColor: theme.colors.primary,
   },
   tabText: {
-    fontSize: hp(2),
-    color: theme.colors.textLight,
-    fontWeight: theme.fonts.medium,
+    fontSize: hp(1.8),
+    color: theme.colors.textSecondary,
+    fontWeight: theme.fonts.semibold,
   },
   activeTabText: {
     color: theme.colors.primary,
