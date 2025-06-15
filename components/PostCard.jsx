@@ -10,11 +10,51 @@ import RenderHtml from 'react-native-render-html';
 import { Image } from 'expo-image';
 import { getSupabaseFileUrl } from '../services/imageService';
 import { Video } from 'expo-av';
-import { createPostLike, removePostLike, createComment } from '../services/PostService';
+import { createPostLike, removePostLike, createComment, unsavePost } from '../services/PostService';
 import { stripHtmlTags } from '../constants/helpers/common';
 import PostOptions from './PostOptions';
 import * as Haptics from 'expo-haptics';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
+import { createNotification } from '../services/notificationService';
+
+// 🔧 פונקציה לזיהוי כיוון טקסט
+const detectTextDirection = (text) => {
+  if (!text) return 'ltr';
+  
+  // הסר HTML tags לפני בדיקה
+  const cleanText = stripHtmlTags(text);
+  
+  // רגקס לזיהוי אותיות עבריות וערביות
+  const rtlRegex = /[\u0590-\u05FF\u0600-\u06FF]/;
+  const ltrRegex = /[a-zA-Z]/;
+  
+  // ספור אותיות RTL ו-LTR
+  const rtlMatches = (cleanText.match(rtlRegex) || []).length;
+  const ltrMatches = (cleanText.match(ltrRegex) || []).length;
+  
+  // אם יש יותר RTL - החזר rtl, אחרת ltr
+  return rtlMatches > ltrMatches ? 'rtl' : 'ltr';
+};
+
+// 🔧 פונקציה משופרת לזמן
+const getTimeAgo = (dateString) => {
+  if (!dateString) return 'לא ידוע';
+  
+  const now = moment();
+  const postTime = moment(dateString);
+  const diffInMinutes = now.diff(postTime, 'minutes');
+  const diffInHours = now.diff(postTime, 'hours');
+  const diffInDays = now.diff(postTime, 'days');
+  
+  if (diffInMinutes < 1) return 'עכשיו';
+  if (diffInMinutes < 60) return `לפני ${diffInMinutes}ד'`;
+  if (diffInHours < 24) return `לפני ${diffInHours}ש'`;
+  if (diffInDays === 1) return 'אתמול';
+  if (diffInDays < 7) return `לפני ${diffInDays} ימים`;
+  
+  return postTime.format('D/M');
+};
 
 const textStyles = {
   color: theme.colors.textSecondary,
@@ -43,8 +83,12 @@ const PostCard = React.memo((props) => {
     showMoreIcon = true, 
     showDelete = false, 
     onDelete = () => {}, 
-    onEdit = () => {} 
+    onEdit = () => {},
+    isInSavedTab = false  // הוסף prop חדש
   } = props;
+
+  // Debug - בדוק אם isInSavedTab מועבר נכון
+  console.log('PostCard props:', { isInSavedTab, postId: item.id });
 
   // Early validation with more descriptive error messages
   if (!item || typeof item !== 'object') {
@@ -83,15 +127,27 @@ const PostCard = React.memo((props) => {
     transform: [{ scale: scale.value }],
   }));
 
-  // Memoized calculations
-  const createdAt = useMemo(() => 
-    item.created_at ? moment(item.created_at).format('D MMM') : 'לא ידוע', 
+  // 🔧 Memoized calculations משופרים
+  const postTimeAgo = useMemo(() => 
+    getTimeAgo(item.created_at), 
     [item.created_at]
   );
   
   const liked = useMemo(() => 
     likes.some(l => l.userId === currentUser.id), 
     [likes, currentUser.id]
+  );
+
+  // 🔧 זיהוי כיוון טקסט
+  const textDirection = useMemo(() => 
+    detectTextDirection(item.body), 
+    [item.body]
+  );
+
+  // 🔧 זיהוי כיוון טקסט לתגובה
+  const commentDirection = useMemo(() => 
+    detectTextDirection(commentText), 
+    [commentText]
   );
 
   // Real-time subscriptions with cleanup
@@ -146,17 +202,45 @@ const PostCard = React.memo((props) => {
       }, 50);
 
       if (liked) {
+        // הסרת לייק
         setLikes(ls => ls.filter(l => l.userId !== currentUser.id));
         await removePostLike(item.id, currentUser.id);
       } else {
+        // הוספת לייק
         setLikes(ls => [...ls, { userId: currentUser.id }]);
         await createPostLike({ userId: currentUser.id, postId: item.id });
+        
+        // 🆕 יצירת התראה אם זה לא הפוסט של המשתמש עצמו
+        if (item.userId !== currentUser.id) {
+          const notificationData = {
+            "senderId": currentUser.id,
+            "receiverId": item.userId,
+            title: 'לייק חדש!',
+            data: JSON.stringify({
+              postId: item.id,
+              type: 'like',
+              senderName: currentUser.name || 'משתמש',
+              postPreview: stripHtmlTags(item.body)?.substring(0, 50) + '...' || 'פוסט',
+              postImage: item.file?.includes('postImages') ? item.file : null,
+              postHasImage: !!item.file?.includes('postImages')
+            })
+          };
+          
+          console.log('🔔 Creating like notification:', notificationData);
+          const notificationResult = await createNotification(notificationData);
+          
+          if (notificationResult.success) {
+            console.log('✅ Like notification created successfully');
+          } else {
+            console.log('❌ Failed to create like notification:', notificationResult.msg);
+          }
+        }
       }
     } catch (error) {
       console.error('Error toggling like:', error);
       Alert.alert('שגיאה', 'לא ניתן לעדכן לייק כרגע');
     }
-  }, [liked, currentUser.id, item.id, scale]);
+  }, [liked, currentUser.id, currentUser.name, item.id, item.userId, item.body, scale]);
 
   const handleSendComment = useCallback(async () => {
     if (!commentText.trim()) return;
@@ -172,6 +256,34 @@ const PostCard = React.memo((props) => {
       if (res.success) {
         setCommentText('');
         setCommentCount(c => c + 1);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        
+        // 🆕 יצירת התראה אם זה לא הפוסט של המשתמש עצמו
+        if (item.userId !== currentUser.id) {
+          const notificationData = {
+            "senderId": currentUser.id,
+            "receiverId": item.userId,
+            title: 'תגובה חדשה!',
+            data: JSON.stringify({
+              postId: item.id,
+              type: 'comment',
+              senderName: currentUser.name || 'משתמש',
+              commentText: commentText.trim().substring(0, 50) + '...',
+              postPreview: stripHtmlTags(item.body)?.substring(0, 50) + '...' || 'פוסט',
+              postImage: item.file?.includes('postImages') ? item.file : null,
+              postHasImage: !!item.file?.includes('postImages')
+            })
+          };
+          
+          console.log('🔔 Creating comment notification:', notificationData);
+          const notificationResult = await createNotification(notificationData);
+          
+          if (notificationResult.success) {
+            console.log('✅ Comment notification created successfully');
+          } else {
+            console.log('❌ Failed to create comment notification:', notificationResult.msg);
+          }
+        }
       } else {
         Alert.alert('תגובה', 'משהו השתבש בשליחה');
       }
@@ -181,7 +293,7 @@ const PostCard = React.memo((props) => {
     } finally {
       setSending(false);
     }
-  }, [commentText, currentUser.id, item.id]);
+  }, [commentText, currentUser.id, currentUser.name, item.id, item.userId, item.body]);
 
   const onShare = useCallback(() => {
     if (item.body) {
@@ -199,6 +311,24 @@ const PostCard = React.memo((props) => {
       ]
     );
   }, [item, onDelete]);
+
+  const handleUnsaveFromSaved = useCallback(async () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      
+      const result = await unsavePost(currentUser.id, item.id);
+      if (result.success) {
+        // הסר מהרשימה מקומית
+        onDelete(item);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        Alert.alert('שגיאה', result.msg || 'לא ניתן להסיר פוסט מהשמורים');
+      }
+    } catch (error) {
+      console.error('Error unsaving post:', error);
+      Alert.alert('שגיאה', 'לא ניתן להסיר פוסט מהשמורים כרגע');
+    }
+  }, [currentUser.id, item.id, onDelete]);
 
   const navigateToPostDetails = useCallback(() => {
     router.push({ pathname: 'postDetails', params: { postId: item.id } });
@@ -220,36 +350,45 @@ const PostCard = React.memo((props) => {
             <Text style={styles.username}>
               {item.user?.name || 'משתמש'}
             </Text>
-            <Text style={styles.postTime}>{createdAt}</Text>
+            <Text style={styles.postTime}>{postTimeAgo}</Text>
           </View>
         </View>
         </TouchableOpacity>
         
         <View style={styles.actionsRight}>
           {showMoreIcon && (
-            <TouchableOpacity onPress={() => setShowOptions(true)}>
+            <TouchableOpacity 
+              onPress={() => setShowOptions(true)}
+              style={styles.actionButton}
+            >
               <Icon 
                 name="threeDotsHorizontal" 
-                size={hp(3.4)} 
+                size={hp(3)} 
                 strokeWidth={3} 
                 color={theme.colors.textSecondary} 
               />
             </TouchableOpacity>
           )}
-          
+
           {showDelete && currentUser.id === item.userId && (
             <>
-              <TouchableOpacity onPress={() => onEdit(item)}>
+              <TouchableOpacity 
+                onPress={() => onEdit(item)}
+                style={styles.actionButton}
+              >
                 <Icon 
                   name="edit" 
-                  size={hp(2.5)} 
+                  size={hp(2.2)} 
                   color={theme.colors.textSecondary} 
                 />
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleDeleteConfirm}>
+              <TouchableOpacity 
+                onPress={handleDeleteConfirm}
+                style={styles.actionButton}
+              >
                 <Icon 
                   name="delete" 
-                  size={hp(2.5)} 
+                  size={hp(2.2)} 
                   color={theme.colors.rose} 
                 />
               </TouchableOpacity>
@@ -258,16 +397,49 @@ const PostCard = React.memo((props) => {
         </View>
       </View>
 
-      {/* Content */}
-      <View style={styles.content}>
+      {/* Content with dynamic text direction */}
+      <View style={[
+        styles.content,
+        { alignItems: textDirection === 'rtl' ? 'flex-end' : 'flex-start' }
+      ]}>
         {item.body && (
-          <RenderHtml
-            contentWidth={wp(100)}
-            source={{ html: item.body }}
-            tagsStyles={tagsStyles}
-            baseStyle={textStyles}
-            defaultTextProps={{ selectable: true }}
-          />
+          <View style={[
+            styles.textContainer,
+            { 
+              alignSelf: textDirection === 'rtl' ? 'stretch' : 'stretch',
+              textAlign: textDirection === 'rtl' ? 'right' : 'left'
+            }
+          ]}>
+            <RenderHtml
+              contentWidth={wp(85)}
+              source={{ html: item.body }}
+              tagsStyles={{
+                ...tagsStyles,
+                div: { 
+                  ...textStyles, 
+                  textAlign: textDirection === 'rtl' ? 'right' : 'left',
+                  writingDirection: textDirection
+                },
+                p: { 
+                  ...textStyles, 
+                  textAlign: textDirection === 'rtl' ? 'right' : 'left',
+                  writingDirection: textDirection
+                }
+              }}
+              baseStyle={{
+                ...textStyles,
+                textAlign: textDirection === 'rtl' ? 'right' : 'left',
+                writingDirection: textDirection
+              }}
+              defaultTextProps={{ 
+                selectable: true,
+                style: {
+                  textAlign: textDirection === 'rtl' ? 'right' : 'left',
+                  writingDirection: textDirection
+                }
+              }}
+            />
+          </View>
         )}
         
         {item.file?.includes('postImages') && (
@@ -289,14 +461,17 @@ const PostCard = React.memo((props) => {
         )}
       </View>
 
-      {/* Footer with actions */}
+      {/* Footer with improved actions */}
       <View style={styles.footer}>
         <View style={styles.footerButton}>
           <Animated.View style={animatedStyle}>
-            <TouchableOpacity onPress={onLike}>
+            <TouchableOpacity 
+              onPress={onLike}
+              style={styles.interactionButton}
+            >
               <Icon 
                 name="heart" 
-                size={24} 
+                size={hp(2.8)} 
                 fill={liked ? theme.colors.rose : 'transparent'} 
                 color={liked ? theme.colors.rose : theme.colors.textSecondary} 
               />
@@ -306,28 +481,63 @@ const PostCard = React.memo((props) => {
         </View>
         
         <View style={styles.footerButton}>
-          <TouchableOpacity onPress={navigateToPostDetails}>
-            <Icon name="comment" size={24} color={theme.colors.textLight} />
+          <TouchableOpacity 
+            onPress={navigateToPostDetails}
+            style={styles.interactionButton}
+          >
+            <Icon 
+              name="comment" 
+              size={hp(2.8)} 
+              color={theme.colors.textLight} 
+            />
           </TouchableOpacity>
           <Text style={styles.count}>{commentCount}</Text>
         </View>
         
+        {/* כפתור הסרה מהשמורים או שיתוף */}
         <View style={styles.footerButton}>
-          <TouchableOpacity onPress={onShare}>
-            <Icon name="share" size={24} color={theme.colors.textLight} />
-          </TouchableOpacity>
+          {isInSavedTab ? (
+            <TouchableOpacity 
+              onPress={handleUnsaveFromSaved}
+              style={styles.interactionButton}
+            >
+              <MaterialCommunityIcons
+                name="bookmark-remove"
+                size={hp(2.8)}
+                color={theme.colors.rose}
+              />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity 
+              onPress={onShare}
+              style={styles.interactionButton}
+            >
+              <Icon 
+                name="share" 
+                size={hp(2.8)} 
+                color={theme.colors.textLight} 
+              />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
-      {/* Quick reply */}
+      {/* Quick reply with dynamic direction */}
       <View style={styles.quickReplyContainer}>
         <TextInput
           placeholder="הגב לפוסט..."
           placeholderTextColor={theme.colors.textLight}
           value={commentText}
           onChangeText={setCommentText}
-          style={styles.quickReplyInput}
+          style={[
+            styles.quickReplyInput,
+            { 
+              textAlign: commentDirection === 'rtl' ? 'right' : 'left',
+              writingDirection: commentDirection
+            }
+          ]}
           multiline
+          maxLength={500}
         />
         <TouchableOpacity 
           disabled={!commentText.trim() || sending} 
@@ -339,7 +549,7 @@ const PostCard = React.memo((props) => {
         >
           <Icon 
             name="send" 
-            size={20} 
+            size={hp(2.2)} 
             color={!commentText.trim() || sending ? theme.colors.textLight : theme.colors.primary} 
           />
         </TouchableOpacity>
@@ -350,6 +560,10 @@ const PostCard = React.memo((props) => {
         visible={showOptions} 
         onClose={() => setShowOptions(false)} 
         postId={item.id} 
+        currentUser={currentUser}
+        postUserId={item.userId}
+        onDelete={onDelete}   
+        item={item}
       />
     </View>
   );
@@ -361,20 +575,20 @@ export default PostCard;
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.radius.xxl,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.radius.xl,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    padding: hp(2),
+    padding: wp(4),
     marginBottom: hp(2),
-    gap: hp(2),
+    gap: hp(1.5),
   },
   shadow: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   errorContainer: {
     padding: hp(2),
@@ -396,77 +610,99 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingBottom: hp(1),
   },
   userInfo: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
-    gap: wp(2),
+    gap: wp(3),
   },
   nameTime: {
-    flexDirection: 'row-reverse',
-    gap: wp(1),
+    alignItems: 'flex-end',
   },
   username: {
-    fontSize: hp(1.7),
+    fontSize: hp(1.8),
     color: theme.colors.textPrimary,
-    fontWeight: theme.fonts.medium,
+    fontWeight: theme.fonts.semibold,
   },
   postTime: {
-    fontSize: hp(1.5),
+    fontSize: hp(1.4),
     color: theme.colors.textLight,
+    marginTop: hp(0.2),
   },
   actionsRight: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
-    gap: wp(3),
+    gap: wp(2),
+  },
+  actionButton: {
+    padding: wp(1.5),
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.background,
   },
   content: {
-    gap: hp(1),
-    marginBottom: hp(1),
+    gap: hp(1.5),
+  },
+  textContainer: {
+    width: '100%',
   },
   postMedia: {
     width: '100%',
-    borderRadius: theme.radius.xxl,
-    height: hp(40),
+    borderRadius: theme.radius.lg,
+    height: hp(35),
+    marginTop: hp(1),
   },
   footer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-around',
     alignItems: 'center',
+    paddingTop: hp(1.5),
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.surface,
   },
   footerButton: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: wp(1.5),
   },
+  interactionButton: {
+    padding: wp(2),
+    borderRadius: theme.radius.md,
+    backgroundColor: theme.colors.background,
+  },
   count: {
-    fontSize: hp(1.8),
+    fontSize: hp(1.7),
     color: theme.colors.textSecondary,
+    fontWeight: theme.fonts.medium,
   },
   quickReplyContainer: {
     flexDirection: 'row-reverse',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     borderTopWidth: 1,
     borderTopColor: theme.colors.surface,
-    paddingVertical: hp(1),
-    paddingHorizontal: wp(3),
+    paddingTop: hp(1.5),
     gap: wp(2),
   },
   quickReplyInput: {
     flex: 1,
     color: theme.colors.textPrimary,
-    fontSize: hp(1.6),
-    paddingVertical: hp(0.8),
-    paddingHorizontal: wp(2),
-    backgroundColor: theme.colors.card, // ✅ רק אחד!
-    borderRadius: theme.radius.md,
+    fontSize: hp(1.7),
+    paddingVertical: hp(1.1),
+    paddingHorizontal: wp(4),
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.radius.xl,
     borderWidth: 1,
     borderColor: theme.colors.surface,
-    maxHeight: hp(8), // מגביל גובה מקסימלי
+    maxHeight: hp(10),
     textAlignVertical: 'top',
+    lineHeight: hp(2.4),
   },
   sendButton: {
-    padding: hp(0.5),
+    padding: wp(2.7),
+    borderRadius: theme.radius.lg,
+    backgroundColor: theme.colors.primary + '20',
+    borderWidth: 1,
+    borderColor: theme.colors.primary + '30',
   },
   sendButtonDisabled: {
     opacity: 0.5,

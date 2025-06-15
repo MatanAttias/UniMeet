@@ -18,9 +18,9 @@ import { theme } from '../constants/theme';
 
 // קומפוננטת שורת מידע (אייקון + טקסט)
 const InfoItem = ({ icon, text }) => (
-  <View style={styles.inlineItem}>
+  <View style={styles.infoItemContainer}>
     <MaterialCommunityIcons name={icon} size={18} color={theme.colors.primary} />
-    <Text style={styles.inlineText}>{text}</Text>
+    <Text style={styles.infoItemText}>{text}</Text>
   </View>
 );
 
@@ -107,6 +107,26 @@ export default function MatchUserProfile({
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
+  // פונקציה להתאמת הסטטוס לפי מין
+  const getStatusText = (status, gender) => {
+    if (!status) return status;
+    
+    if (status.toLowerCase().includes('רווק')) {
+      return gender === 'נקבה' ? 'רווקה' : 'רווק';
+    }
+    if (status.toLowerCase().includes('נשוי')) {
+      return gender === 'נקבה' ? 'נשואה' : 'נשוי';
+    }
+    if (status.toLowerCase().includes('גרוש')) {
+      return gender === 'נקבה' ? 'גרושה' : 'גרוש';
+    }
+    if (status.toLowerCase().includes('אלמן')) {
+      return gender === 'נקבה' ? 'אלמנה' : 'אלמן';
+    }
+    
+    return status; // החזר את הסטטוס המקורי אם לא נמצא התאמה
+  };
+
   const age = calculateAge(user.birth_date);
 
   // תצוגת תמונה בלבד (כמו שהיה קודם)
@@ -191,26 +211,20 @@ export default function MatchUserProfile({
         <View style={styles.row}>
           {user.birth_date && <InfoItem icon="cake-variant" text={age} />}
           {user.gender && <InfoItem icon="gender-male-female" text={user.gender} />}
-          {user.status && <InfoItem icon="heart" text={user.status} />}
+          {user.status && <InfoItem icon="heart" text={getStatusText(user.status, user.gender)} />}
         </View>
 
         {user.connectionTypes && (
-          <View style={[styles.inlineItem, styles.rowReverse]}>
-            <MaterialCommunityIcons
-              name="magnify-plus-outline"
-              size={24}
-              color={theme.colors.primary}
-            />
+          <View style={[styles.inlineItem, { flexDirection: 'row-reverse', marginTop: 8 }]}>
+            <MaterialCommunityIcons name="magnify-plus-outline" size={28} color={theme.colors.primary} />
             <Text style={styles.inlineText}>{user.connectionTypes}</Text>
           </View>
         )}
+      
+        {/* הצגת preferredMatch מתחת ל connectionTypes */}
         {user.preferredMatch && (
-          <View style={[styles.inlineItem, styles.rowReverse]}>
-            <MaterialCommunityIcons
-              name="account-heart"
-              size={24}
-              color={theme.colors.primary}
-            />
+          <View style={[styles.inlineItem, { flexDirection: 'row-reverse', marginTop: 8 }]}>
+            <MaterialCommunityIcons name="account-heart" size={28} color={theme.colors.primary} />
             <Text style={styles.inlineText}>{user.preferredMatch}</Text>
           </View>
         )}
@@ -224,13 +238,13 @@ export default function MatchUserProfile({
           transition={{ type: 'timing', duration: 400 }}
           style={styles.infoBox}
         >
-          <View style={styles.inlineItem}>
+          <View style={styles.introductionContainer}>
             <MaterialCommunityIcons
               name="comment-text-outline"
               size={24}
               color={theme.colors.primary}
             />
-            <Text style={styles.inlineText}>{user.introduction}</Text>
+            <Text style={styles.introductionText}>{user.introduction}</Text>
           </View>
         </MotiView>
       )}
@@ -338,8 +352,10 @@ const styles = StyleSheet.create({
     fontSize: hp(3.1),
     fontWeight: 'bold',
     marginBottom: hp(1),
-    alignSelf: 'flex-start',
+    alignSelf: 'flex-end', // שינוי מ-flex-start ל-flex-end
     paddingHorizontal: wp(2),
+    textAlign: 'right', // הוספה
+    writingDirection: 'rtl', // הוספה
   },
   imageWrapper: {
     width: '99%',
@@ -412,6 +428,7 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontSize: hp(1.8),
     marginRight: wp(1),
+    textAlign: 'right',
   },
   avatarContainer: {
     alignSelf: 'center',
@@ -423,6 +440,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     textAlign: 'center',
     marginBottom: hp(2),
+    writingDirection: 'rtl',
   },
   infoBox: {
     backgroundColor: theme.colors.card,
@@ -441,16 +459,48 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     marginTop: hp(1),
   },
-  inlineItem: {
-    flexDirection: 'row',
+  // סטיילים חדשים ל-InfoItem
+  infoItemContainer: {
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     marginHorizontal: wp(2),
     marginBottom: hp(0.5),
   },
+  infoItemText: {
+    color: theme.colors.textPrimary,
+    fontSize: 20,
+    marginRight: 6,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+    fontWeight: 'bold',
+  },
+  inlineItem: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    marginHorizontal: wp(2),
+    marginBottom: hp(0.5),
+  },
+  
   inlineText: {
     color: theme.colors.textPrimary,
     fontSize: hp(2),
-    marginStart: wp(1),
+    marginRight: wp(1),
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  introductionContainer: {
+    flexDirection: 'row-reverse',
+    alignItems: 'flex-start',
+    width: '100%',
+  },
+  introductionText: {
+    color: theme.colors.textPrimary,
+    fontSize: hp(2),
+    marginRight: wp(2),
+    textAlign: 'right',
+    writingDirection: 'rtl',
+    flex: 1,
+    lineHeight: hp(2.8),
   },
   sectionHeader: {
     flexDirection: 'row-reverse',
@@ -462,6 +512,7 @@ const styles = StyleSheet.create({
     fontSize: hp(2.2),
     fontWeight: '600',
     textAlign: 'right',
+    writingDirection: 'rtl',
   },
   tagSection: {
     marginBottom: hp(1),
@@ -472,6 +523,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     marginBottom: hp(0.5),
     textAlign: 'right',
+    writingDirection: 'rtl',
   },
   tagList: {
     flexDirection: 'row-reverse',
@@ -488,6 +540,7 @@ const styles = StyleSheet.create({
   tagText: {
     color: '#fff',
     fontSize: hp(1.6),
+    textAlign: 'center',
   },
   audioContainer: {
     backgroundColor: theme.colors.card,
@@ -502,6 +555,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: hp(1),
     textAlign: 'center',
+    writingDirection: 'rtl',
   },
   audioPlayBtn: {
     backgroundColor: theme.colors.primary,
@@ -532,6 +586,7 @@ const styles = StyleSheet.create({
     fontSize: hp(1.4),
     color: theme.colors.textLight,
     marginTop: 4,
+    textAlign: 'center',
   },
   fullProfileActions: {
     flexDirection: 'row',
@@ -541,16 +596,17 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     alignItems: 'center',
-    paddingVertical: hp(1.5),
-    paddingHorizontal: wp(4),
+    paddingVertical: hp(1.3),
+    paddingHorizontal: wp(3),
     borderRadius: theme.radius.lg,
-    minWidth: wp(20),
+    minWidth: wp(18),
   },
   actionButtonText: {
     color: 'white',
     fontSize: hp(1.6),
     fontWeight: '600',
     marginTop: 4,
+    textAlign: 'center',
   },
   rejectButton: {
     backgroundColor: '#666',

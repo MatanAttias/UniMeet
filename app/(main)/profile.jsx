@@ -166,64 +166,63 @@ const Profile = () => {
   )}
 </View>
       <View style={styles.tabsContainer}>
-        
-        
-      <TouchableOpacity
-        style={[styles.tab, activeTab === 'profile' && styles.activeTab]}
-        onPress={() => setActiveTab('profile')}
-      >
-        <Text style={[styles.tabText, activeTab === 'profile' && styles.activeTabText]}>פרופיל</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.tab, activeTab === 'posts' && styles.activeTab]}
-        onPress={() => {
-          setActiveTab('posts');
-          if (!showPosts) {
-            setShowPosts(true);
-            getPosts();
-          }
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'profile' && styles.activeTab]}
+          onPress={() => setActiveTab('profile')}
+        >
+          <Text style={[styles.tabText, activeTab === 'profile' && styles.activeTabText]}>פרופיל</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'posts' && styles.activeTab]}
+          onPress={() => {
+            setActiveTab('posts');
+            if (!showPosts) {
+              setShowPosts(true);
+              getPosts();
+            }
+          }}
+        >
+          <Text style={[styles.tabText, activeTab === 'posts' && styles.activeTabText]}>פוסטים</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <FlatList
+        style={{ flex: 1 }}
+        data={activeTab === 'posts' && showPosts ? posts : []}
+        ListHeaderComponent={
+          <>
+            {activeTab === 'profile' && (
+              <UserHeader user={user} router={router} handleLogout={handleLogout} />
+            )}
+          </>
+        }
+        ListHeaderComponentStyle={{ marginBottom: 30 }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listStyle}
+        keyExtractor={(item, index) => item.id ? `post-${item.id}` : `default-${index}`}
+        renderItem={({ item }) =>
+          activeTab === 'posts' ? (
+            <PostCard item={item} currentUser={user} router={router} />
+          ) : null
+        }
+        onEndReached={() => {
+          if (activeTab === 'posts' && showPosts) getPosts();
         }}
-      >
-        <Text style={[styles.tabText, activeTab === 'posts' && styles.activeTabText]}>פוסטים</Text>
-      </TouchableOpacity>
-    </View>
-        <FlatList
-      style={{ flex: 1 }}
-      data={activeTab === 'posts' && showPosts ? posts : []}
-      ListHeaderComponent={
-        <>
-          {activeTab === 'profile' && (
-            <UserHeader user={user} router={router} handleLogout={handleLogout} />
-          )}
-        </>
-      }
-      ListHeaderComponentStyle={{ marginBottom: 30 }}
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.listStyle}
-      keyExtractor={(item, index) => item.id ? `post-${item.id}` : `default-${index}`}
-      renderItem={({ item }) =>
-        activeTab === 'posts' ? (
-          <PostCard item={item} currentUser={user} router={router} />
-        ) : null
-      }
-      onEndReached={() => {
-        if (activeTab === 'posts' && showPosts) getPosts();
-      }}
-      onEndReachedThreshold={0}
-      ListFooterComponent={
-        activeTab === 'posts' && showPosts ? (
-          hasMore ? (
-            <View style={{ marginVertical: posts.length === 0 ? 100 : 30 }}>
-              <Loading />
-            </View>
-          ) : (
-            <View style={{ marginVertical: 30 }}>
-              <Text style={styles.noPosts}>אין עוד פוסטים</Text>
-            </View>
-          )
-        ) : null
-      }
-    />
+        onEndReachedThreshold={0}
+        ListFooterComponent={
+          activeTab === 'posts' && showPosts ? (
+            hasMore ? (
+              <View style={{ marginVertical: posts.length === 0 ? 100 : 30 }}>
+                <Loading />
+              </View>
+            ) : (
+              <View style={{ marginVertical: 30 }}>
+                <Text style={styles.noPosts}>אין עוד פוסטים</Text>
+              </View>
+            )
+          ) : null
+        }
+      />
     </ScreenWrapper>
   );
 };
@@ -250,7 +249,6 @@ const UserHeader = ({ user, router, handleLogout }) => {
       return;
     }
     
-
     const { sound: newSound } = await Audio.Sound.createAsync({ uri: user.audio });
     setSound(newSound);
     await newSound.playAsync();
@@ -272,6 +270,7 @@ const UserHeader = ({ user, router, handleLogout }) => {
       if (sound) sound.unloadAsync();
     };
   }, [sound]);
+  
   const calculateAge = (birthDate) => {
     if (!birthDate) return null;
     const today = new Date();
@@ -305,7 +304,6 @@ const UserHeader = ({ user, router, handleLogout }) => {
     );
   };
   
- 
   const renderTagList = (label, tags) => {
     if (!tags) return null;
   
@@ -344,8 +342,6 @@ const UserHeader = ({ user, router, handleLogout }) => {
     <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingHorizontal: wp(4) }}>
       <View>
         <Header title="פרטי פרופיל" mb={30} />
-       
-       
       </View>
 
       <View style={styles.container}>
@@ -422,23 +418,25 @@ const UserHeader = ({ user, router, handleLogout }) => {
           </MotiView>
           )}
 
-      {user?.introduction && (
-                      <MotiView
-                      from={{ opacity: 0, translateY: 10 }}
-                      animate={{ opacity: 1, translateY: 0 }}
-                      transition={{ type: 'timing', duration: 500 }}
-                      style={styles.infoBox}
-                    >
-                      <View style={styles.inlineItem}>
-                        <MaterialCommunityIcons
-                          name="comment-text-outline" // אייקון מתאים להקדמה
-                          size={24}
-                          color={theme.colors.primary}
-                        />
-                        <Text style={styles.inlineText}>{user.introduction}</Text>
-                      </View>
-                    </MotiView>
-        )}    
+          {/* תיקון הטקסט של ההקדמה להיות RTL */}
+          {user?.introduction && (
+            <MotiView
+              from={{ opacity: 0, translateY: 10 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ type: 'timing', duration: 500 }}
+              style={styles.infoBox}
+            >
+              <View style={styles.introductionContainer}>
+                <MaterialCommunityIcons
+                  name="comment-text-outline"
+                  size={24}
+                  color={theme.colors.primary}
+                />
+                <Text style={styles.introductionText}>{user.introduction}</Text>
+              </View>
+            </MotiView>
+          )}    
+          
           {(user.showTraits || user.showHobbies || user.showIdentities || user.showSupportNeeds) && (
             <MotiView
             from={{ opacity: 0, translateY: 10 }}
@@ -555,6 +553,7 @@ const styles = StyleSheet.create({
     fontSize: hp(3),
     fontWeight: '500',
     color: theme.colors.textPrimary,
+    textAlign: 'center',
   },
   infoBox: {
     backgroundColor: theme.colors.card,
@@ -574,9 +573,37 @@ const styles = StyleSheet.create({
     fontSize: hp(2),
     fontWeight: '600',
     color: theme.colors.textPrimary,
-    textAlign: 'right',
+    textAlign: 'center',
   },
- 
+  
+  // כפתור התנתקות מתוקן
+  logoutButton: {
+    position: 'absolute',
+    top: hp(7),
+    left: wp(4),
+    zIndex: 10,
+    backgroundColor: theme.colors.rose,
+    borderRadius: 25,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  logoutContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutText: {
+    color: '#fff',
+    fontSize: hp(1.5),
+    fontWeight: '600',
+    marginRight: 6, // מרחק בין הטקסט לאייקון
+  },
+  
   listStyle: {
     paddingHorizontal: wp(4),
     paddingBottom: 30,
@@ -666,6 +693,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     marginHorizontal: 6,
     fontWeight: 'bold',
+    textAlign: 'right',
   },
   separator: {
     height: 1,
@@ -675,7 +703,7 @@ const styles = StyleSheet.create({
   },
   connectionText: {
     textAlign: 'center',
-    fontSize: 14,
+    fontSize: 16,
     color: theme.colors.textSecondary,
     marginTop: 4,
   },
@@ -686,7 +714,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: theme.colors.textPrimary,
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '600',
     textAlign: 'right',
   },
@@ -713,11 +741,11 @@ const styles = StyleSheet.create({
   },
   tagText: {
     color: 'white',
-    fontSize: 13,
+    fontSize: 18,
     textAlign: 'right',
   },
   subSectionTitle: {
-    fontSize: 16,
+    fontSize: 21,
     fontWeight: '600',
     color: theme.colors.textPrimary,
     marginBottom: 4,
@@ -766,18 +794,14 @@ const styles = StyleSheet.create({
     fontSize: hp(2),
     fontWeight: theme.fonts.semibold,
   },
-  logoutButton: {
-    position: 'absolute',
-    top: hp(7), // או מספר אחר שמתאים למסך שלך
-    left: wp(4),
-    padding: 8,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 50,
-    zIndex: 10,
-    marginTop: -40,
+  
+  // סטיילים חדשים לתיאור בעברית
+  introductionContainer: {
+    flexDirection: 'row-reverse',
+    alignItems: 'flex-start',
+    width: '100%',
   },
-  logoutText: {
-    color: theme.colors.primary,
+  introductionText: {
     fontSize: hp(2),
     fontWeight: theme.fonts.semibold,
     marginLeft: 8,

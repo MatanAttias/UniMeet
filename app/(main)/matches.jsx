@@ -274,12 +274,14 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     fontSize: hp(1.8),
     marginTop: hp(2),
+    textAlign: 'center',
   },
   noMore: {
     color: theme.colors.textSecondary,
     fontSize: hp(2.5),
     textAlign: 'center',
     marginBottom: hp(3),
+    writingDirection: 'rtl',
   },
   refreshButton: {
     backgroundColor: theme.colors.primary,
@@ -291,6 +293,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: hp(2),
     fontWeight: '600',
+    textAlign: 'center',
   },
   cardContainer: {
     flex: 1,
@@ -307,11 +310,14 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     fontSize: hp(1.6),
     fontWeight: '500',
+    textAlign: 'center',
+    writingDirection: 'rtl',
   },
   tapHint: {
     color: theme.colors.textLight,
     fontSize: hp(1.4),
     marginTop: 4,
     textAlign: 'center',
+    writingDirection: 'rtl',
   },
 });

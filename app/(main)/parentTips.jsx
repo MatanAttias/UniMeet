@@ -10,7 +10,7 @@ import { hp, wp } from '../../constants/helpers/common';
 import { sendToChat } from '../../services/openai';
 import { supabase } from '../../lib/supabase';
 import { PARENT_TIPS_SYSTEM_PROMPT, createAgeAppropriateUserMessage } from '../../constants/prompts';
-
+import { saveParentTip, unsaveParentTip, isParentTipSaved } from '../../services/PostService';
 
 // רשימה מורחבת של מונחי מוגבלות לולידציה
 const disabilityTerms = [
@@ -120,6 +120,8 @@ const ParentTips = () => {
   const [selectedTip, setSelectedTip] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const [isTipSaved, setIsTipSaved] = useState(false);
+  const [checkingTipStatus, setCheckingTipStatus] = useState(false);
 
 
   const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 שעות
@@ -490,6 +492,7 @@ const validateAndReturn = (parsed) => {
 };
 
 
+
   const generateFallbackTips = (identities, supportNeeds) => {
     const hasConditions = identities.length > 0;
     const conditions = identities.join(', ');
@@ -594,6 +597,20 @@ const validateAndReturn = (parsed) => {
     </MotiView>
   );
 
+  const handleSaveTip = async (tip) => {
+    try {
+      const res = await saveParentTip(user.id, tip);
+      if (res.success) {
+        Alert.alert('✅ נשמר!', 'הטיפ נשמר בהצלחה ותוכל למצוא אותו בדף "שמורים"');
+      } else {
+        Alert.alert('שגיאה', 'לא הצלחנו לשמור את הטיפ');
+      }
+    } catch (error) {
+      console.error('Save tip error:', error);
+      Alert.alert('שגיאה', 'אירעה שגיאה בשמירת הטיפ');
+    }
+  };
+
   const TipCard = ({ tip, onSelect }) => {
   if (!tip) return null;
 
@@ -644,7 +661,7 @@ const validateAndReturn = (parsed) => {
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <Pressable style={styles.backButton} onPress={() => router.back()}>
+          <Pressable style={styles.backButton} onPress={() => router.push('/home')}>
             <Text style={styles.backText}>חזור</Text>
           </Pressable>
           <Text style={styles.title}>הטיפים שלנו להיום 💝</Text>
@@ -888,19 +905,16 @@ const validateAndReturn = (parsed) => {
               <Pressable
                 style={[styles.actionButton, styles.bookmarkButton]}
                 onPress={() => {
-                  setTips(prev => prev.map(t => 
-                    t.id === selectedTip?.id ? { ...t, isBookmarked: !t.isBookmarked } : t
-                  ));
+                  handleSaveTip(selectedTip);
+                  setModalVisible(false);
                 }}
               >
                 <MaterialCommunityIcons 
-                  name={selectedTip?.isBookmarked ? 'bookmark' : 'bookmark-outline'} 
+                  name="bookmark-plus" 
                   size={20} 
                   color="white" 
                 />
-                <Text style={styles.actionButtonText}>
-                  {selectedTip?.isBookmarked ? 'שמור' : 'שמור לי'}
-                </Text>
+                <Text style={styles.actionButtonText}>שמור טיפ</Text>
               </Pressable>
               
               <Pressable
