@@ -14,23 +14,14 @@ import { theme } from '../../constants/theme';
 import { useRouter } from 'expo-router';
 import Icon from '../../assets/icons';
 import Avatar from '../../components/Avatar';
-import { 
-  fetchPosts, 
-  fetchSavedPosts, 
-  fetchSavedTips,
-  savePost, 
-  unsavePost,
-  unsaveParentTip 
-} from '../../services/PostService';
+import { fetchPosts } from '../../services/PostService';
 import PostCard from '../../components/PostCard';
 import Loading from '../../components/Loading';
+import { getUserData } from '../../services/userService';
 import BottomBar from '../../components/BottomBar';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
-import HomeTabs from '../../components/HomeTabs';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import * as Haptics from 'expo-haptics';
-
 
 let limit = 0;
 
@@ -39,12 +30,9 @@ export default function Home() {
   const router = useRouter();
   const [selectedTab, setSelectedTab] = useState('home');
   const [posts, setPosts] = useState([]);
-  const [savedPosts, setSavedPosts] = useState([]);
-  const [savedTips, setSavedTips] = useState([]);
   const [hasMore, setHasMore] = useState(true);
   const [notificationCount, setNotificationCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-  const [loadingSaved, setLoadingSaved] = useState(false);
  const subscriptionsRef = useRef({});
  const isParent = user?.role === 'parent';
 
@@ -53,22 +41,6 @@ export default function Home() {
     Poppins_700Bold,
     Poppins_400Regular,
   });
-
-  useEffect(() => {
-    console.log('🔍 User data in HOME debug:', {
-      userId: user?.id,
-      userName: user?.name,
-      userEmail: user?.email,
-      hasImage: !!user?.image,
-      imageUrl: user?.image,
-      fullUserKeys: user ? Object.keys(user) : [],
-      fullUser: user
-    });
-  }, [user]);
-  
-  // בדיקה אם המשתמש הוא הורה
-  const isParent = user?.role === 'parent';
-
 
 
   useFocusEffect(
@@ -104,16 +76,6 @@ export default function Home() {
     }, [user?.id])
   );
   useEffect(() => {
-    console.log('Home component mounted for user:', user?.id);
-    
-    // טען תוכן בהתאם לtab הנבחר - רק אם יש משתמש וtab השתנה
-    if (user?.id) {
-      if (selectedTab === 'home' && posts.length === 0) {
-        getPosts();
-      } else if (selectedTab === 'saved') {
-        loadSavedContent();
-      } else if (selectedTab === 'parentTips') {
-        router.push('/parentTips');
 
     if (!user?.id || subscriptionsRef.current[user.id]) return;
 
@@ -197,10 +159,41 @@ export default function Home() {
         supabase.removeChannel(commentsChannel);
         delete subscriptionsRef.current[user.id];
       }
-    }
-  }, [user?.id, selectedTab]);
+    };
+  }, [user?.id]);
 
-  // פונקציות לטעינת תוכן
+  async function handlePostEvent(payload) {
+    if (payload.eventType === 'INSERT' && payload.new?.id) {
+      let newPost = { ...payload.new, postLikes: [], comments: [{ count: 0 }] };
+      const res = await getUserData(newPost.userId);
+      newPost.user = res.success ? res.data : {};
+      setPosts((prev) => [newPost, ...prev]);
+    }
+    if (payload.eventType === 'DELETE' && payload.old?.id) {
+      setPosts((prev) => prev.filter((p) => p.id !== payload.old.id));
+    }
+    if (payload.eventType === 'UPDATE' && payload.new?.id) {
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === payload.new.id
+            ? { ...p, body: payload.new.body, file: payload.new.file }
+            : p
+        )
+      );
+    }
+  }
+
+  function handleNewNotification(payload) {
+    if (payload.eventType === 'INSERT' && payload.new?.id) {
+      setNotificationCount((n) => n + 1);
+    }
+  }
+
+  function handleCommentEvent(payload) {
+    // שינוי בתגובות – רענון מונה
+    refreshPosts();
+  }
+
   const getPosts = async () => {
     if (!hasMore) return;
     limit += 10;
@@ -215,209 +208,15 @@ export default function Home() {
     }
   };
 
-  const loadSavedContent = async () => {
-    setLoadingSaved(true);
-    
-    // טען פוסטים שמורים
-    const postsRes = await fetchSavedPosts(user.id);
-    if (postsRes.success) {
-      setSavedPosts(postsRes.data);
-    }
-
-    // טען טיפים שמורים (רק אם הורה)
-    if (isParent) {
-      const tipsRes = await fetchSavedTips(user.id);
-      if (tipsRes.success) {
-        setSavedTips(tipsRes.data);
-      }
-    }
-    
-    setLoadingSaved(false);
-  };
-
   const refreshPosts = async () => {
     setRefreshing(true);
-    if (selectedTab === 'home') {
-      const res = await fetchPosts(limit || 10);
-      if (res.success) {
-        limit = res.data.length;
-        setHasMore(true);
-        setPosts(res.data);
-      }
-    } else if (selectedTab === 'saved') {
-      await loadSavedContent();
+    const res = await fetchPosts(limit || 10);
+    if (res.success) {
+      limit = res.data.length;
+      setHasMore(true);
+      setPosts(res.data);
     }
     setRefreshing(false);
-  };
-
-  const handleDeletePost = (deletedPost) => {
-    console.log('🗑️ Deleting post locally:', deletedPost.id);
-    if (selectedTab === 'home') {
-      setPosts(prevPosts => prevPosts.filter(post => post.id !== deletedPost.id));
-    } else if (selectedTab === 'saved') {
-      setSavedPosts(prevPosts => prevPosts.filter(post => post.id !== deletedPost.id));
-    }
-    console.log('✅ Post removed from local state');
-  };
-
-  const handleUnsaveTip = async (tip) => {
-    try {
-      const result = await unsaveParentTip(user.id, tip.tip_id);
-      if (result.success) {
-        setSavedTips(prevTips => prevTips.filter(t => t.id !== tip.id));
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } else {
-        Alert.alert('שגיאה', result.msg || 'לא ניתן להסיר טיפ');
-      }
-    } catch (error) {
-      console.error('Error unsaving tip:', error);
-      Alert.alert('שגיאה', 'לא ניתן להסיר טיפ כרגע');
-    }
-  };
-
-  const handleTabSelect = (tab) => {
-    console.log('🔄 Tab selected:', tab); // Debug
-    setSelectedTab(tab);
-    if (tab === 'parentTips') {
-      router.push('/parentTips');
-    }
-  };
-
-  // רנדר תוכן הסמן "שמורים"
-  const renderSavedContent = () => {
-    console.log('🔍 Rendering saved content. selectedTab:', selectedTab); // Debug
-    
-    if (loadingSaved) {
-      return <Loading style={{ marginTop: hp(4) }} />;
-    }
-
-    const hasContent = savedPosts.length > 0 || (isParent && savedTips.length > 0);
-
-    if (!hasContent) {
-      return (
-        <View style={styles.emptyContainer}>
-          <MaterialCommunityIcons 
-            name="bookmark-outline" 
-            size={64} 
-            color={theme.colors.textLight} 
-          />
-          <Text style={styles.emptyTitle}>אין תוכן שמור</Text>
-          <Text style={styles.emptySubtitle}>
-            שמור פוסטים{isParent ? ' וטיפים' : ''} שאתה רוצה לחזור אליהם
-          </Text>
-        </View>
-      );
-    }
-
-    // מיזוג פוסטים וטיפים עם מזהה ייחודי ומניעת כפולים
-    const uniquePosts = savedPosts.reduce((acc, post) => {
-      const key = `post-${post.id}`;
-      if (!acc[key]) {
-        acc[key] = { ...post, type: 'post', uniqueKey: key };
-      }
-      return acc;
-    }, {});
-
-    const uniqueTips = isParent ? savedTips.reduce((acc, tip) => {
-      const key = `tip-${tip.id}`;
-      if (!acc[key]) {
-        acc[key] = { ...tip, type: 'tip', uniqueKey: key };
-      }
-      return acc;
-    }, {}) : {};
-
-    const allSavedContent = [
-      ...Object.values(uniquePosts),
-      ...Object.values(uniqueTips)
-    ].sort((a, b) => new Date(b.savedAt || b.saved_at) - new Date(a.savedAt || a.saved_at));
-
-    return (
-      <FlatList
-        data={allSavedContent}
-        refreshing={refreshing}
-        onRefresh={refreshPosts}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.list}
-        keyExtractor={(item) => `saved-${item.uniqueKey || `${item.type}-${item.id}`}`}
-        renderItem={({ item }) => {
-          if (item.type === 'post') {
-            return (
-              <PostCard 
-                item={item} 
-                currentUser={user} 
-                router={router} 
-                onDelete={handleDeletePost}
-                showDelete={true}
-                isInSavedTab={true}  // ודא שזה מועבר נכון
-              />
-            );
-          } else {
-            // רנדר כרטיס טיפ
-            return (
-              <View style={styles.tipCard}>
-                <View style={styles.tipHeader}>
-                  <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(item.tip_category) + '20' }]}>
-                    <Text style={[styles.categoryText, { color: getCategoryColor(item.tip_category) }]}>
-                      {getCategoryName(item.tip_category)}
-                    </Text>
-                  </View>
-                  <Pressable onPress={() => handleUnsaveTip(item)}>
-                    <MaterialCommunityIcons name="bookmark-minus" size={24} color={theme.colors.rose} />
-                  </Pressable>
-                </View>
-                
-                <Text style={styles.tipTitle}>{item.tip_title}</Text>
-                <Text style={styles.tipContent} numberOfLines={3}>
-                  {item.tip_content}
-                </Text>
-                
-                <Text style={styles.savedDate}>
-                  נשמר ב-{new Date(item.saved_at).toLocaleDateString('he-IL')}
-                </Text>
-              </View>
-            );
-          }
-        }}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <MaterialCommunityIcons 
-              name="bookmark-outline" 
-              size={64} 
-              color={theme.colors.textLight} 
-            />
-            <Text style={styles.emptyTitle}>אין תוכן שמור</Text>
-            <Text style={styles.emptySubtitle}>
-              שמור פוסטים{isParent ? ' וטיפים' : ''} שאתה רוצה לחזור אליהם
-            </Text>
-          </View>
-        }
-      />
-    );
-  };
-
-  // פונקציות עזר לטיפים
-  const getCategoryColor = (category) => {
-    const colors = {
-      'communication': '#6B73FF',
-      'daily_routine': '#9C88FF',
-      'sensory': '#FF8A9B',
-      'social': '#32D1C3',
-      'education': '#FFB443',
-      'self_care': '#FF6B9D'
-    };
-    return colors[category] || theme.colors.primary;
-  };
-
-  const getCategoryName = (category) => {
-    const names = {
-      'communication': 'תקשורת',
-      'daily_routine': 'שגרה יומיומית',
-      'sensory': 'ויסות חושי',
-      'social': 'מיומנויות חברתיות',
-      'education': 'חינוך ולמידה',
-      'self_care': 'טיפול עצמי'
-    };
-    return names[category] || 'כללי';
   };
 
   if (!fontsLoaded) {
@@ -456,11 +255,26 @@ export default function Home() {
       </View>
 
       {/* Tabs */}
-      <HomeTabs 
-        selectedTab={selectedTab}
-        onSelectTab={handleTabSelect}
-        isParent={isParent}
-      />
+      <View style={styles.tabsContainer}>
+        <Pressable style={[styles.tab, selectedTab === 'home' && styles.tabActive]} onPress={() => setSelectedTab('home')}>
+          <Text style={[styles.tabText, selectedTab === 'home' && styles.tabTextActive]}>דף הבית</Text>
+        </Pressable>
+        
+        {/* Tab נוסף להורים */}
+        {isParent && (
+          <Pressable 
+            style={[styles.tab, selectedTab === 'parentTips' && styles.tabActive]} 
+            onPress={() => {
+              setSelectedTab('parentTips');
+              router.push('/parentTips');
+            }}
+          >
+            <Text style={[styles.tabText, selectedTab === 'parentTips' && styles.tabTextActive]}>
+              טיפים להורים
+            </Text>
+          </Pressable>
+        )}
+      </View>
 
       {/* הודעת ברוכים הבאים מיוחדת להורים */}
       {isParent && selectedTab === 'home' && (
@@ -471,7 +285,7 @@ export default function Home() {
           </Text>
           <Pressable 
             style={styles.parentWelcomeButton}
-            onPress={() => setSelectedTab('parentTips')}
+            onPress={() => router.push('/parentTips')}
           >
             <Text style={styles.parentWelcomeButtonText}>צפה בטיפים</Text>
           </Pressable>
@@ -479,7 +293,6 @@ export default function Home() {
       )}
 
       {/* Content */}
-      {console.log('🔍 Current selectedTab:', selectedTab)}
       {selectedTab === 'home' ? (
         <FlatList
           data={posts}
@@ -502,19 +315,24 @@ export default function Home() {
           />}
           ListFooterComponent={hasMore ? <Loading style={{ margin: hp(2) }} /> : <Text style={styles.noMore}>אין עוד פוסטים</Text>}
         />
-      ) : selectedTab === 'saved' ? (
-        renderSavedContent()
-      ) : null}
+      ) : (
+        <View style={styles.matchesPlaceholder}>
+          <Text style={styles.matchesText}>אין עדיין התאמות כדי להציג</Text>
+          <Pressable style={styles.matchesButton} onPress={() => Alert.alert('Find matches')}>
+            <Text style={styles.matchesButtonText}>מצא התאמות ∞</Text>
+          </Pressable>
+        </View>
+      )}
 
       {/* BottomBar */}
       <BottomBar
         currentUser={user}
-        selected={selectedTab === 'home' ? 'home' : selectedTab === 'saved' ? 'saved' : 'home'}
+        selected={selectedTab}
         onTabChange={tab => {
+          setSelectedTab(tab);
           if (tab === 'search') router.push('Search');
-          if (tab === 'saved') setSelectedTab('saved');
+          if (tab === 'saved') router.push('savedPosts');
           if (tab === 'profile') router.push('profile');
-          if (tab === 'home') setSelectedTab('home');
         }}
       />
     </ScreenWrapper>
@@ -575,6 +393,30 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: hp(1.2),
     fontFamily: 'Poppins_600SemiBold',
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: wp(4),
+    marginBottom: hp(1),
+  },
+  tab: {
+    alignSelf: 'flex-start',
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(6),
+  },
+  tabActive: {
+    borderBottomWidth: 2,
+    borderBottomColor: theme.colors.primary,
+  },
+  tabText: {
+    fontSize: hp(1.8),
+    color: theme.colors.textSecondary,
+    fontFamily: 'Poppins_600SemiBold',
+  },
+  tabTextActive: {
+    color: theme.colors.primary,
+    fontFamily: 'Poppins_700Bold',
   },
   parentWelcome: {
     backgroundColor: theme.colors.card,
@@ -650,63 +492,28 @@ const styles = StyleSheet.create({
     marginRight: wp(2),
     fontFamily: 'Poppins_400Regular',
   },
-  emptyContainer: {
+  matchesPlaceholder: {
+    flex: 1,
     alignItems: 'center',
-    paddingVertical: hp(8),
+    justifyContent: 'center',
+    padding: wp(6),
   },
-  emptyTitle: {
+  matchesText: {
     fontSize: hp(2.2),
-    fontWeight: theme.fonts.semibold,
-    color: theme.colors.textPrimary,
-    marginTop: hp(2),
-    marginBottom: hp(1),
-  },
-  emptySubtitle: {
-    fontSize: hp(1.8),
-    color: theme.colors.textLight,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    paddingHorizontal: wp(8),
+    marginBottom: hp(3),
+    fontFamily: 'Poppins_600SemiBold',
   },
-  tipCard: {
+  matchesButton: {
     backgroundColor: theme.colors.card,
-    borderRadius: theme.radius.xl,
-    padding: wp(4),
-    marginBottom: hp(2),
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  tipHeader: {
-    flexDirection: 'row-reverse',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: hp(1),
-  },
-  categoryBadge: {
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(0.5),
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(6),
     borderRadius: theme.radius.md,
   },
-  categoryText: {
-    fontSize: hp(1.4),
-    fontWeight: theme.fonts.semibold,
-  },
-  tipTitle: {
-    fontSize: hp(2),
-    fontWeight: theme.fonts.semibold,
+  matchesButtonText: {
+    fontSize: hp(1.8),
     color: theme.colors.textPrimary,
-    textAlign: 'right',
-    marginBottom: hp(1),
-  },
-  tipContent: {
-    fontSize: hp(1.7),
-    color: theme.colors.textSecondary,
-    lineHeight: hp(2.4),
-    textAlign: 'right',
-    marginBottom: hp(1.5),
-  },
-  savedDate: {
-    fontSize: hp(1.4),
-    color: theme.colors.textLight,
-    textAlign: 'right',
+    fontFamily: 'Poppins_700Bold',
   },
 });

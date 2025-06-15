@@ -147,13 +147,13 @@ const MainLayout = () => {
 
   useEffect(() => {
     if (!fontsLoaded) return;
-  
-    const init = async () => {
+
+    const getSession = async () => {
       try {
         const {
           data: { session },
         } = await supabase.auth.getSession();
-  
+
         if (session) {
           // 🔧 השתמש בפונקציה החדשה שטוענת נתונים מלאים
           await setAuthWithFullData(session.user); // במקום setAuth
