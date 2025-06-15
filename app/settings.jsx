@@ -164,14 +164,15 @@ export default Settings;
 const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#F5F5F5', // רקע כללי נעים
+      backgroundColor: theme.colors.background, // רקע כללי נעים
       padding: wp(5),
       justifyContent: 'center',
+      marginTop: -30,
     },
     title: {
       fontSize: hp(2.5),
       fontWeight: 'bold',
-      color: theme.colors.dark,
+      color: theme.colors.primary,
       marginBottom: 10,
       textAlign: 'right',
     },

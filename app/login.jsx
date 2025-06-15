@@ -59,7 +59,10 @@ const Login = () => {
             iconPosition="right"
             placeholder="הכנס את כתובת האימייל שלך"
             onChangeText={(value) => (emailRef.current = value)}
-            style={{ textAlign: 'right' }}
+            style={{ 
+              textAlign: 'right', 
+              color: 'white' // משנה את צבע הטקסט שהמשתמש מקליד ללבן
+            }}
           />
           <Input
             icon={<Icon name="lock" size={26} strokeWidth={1.6} color={theme.colors.textLight} />}
@@ -67,8 +70,10 @@ const Login = () => {
             placeholder="הכנס את הסיסמה שלך"
             secureTextEntry
             onChangeText={(value) => (passwordRef.current = value)}
-            style={{ textAlign: 'right' }}
-          />
+            style={{ 
+              textAlign: 'right', 
+              color: 'white' // משנה את צבע הטקסט שהמשתמש מקליד ללבן
+            }}          />
           <TouchableOpacity onPress={() => router.push('/forgotPassword')}>
             <Text style={styles.forgotPassword}>שכחת סיסמה?</Text>
           </TouchableOpacity>

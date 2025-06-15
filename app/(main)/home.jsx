@@ -42,9 +42,6 @@ export default function Home() {
     Poppins_400Regular,
   });
 
-  // בדיקה אם המשתמש הוא הורה
-
-  // בדיקה אם המשתמש הוא הורה
 
   useFocusEffect(
     useCallback(() => {
@@ -124,6 +121,8 @@ export default function Home() {
           console.log('notificationChannel status:', status);
         }
       });
+    
+    
   
     const commentsChannel = supabase
       .channel(`comments-${user.id}`)
@@ -229,6 +228,9 @@ export default function Home() {
       </ScreenWrapper>
     );
   }
+  const navigateToProfile = (userId) => {
+    router.push({ pathname: '/visitedProfile', params: { userId } });
+  };
 
   return (
     <ScreenWrapper bg={theme.colors.background}>
@@ -312,7 +314,8 @@ export default function Home() {
             </Pressable>
           }
           keyExtractor={item => `post-${item.id}`}
-          renderItem={({ item }) => <PostCard item={item} currentUser={user} router={router} />}
+          renderItem={({ item }) => <PostCard item={item} currentUser={user} router={router}  onUserPress={() => navigateToProfile(item.user?.id)}
+          />}
           ListFooterComponent={hasMore ? <Loading style={{ margin: hp(2) }} /> : <Text style={styles.noMore}>אין עוד פוסטים</Text>}
         />
       ) : (
@@ -354,6 +357,7 @@ const styles = StyleSheet.create({
     paddingBottom: hp(1),
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.surface,
+    marginTop: -40,
   },
   logo: {
     flexDirection: 'row',

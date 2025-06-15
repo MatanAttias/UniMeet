@@ -116,20 +116,32 @@ const Profile = () => {
   return (
     
     <ScreenWrapper bg = {theme.colors.background}>
-      <Pressable style={styles.backToWelcomeButton} onPress={goToPreviousStep}>
-                <Text style={styles.backToWelcomeText}>חזור</Text>
-              </Pressable>
-              <View>
-              <TouchableOpacity
-  onPress={() => setMenuVisible(!menuVisible)}
-  style={{
-  }}
->
-  <MaterialCommunityIcons name="dots-vertical" size={28} color="white" />
-</TouchableOpacity>
+           <Pressable style={styles.backToWelcomeButton} onPress={goToPreviousStep}>
+          <Text style={styles.backToWelcomeText}>חזור</Text>
+        </Pressable>
+      <View>
+      <TouchableOpacity
+        onPress={() => setMenuVisible(!menuVisible)}
+        style={{
+          width: 30, // תפריט לא רחב מדי
+
+        }}
+      >
+      <TouchableOpacity
+        onPress={() => setMenuVisible(!menuVisible)}
+        style={{
+          marginTop: -30,   // שלילי = מעלה
+          right: -15,     // יותר קטן = יותר ימינה
+          zIndex: 10     
+            }}
+      >
+        <MaterialCommunityIcons name="dots-vertical" size={28} color="white" />
+      </TouchableOpacity>
+      
+    </TouchableOpacity>
 
       {menuVisible && (
-  <View style={styles.menuContainer}>
+  <View style={styles.menuContainer} >
     <TouchableOpacity
       style={styles.menuItem}
       onPress={() => {
@@ -771,33 +783,39 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 16,
   },
+  
   menuContainer: {
     backgroundColor: '#1a1a1a',
     position: 'absolute',
-    top: 50,
-    left: 10,                 // במקום right: 10
+    top: 10,
+    left: 1,                  // ✅ מיקום מצד שמאל בלבד
     borderRadius: 12,
-    elevation: 4, // shadow לאנדרואיד
-    shadowColor: '#000', // shadow לאייפון
+    elevation: 4,              // ✅ צל לאנדרואיד
+    shadowColor: '#000',       // ✅ צל לאייפון
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-    paddingVertical: 10,
+    paddingVertical: 1,
     paddingHorizontal: 8,
     zIndex: 999,
+    alignItems: 'flex-start',  // ✅ כל התוכן בתוך התפריט מיושר לשמאל
+    
   },
   
   menuItem: {
     paddingVertical: 12,
-    paddingRight: 12,
-    paddingLeft: 8,
+    paddingLeft: 8,            // ✅ השאר את ה-left
+    paddingRight: 12,          // אפשר גם להוריד אם אתה לא צריך ריווח מימין
+    flexDirection: 'row',      // אם יש אייקון וטקסט – שים אותם בשורה
+    alignItems: 'center',
     
   },
+
   
   menuText: {
     fontSize: 16,
-    color: theme.colors.text, // שים לב שזה קיים אצלך ב־theme
-    textAlign: 'left',        // שינוי חשוב: מימין לשמאל
+    color: theme.colors.text,
+    textAlign: 'left',         // ✅ תוכן הטקסט יתחיל משמאל
     fontWeight: '500',
   },
   

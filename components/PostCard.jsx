@@ -38,6 +38,7 @@ const PostCard = React.memo((props) => {
     item, 
     currentUser, 
     router, 
+    onUserPress,
     hasShadow = true, 
     showMoreIcon = true, 
     showDelete = false, 
@@ -207,6 +208,8 @@ const PostCard = React.memo((props) => {
     <View style={[styles.container, hasShadow && styles.shadow]}>
       {/* Header */}
       <View style={styles.header}>
+      <TouchableOpacity style={styles.userInfo} onPress={onUserPress}>
+
         <View style={styles.userInfo}>
           <Avatar 
             size={hp(4.5)} 
@@ -220,6 +223,7 @@ const PostCard = React.memo((props) => {
             <Text style={styles.postTime}>{createdAt}</Text>
           </View>
         </View>
+        </TouchableOpacity>
         
         <View style={styles.actionsRight}>
           {showMoreIcon && (
