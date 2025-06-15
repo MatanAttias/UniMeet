@@ -16,6 +16,7 @@ import PostOptions from './PostOptions';
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
+import { createNotification } from '../services/notificationService';
 
 // 🔧 פונקציה לזיהוי כיוון טקסט
 const detectTextDirection = (text) => {
@@ -195,17 +196,45 @@ const PostCard = React.memo((props) => {
       }, 50);
 
       if (liked) {
+        // הסרת לייק
         setLikes(ls => ls.filter(l => l.userId !== currentUser.id));
         await removePostLike(item.id, currentUser.id);
       } else {
+        // הוספת לייק
         setLikes(ls => [...ls, { userId: currentUser.id }]);
         await createPostLike({ userId: currentUser.id, postId: item.id });
+        
+        // 🆕 יצירת התראה אם זה לא הפוסט של המשתמש עצמו
+        if (item.userId !== currentUser.id) {
+          const notificationData = {
+            "senderId": currentUser.id,
+            "receiverId": item.userId,
+            title: 'לייק חדש!',
+            data: JSON.stringify({
+              postId: item.id,
+              type: 'like',
+              senderName: currentUser.name || 'משתמש',
+              postPreview: stripHtmlTags(item.body)?.substring(0, 50) + '...' || 'פוסט',
+              postImage: item.file?.includes('postImages') ? item.file : null,
+              postHasImage: !!item.file?.includes('postImages')
+            })
+          };
+          
+          console.log('🔔 Creating like notification:', notificationData);
+          const notificationResult = await createNotification(notificationData);
+          
+          if (notificationResult.success) {
+            console.log('✅ Like notification created successfully');
+          } else {
+            console.log('❌ Failed to create like notification:', notificationResult.msg);
+          }
+        }
       }
     } catch (error) {
       console.error('Error toggling like:', error);
       Alert.alert('שגיאה', 'לא ניתן לעדכן לייק כרגע');
     }
-  }, [liked, currentUser.id, item.id, scale]);
+  }, [liked, currentUser.id, currentUser.name, item.id, item.userId, item.body, scale]);
 
   const handleSendComment = useCallback(async () => {
     if (!commentText.trim()) return;
@@ -222,6 +251,33 @@ const PostCard = React.memo((props) => {
         setCommentText('');
         setCommentCount(c => c + 1);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        
+        // 🆕 יצירת התראה אם זה לא הפוסט של המשתמש עצמו
+        if (item.userId !== currentUser.id) {
+          const notificationData = {
+            "senderId": currentUser.id,
+            "receiverId": item.userId,
+            title: 'תגובה חדשה!',
+            data: JSON.stringify({
+              postId: item.id,
+              type: 'comment',
+              senderName: currentUser.name || 'משתמש',
+              commentText: commentText.trim().substring(0, 50) + '...',
+              postPreview: stripHtmlTags(item.body)?.substring(0, 50) + '...' || 'פוסט',
+              postImage: item.file?.includes('postImages') ? item.file : null,
+              postHasImage: !!item.file?.includes('postImages')
+            })
+          };
+          
+          console.log('🔔 Creating comment notification:', notificationData);
+          const notificationResult = await createNotification(notificationData);
+          
+          if (notificationResult.success) {
+            console.log('✅ Comment notification created successfully');
+          } else {
+            console.log('❌ Failed to create comment notification:', notificationResult.msg);
+          }
+        }
       } else {
         Alert.alert('תגובה', 'משהו השתבש בשליחה');
       }
@@ -231,7 +287,7 @@ const PostCard = React.memo((props) => {
     } finally {
       setSending(false);
     }
-  }, [commentText, currentUser.id, item.id]);
+  }, [commentText, currentUser.id, currentUser.name, item.id, item.userId, item.body]);
 
   const onShare = useCallback(() => {
     if (item.body) {

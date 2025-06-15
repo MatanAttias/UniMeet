@@ -429,7 +429,7 @@ import {
                 resizeMode="cover"
               />
             ) : (
-      <Text Text style={styles.messageText}>{String(item.content)}</Text>      
+      <Text style={styles.messageText}>{String(item.content)}</Text>  
       )}
       </View>
     );

@@ -13,7 +13,7 @@ const HomeHeader = ({ activeTab, onTabChange }) => {
       {/* שורת אייקונים ולוגו */}
       <View style={styles.topRow}>
         {/* אייקון תפריט חבור (hamburger) */}
-        <Pressable onPress={() => {/* כאן אפשר לפתוח את צ’יפס הקטגוריות */}} style={styles.iconButton}>
+        <Pressable onPress={() => {/* כאן אפשר לפתוח את הקטגוריות */}} style={styles.iconButton}>
           <Ionicons name="menu-outline" size={24} color={theme.colors.pink} />
         </Pressable>
 
@@ -27,9 +27,6 @@ const HomeHeader = ({ activeTab, onTabChange }) => {
   </Pressable>
   <Pressable onPress={() => router.push('search')} style={styles.iconButton}>
     <Ionicons name="search-outline" size={24} color={theme.colors.pink} />
-  </Pressable>
-  <Pressable onPress={() => router.push('/bookMark')} style={styles.iconButton}>
-    <Ionicons name="bookmark-outline" size={24} color={theme.colors.pink} />
   </Pressable>
   <Pressable onPress={() => router.push('/notifications')} style={styles.iconButton}>
     <Ionicons name="notifications-outline" size={24} color={theme.colors.pink} />

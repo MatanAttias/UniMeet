@@ -24,10 +24,11 @@ import {
 } from '../../services/PostService';
 import PostCard from '../../components/PostCard';
 import Loading from '../../components/Loading';
-import { getUserData } from '../../services/userService';
 import BottomBar from '../../components/BottomBar';
 import HomeTabs from '../../components/HomeTabs';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import * as Haptics from 'expo-haptics';
+
 
 let limit = 0;
 
