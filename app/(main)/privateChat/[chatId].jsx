@@ -501,6 +501,7 @@ import {
         shadowOpacity: 0.2,
         shadowRadius: 4,
         elevation: 5,
+        marginTop: -50,
       },
     backButton: {
       marginLeft: wp(3),
