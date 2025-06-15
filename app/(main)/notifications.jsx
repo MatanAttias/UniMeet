@@ -26,35 +26,37 @@ const Notifications = () => {
   const goBack = () => router.back();
 
   return (
-    <ScreenWrapper>
-      <Header title="Notifications" />
-      
-      {/* שורת כפתור חזור - בתוך View רגיל, לא absolute */}
-      <View style={styles.backWrapper}>
+    <ScreenWrapper bg={theme.colors.background}>
+      <View style={styles.container}>
+        <Header title="התראות" />
+        
+        {/* כפתור חזור */}
         <Pressable style={styles.backButton} onPress={goBack}>
           <Text style={styles.backText}>חזור</Text>
         </Pressable>
-      </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listStyle}
-      >
-        {
-          notifications.map(item => (
-            <NotificationItem
-              item={item}
-              key={item?.id}
-              router={router}
-            />
-          ))
-        }
-        {
-          notifications.length === 0 && (
-            <Text style={styles.noData}>No notifications yet</Text>
-          )
-        }
-      </ScrollView>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listStyle}
+        >
+          {notifications.length > 0 ? (
+            notifications.map(item => (
+              <NotificationItem
+                item={item}
+                key={item?.id}
+                router={router}
+              />
+            ))
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyTitle}>אין התראות חדשות</Text>
+              <Text style={styles.emptySubtitle}>
+                כשמישהו יעשה לייק או יגיב לפוסט שלך, תקבל התראה כאן
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+      </View>
     </ScreenWrapper>
   )
 }
@@ -62,14 +64,14 @@ const Notifications = () => {
 export default Notifications
 
 const styles = StyleSheet.create({
-  backWrapper: {
-    alignItems: 'flex-end',
-    marginTop: hp(1),
-    marginBottom: hp(1),
+  container: {
+    flex: 1,
     paddingHorizontal: wp(4),
-    marginTop: -400,
   },
   backButton: {
+    position: 'absolute',
+    top: hp(8),
+    right: wp(4),
     backgroundColor: theme.colors.card,
     paddingVertical: hp(1),
     paddingHorizontal: wp(3),
@@ -81,24 +83,38 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 4,
-    marginTop: -150,
-
+    zIndex: 10,
   },
   backText: {
     color: theme.colors.primary,
-    fontSize: hp(2),
+    fontSize: hp(1.8),
     fontWeight: theme.fonts.semibold,
   },
   listStyle: {
-    paddingHorizontal: wp(4),
+    paddingTop: hp(2), // הקטנתי מ-hp(12) ל-hp(2) כדי שיהיה יותר למעלה
     paddingBottom: hp(5),
-    gap: 10,
+    gap: hp(1),
+    flexGrow: 1,
   },
-  noData: {
-    fontSize: hp(1.8),
-    fontWeight: theme.fonts.medium,
-    color: theme.colors.text,
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: wp(8),
+    marginTop: hp(10),
+  },
+  emptyTitle: {
+    fontSize: hp(2.5),
+    fontWeight: theme.fonts.bold,
+    color: theme.colors.textPrimary,
     textAlign: 'center',
-    marginTop: hp(2),
+    marginBottom: hp(1),
   },
-})
+  emptySubtitle: {
+    fontSize: hp(1.8),
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: hp(2.5),
+    writingDirection: 'rtl',
+  },
+});
