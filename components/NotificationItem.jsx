@@ -14,7 +14,6 @@ const NotificationItem = ({
 }) => {
 
     const handleClick = () => {
-        // פתיחת פרטי הפוסט
         try {
             const data = JSON.parse(item?.data || '{}')
             const { postId, commentId } = data
@@ -47,7 +46,6 @@ const NotificationItem = ({
         return notificationTime.format('D/M');
     };
 
-    // קבלת נתונים על ההתראה
     const getNotificationData = () => {
         try {
             const data = JSON.parse(item?.data || '{}')
@@ -91,7 +89,6 @@ const NotificationItem = ({
         }
     }
 
-    // קבלת תמונת הפוסט
     const getPostImage = () => {
         try {
             const data = JSON.parse(item?.data || '{}')
@@ -108,14 +105,12 @@ const NotificationItem = ({
 
     return (
         <TouchableOpacity style={styles.container} onPress={handleClick}>
-            {/* אווטר של השולח */}
             <Avatar
                 uri={item?.sender?.image}
                 size={hp(5)}
                 rounded={theme.radius.md}
             />
             
-            {/* תוכן ההתראה */}
             <View style={styles.content}>
                 <View style={styles.textContent}>
                     <Text style={styles.notificationText}>
@@ -124,7 +119,6 @@ const NotificationItem = ({
                         <Text style={styles.timeText}> {timeAgo}</Text>
                     </Text>
                     
-                    {/* תגובה אם זה comment */}
                     {notificationData.commentText && (
                         <Text style={styles.commentPreview}>
                             "{notificationData.commentText}"
@@ -133,7 +127,6 @@ const NotificationItem = ({
                 </View>
             </View>
 
-            {/* תמונת הפוסט או אייקון */}
             <View style={styles.rightSide}>
                 {postImage ? (
                     <Image

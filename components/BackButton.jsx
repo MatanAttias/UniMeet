@@ -19,6 +19,6 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     padding: 5,
     borderRadius: theme.radius.sm,
-    backgroundColor: 'rgba(156, 39, 176, 0.15)', // 💜 סגול שקוף עדין
+    backgroundColor: 'rgba(156, 39, 176, 0.15)', 
   }
 })

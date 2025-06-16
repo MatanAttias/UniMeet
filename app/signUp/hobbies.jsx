@@ -132,7 +132,6 @@ const Hobbies = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.headerRow}>
         <Pressable onPress={goBack} style={styles.backButton}>
           <Text style={styles.backText}>חזור</Text>
@@ -140,7 +139,6 @@ const Hobbies = () => {
         <Text style={styles.title}>תחביבים</Text>
       </View>
 
-      {/* Search */}
       <TextInput
         placeholder="חפש תחביב או כתוב בעצמך..."
         placeholderTextColor={theme.colors.textSecondary}
@@ -150,12 +148,10 @@ const Hobbies = () => {
         textAlign="right"
       />
 
-      {/* Counter */}
       <Text style={styles.counterText}>
         {selectedHobbies.length} / 5 תחביבים נבחרו
       </Text>
 
-      {/* List of hobbies */}
       <ScrollView contentContainerStyle={styles.traitsContainer}>
         {filteredHobbies.map((hobby) => (
           <Animated.View
@@ -185,7 +181,6 @@ const Hobbies = () => {
         ))}
       </ScrollView>
 
-      {/* Footer */}
       <View style={styles.bottomSection}>
         <View style={styles.toggleRow}>
           <Switch

@@ -18,7 +18,6 @@ const PostOptions = ({
 }) => {
   const { user } = useAuth();
   
-  // בדוק אם זה הפוסט של המשתמש הנוכחי
   const isMyPost = user?.id === postUserId;
 
   const handleSavePost = async () => {
@@ -54,20 +53,18 @@ const PostOptions = ({
           style: 'destructive',
           onPress: async () => {
             try {
-              onClose(); // סגור את המודל קודם
+              onClose(); 
               
-              // מחק את הפוסט מהמסד נתונים
               const { error } = await supabase
                 .from('posts')
                 .delete()
                 .eq('id', postId)
-                .eq('userId', user.id); // ודא שזה הפוסט של המשתמש
+                .eq('userId', user.id); 
 
               if (error) {
                 console.error('Delete error:', error);
                 Alert.alert('שגיאה', 'לא הצלחנו למחוק את הפוסט');
               } else {
-                // עדכן את ה-UI מקומית
                 if (onDelete && item) {
                   onDelete(item);
                 }
@@ -124,7 +121,6 @@ const PostOptions = ({
     try {
       let shareContent = '';
       
-      // בנה את תוכן השיתוף
       if (item?.body) {
         const cleanText = stripHtmlTags ? stripHtmlTags(item.body) : item.body;
         shareContent = cleanText.length > 100 
@@ -135,7 +131,6 @@ const PostOptions = ({
       const shareData = {
         title: `פוסט מ-UniMeet`,
         message: shareContent || 'בואו לראות את הפוסט הזה באפליקציה!',
-        // url: `unimeet://post/${postId}` // אם יש לך deep linking
       };
 
       const result = await Share.share(shareData);
@@ -143,7 +138,6 @@ const PostOptions = ({
       if (result.action === Share.sharedAction) {
         console.log('✅ Post shared successfully');
         
-        // אופציונלי: שמור סטטיסטיקת שיתוף
         try {
           await supabase
             .from('post_shares')
@@ -179,7 +173,6 @@ const PostOptions = ({
           
           <Text style={styles.menuTitle}>אפשרויות פוסט</Text>
 
-          {/* שמירת פוסט */}
           <Pressable 
             style={({ pressed }) => [
               styles.item, 
@@ -194,7 +187,6 @@ const PostOptions = ({
             </View>
           </Pressable>
 
-          {/* שיתוף פוסט */}
           <Pressable 
             style={({ pressed }) => [
               styles.item, 
@@ -209,10 +201,8 @@ const PostOptions = ({
             </View>
           </Pressable>
 
-          {/* קו מפריד */}
           <View style={styles.separator} />
 
-          {/* אם זה הפוסט שלי - אופציית מחיקה */}
           {isMyPost && (
             <Pressable 
               style={({ pressed }) => [
@@ -229,7 +219,6 @@ const PostOptions = ({
             </Pressable>
           )}
 
-          {/* אם זה לא הפוסט שלי - אופציית דיווח */}
           {!isMyPost && (
             <Pressable 
               style={({ pressed }) => [
@@ -246,7 +235,6 @@ const PostOptions = ({
             </Pressable>
           )}
 
-          {/* כפתור ביטול */}
           <Pressable 
             style={({ pressed }) => [
               styles.cancelButton, 

@@ -10,7 +10,6 @@ const ConnectionType = () => {
   const router = useRouter();
   const { fullName, email, password, birth_date, wantsNotifications, role } = useLocalSearchParams();
 
-  // המרה של wantsNotifications מ-string ל-boolean
   const wantsNotificationsBool = wantsNotifications === 'true';
 
   const [selectedTypes, setSelectedTypes] = useState([]);
@@ -38,7 +37,7 @@ const ConnectionType = () => {
         role,
         password,
         birth_date,
-        wantsNotifications: wantsNotificationsBool, // מועבר כערך בוליאני
+        wantsNotifications: wantsNotificationsBool, 
         connectionTypes: selectedTypes.join(','),
       },
     });

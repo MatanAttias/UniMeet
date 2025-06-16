@@ -8,7 +8,6 @@ export default function UniMeetLogo({ width = 180, height = 48 }) {
       <Svg width={width} height={height}>
         <Defs>
           <LinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
-            {/* עדכן צבעים לפי הלוגו שלך */}
             <Stop offset="0%" stopColor="#d8e6fa" />
             <Stop offset="50%" stopColor="#cebae8" />
             <Stop offset="100%" stopColor="#fd3587" />
@@ -18,7 +17,7 @@ export default function UniMeetLogo({ width = 180, height = 48 }) {
           fill="url(#grad)"
           fontSize={height * 0.7}
           fontWeight="bold"
-          fontFamily="Poppins" // אם מותקן, אחרת תשנה ל-System
+          fontFamily="Poppins" 
           x="0"
           y={height * 0.75}
         >

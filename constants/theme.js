@@ -1,20 +1,20 @@
 export const theme = {
   colors: {
     // רקעים
-    dark: '#1C1C1E',           // alias ל־background (רקע כהה)
-    background: '#1C1C1E',     // רקע כללי
-    card: '#2C2C2E',           // רקע לכרטיסים, שדות, אזורים פנימיים
-    surface: '#3A3A3C',        // גבולות, אזורים מודגשים
+    dark: '#1C1C1E',          
+    background: '#1C1C1E',     
+    card: '#2C2C2E',          
+    surface: '#3A3A3C',        
     border: '#3A3A3C',         
     shadow: '#00000066',
     rose: '#FF4F93',
 
     // טקסטים
-    text: '#FFFFFF',           // טקסט עיקרי – ניגוד גבוה
+    text: '#FFFFFF',           
     textPrimary: '#FFFFFF',
-    textDark: '#000000',       // אם צריך טקסט כהה
-    textSecondary: '#CCCCCC',  // תיאורים
-    textLight: '#888888',      // placeholder / טקסט לא פעיל
+    textDark: '#000000',       
+    textSecondary: '#CCCCCC',
+    textLight: '#888888',     
     textDisabled: '#888888',
     onPrimary: '#1C1C1E',      
 

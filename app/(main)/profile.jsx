@@ -25,6 +25,8 @@ import PostCard from '../../components/PostCard';
 import Loading from '../../components/Loading';
 import { Audio } from 'expo-av';
 import { AnimatePresence, MotiView } from 'moti';
+import UserCityFromLocation from '../../components/UserCityFromLocation'
+import { MaterialIcons } from '@expo/vector-icons';
 
 var limit = 0;
 const Profile = () => {
@@ -34,7 +36,8 @@ const Profile = () => {
   const [posts, setPosts] = useState([]);
   const [hasMore, setHasMore] = useState(true);
   const [showPosts, setShowPosts] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile'); // או 'posts'
+  const [activeTab, setActiveTab] = useState('profile'); 
+  const [menuVisible, setMenuVisible] = useState(false); 
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -58,6 +61,7 @@ const Profile = () => {
       fetchUserData();
     }
   }, [user?.id]);
+  
 
   const onLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -88,7 +92,9 @@ const Profile = () => {
   if (loading) {
     return <ActivityIndicator size="large" color={theme.colors.primary} />;
   }
-
+  const handleMenuToggle = () => {
+    setMenuVisible(prev => !prev);
+  };
   const handleLogout = async () => {
     Alert.alert('אישור', 'אתה בטוח שאתה רוצה להתנתק?', [
       {
@@ -106,21 +112,59 @@ const Profile = () => {
   const goToPreviousStep = () => {
     router.back();
   };
-
+  
   return (
-    <ScreenWrapper bg="black">
-      <Pressable style={styles.backToWelcomeButton} onPress={goToPreviousStep}>
-        <Text style={styles.backToWelcomeText}>חזור</Text>
-      </Pressable>
-      
-      {/* כפתור התנתקות */}
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <View style={styles.logoutContent}>
-          <MaterialCommunityIcons name="logout" size={20} color="#fff" />
-          <Text style={styles.logoutText}>התנתק</Text>
-        </View>
+    
+    <ScreenWrapper bg = {theme.colors.background}>
+           <Pressable style={styles.backToWelcomeButton} onPress={goToPreviousStep}>
+          <Text style={styles.backToWelcomeText}>חזור</Text>
+        </Pressable>
+      <View>
+      <TouchableOpacity
+        onPress={() => setMenuVisible(!menuVisible)}
+        style={{
+          width: 30, 
+
+        }}
+      >
+      <TouchableOpacity
+        onPress={() => setMenuVisible(!menuVisible)}
+        style={{
+          marginTop: -30,   
+          right: -15,     
+          zIndex: 10     
+            }}
+      >
+        <MaterialCommunityIcons name="dots-vertical" size={28} color="white" />
       </TouchableOpacity>
       
+    </TouchableOpacity>
+
+      {menuVisible && (
+  <View style={styles.menuContainer} >
+    <TouchableOpacity
+      style={styles.menuItem}
+      onPress={() => {
+        setMenuVisible(false);
+        router.push('/settings');
+            }}
+    >
+      <Text style={styles.menuText}>הגדרות</Text>
+    </TouchableOpacity>
+
+    <TouchableOpacity
+      style={styles.menuItem}
+      onPress={() => {
+        setMenuVisible(false);
+        handleLogout();
+      }}
+    >
+
+        <Text style={[styles.menuText, { color: 'red' }]}>התנתק</Text>
+      </TouchableOpacity>
+    </View>
+  )}
+</View>
       <View style={styles.tabsContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'profile' && styles.activeTab]}
@@ -173,7 +217,7 @@ const Profile = () => {
               </View>
             ) : (
               <View style={{ marginVertical: 30 }}>
-                <Text style={styles.noPosts}>No more posts</Text>
+                <Text style={styles.noPosts}>אין עוד פוסטים</Text>
               </View>
             )
           ) : null
@@ -191,8 +235,8 @@ const UserHeader = ({ user, router, handleLogout }) => {
   const [playbackStatus, setPlaybackStatus] = useState(null);
   const [posts, setPosts] = useState([]);
   const [showPosts, setShowPosts] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile'); // profile or posts
-  const [showEdit, setShowEdit] = useState(true); // או false – לפי ההגיון שלך
+  const [activeTab, setActiveTab] = useState('profile'); 
+  const [showEdit, setShowEdit] = useState(true);
 
   const playSound = async () => {
     if (!user.audio) return;
@@ -261,13 +305,21 @@ const UserHeader = ({ user, router, handleLogout }) => {
   };
   
   const renderTagList = (label, tags) => {
-    if (!tags || tags.length === 0) return null;
+    if (!tags) return null;
+  
+    const tagList = Array.isArray(tags)
+      ? tags
+      : typeof tags === 'string'
+      ? tags.split(',').map(t => t.trim())
+      : [];
+  
+    if (tagList.length === 0) return null;
   
     return (
       <View style={{ marginBottom: 12 }}>
         <Text style={styles.tagCategory}>{label}</Text>
         <View style={styles.tagList}>
-          {tags.map((tag, index) => (
+          {tagList.map((tag, index) => (
             <View key={index} style={styles.tagPill}>
               <Text style={styles.tagText}>{tag}</Text>
             </View>
@@ -276,13 +328,14 @@ const UserHeader = ({ user, router, handleLogout }) => {
       </View>
     );
   };
-
   const getFormattedTime = (millis) => {
     const totalSeconds = Math.floor(millis / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
+
+ 
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingHorizontal: wp(4) }}>
@@ -304,13 +357,16 @@ const UserHeader = ({ user, router, handleLogout }) => {
             </Pressable>
           )}
           </View>
-
           <View style={{ alignItems: 'center', gap: 4 }}>
-            <Text style={styles.userName}>
-              {user?.fullName || user?.name || 'No name'}
-            </Text>
-            <Text style={styles.infoText}>{user?.address || 'No address'}</Text>
-          </View>
+          <Text style={styles.userName}>
+            {user?.fullName || user?.name || 'No name'}
+          </Text>
+          {user?.location ? (
+            <UserCityFromLocation location={user.location} />
+          ) : (
+            <Text style={styles.infoText}>מיקום לא זמין</Text>
+          )}
+        </View>
 
           {['gender', 'birth_date', 'status', 'connectionTypes'].some(key => !!user?.[key]) && (
         <MotiView
@@ -340,10 +396,8 @@ const UserHeader = ({ user, router, handleLogout }) => {
               )}
             </View>
           
-            {/* פס שקוף מתחת לשלושת הפרמטרים */}
             <View style={styles.separator} />
           
-            {/* הצגת connectionTypes */}
             {user.connectionTypes && (
               <View style={[styles.inlineItem, { flexDirection: 'row-reverse', marginTop: 8 }]}>
                 <MaterialCommunityIcons name="magnify-plus-outline" size={28} color={theme.colors.primary} />
@@ -351,7 +405,6 @@ const UserHeader = ({ user, router, handleLogout }) => {
               </View>
             )}
           
-            {/* הצגת preferredMatch מתחת ל connectionTypes */}
             {user.preferredMatch && (
               <View style={[styles.inlineItem, { flexDirection: 'row-reverse', marginTop: 8 }]}>
                 <MaterialCommunityIcons name="account-heart" size={28} color={theme.colors.primary} />
@@ -361,7 +414,6 @@ const UserHeader = ({ user, router, handleLogout }) => {
           </MotiView>
           )}
 
-          {/* תיקון הטקסט של ההקדמה להיות RTL */}
           {user?.introduction && (
             <MotiView
               from={{ opacity: 0, translateY: 10 }}
@@ -396,6 +448,13 @@ const UserHeader = ({ user, router, handleLogout }) => {
               <>
                 <Text style={styles.subSectionTitle}>תכונות</Text>
                 {renderTagList('', user.traits)}
+              </>
+            )}
+
+            {user.traits?.length > 0 && (
+              <>
+                <Text style={styles.subSectionTitle}>תחביבים</Text>
+                {renderTagList('', user.hobbies)}
               </>
             )}
           
@@ -465,7 +524,7 @@ export default Profile;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '##CDB0AA', // אפור רגוע
+    backgroundColor: '##CDB0AA', 
   },
   avatarContainer: {
     height: hp(12),
@@ -537,7 +596,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: hp(1.5),
     fontWeight: '600',
-    marginRight: 6, // מרחק בין הטקסט לאייקון
+    marginRight: 6, 
   },
   
   listStyle: {
@@ -731,7 +790,6 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.semibold,
   },
   
-  // סטיילים חדשים לתיאור בעברית
   introductionContainer: {
     flexDirection: 'row-reverse',
     alignItems: 'flex-start',
@@ -739,12 +797,47 @@ const styles = StyleSheet.create({
   },
   introductionText: {
     fontSize: hp(2),
-    color: theme.colors.textPrimary,
+    color: theme.colors.text,
+    fontWeight: theme.fonts.semibold,
+    marginLeft: 8,
+    fontSize: 16,
+  },
+  
+  menuContainer: {
+    backgroundColor: '#1a1a1a',
+    position: 'absolute',
+    top: 10,
+    left: 1,                 
+    borderRadius: 12,
+    elevation: 4,              
+    shadowColor: '#000',       
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    paddingVertical: 1,
+    paddingHorizontal: 8,
+    zIndex: 999,
+    alignItems: 'flex-start',      
+  },
+  
+  menuItem: {
+    paddingVertical: 12,
+    paddingLeft: 8,           
+    paddingRight: 12,          
+    flexDirection: 'row',      
+    alignItems: 'center',
+    
+  },
+
+  
+  menuText: {
+    fontSize: 16,
+    color: theme.colors.text,
+    textAlign: 'left',   
     fontWeight: '500',
-    textAlign: 'right',
-    writingDirection: 'rtl',
-    flex: 1,
-    marginRight: 8,
-    lineHeight: hp(2.8),
+  },
+  
+  logoutText: {
+    color: 'red',
   },
 });

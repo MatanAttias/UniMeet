@@ -52,23 +52,14 @@ export default function Home() {
   });
 
   useEffect(() => {
-    console.log('🔍 User data in HOME debug:', {
-      userId: user?.id,
-      userName: user?.name,
-      userEmail: user?.email,
-      hasImage: !!user?.image,
-      imageUrl: user?.image,
-      fullUserKeys: user ? Object.keys(user) : [],
-      fullUser: user
-    });
+
   }, [user]);
   
   // בדיקה אם המשתמש הוא הורה
   const isParent = user?.role === 'parent';
 
   useEffect(() => {
-    console.log('Home component mounted for user:', user?.id);
-    
+
     // טען תוכן בהתאם לtab הנבחר - רק אם יש משתמש וtab השתנה
     if (user?.id) {
       if (selectedTab === 'home' && posts.length === 0) {
@@ -357,7 +348,6 @@ export default function Home() {
       )}
 
       {/* Content */}
-      {console.log('🔍 Current selectedTab:', selectedTab)}
       {selectedTab === 'home' ? (
         <FlatList
           data={posts}

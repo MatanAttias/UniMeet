@@ -18,7 +18,6 @@ const FinalStep = () => {
   const router = useRouter();
   const rawParams = useLocalSearchParams();
 
-  // פרסינג ערכים מהפרמטרים
   const [formData] = useState(() => {
     const parseBool = (val) => val === 'true';
     const parseJson = (val) => {
@@ -85,7 +84,6 @@ const FinalStep = () => {
   const [loading, setLoading] = useState(false);
 
   const onNext = async () => {
-    // ולידציה של שדות חובה
     if (!email || !password || !fullName || !birth_date || !gender || !connectionTypes) {
       Alert.alert('שגיאה', 'נא לוודא שכל שדות החובה מולאו');
       return;
@@ -94,7 +92,6 @@ const FinalStep = () => {
     try {
       setLoading(true);
 
-      // רישום ב־Auth עם role דינמי
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -106,13 +103,11 @@ const FinalStep = () => {
       const user = data.user;
       if (!user) throw new Error('User not returned from signUp');
 
-      // עיבוד location
       let parsedLocation = null;
       if (location) {
         parsedLocation = location;
       }
 
-      // upsert לטבלת public.users
       const profile = {
         id: user.id,
         email,

@@ -33,9 +33,9 @@ const GetNotify = () => {
     const { status } = await Notifications.requestPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('שים לב', 'לא תוכל לקבל עידכונים בזמן אמת');
-      goToNextStep(false); // המשתמש לא אישר
+      goToNextStep(false); 
     } else {
-      goToNextStep(true); // המשתמש אישר
+      goToNextStep(true); 
     }
   };
 
@@ -69,7 +69,6 @@ const GetNotify = () => {
 
 export default GetNotify;
 
-// styles (נשארו אותו דבר)
 const styles = StyleSheet.create({
   container: {
     flex: 1,

@@ -16,8 +16,7 @@ const prompts = [
 ];
 
 export default function PromptModal({ visible, onClose, onSelectPrompt }) {
-  // אנימציה של חיווט התצוגה
-  const fadeAnim = new Animated.Value(0); // מתחילים ב-0
+  const fadeAnim = new Animated.Value(0); 
 
   React.useEffect(() => {
     if (visible) {
@@ -98,7 +97,7 @@ const styles = StyleSheet.create({
   },
   closeText: {
     fontSize: 18,
-    color: '#9b59b6', // צבע סגול יפה
+    color: '#9b59b6', 
     fontWeight: 'bold',
   },
 });

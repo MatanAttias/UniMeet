@@ -41,17 +41,14 @@ const Login = () => {
     <ScreenWrapper bg={theme.colors.dark}>
       <StatusBar style="light" />
 
-      {/* כפתור חזור אחיד */}
       <CustomBackButton to="/welcome" style={styles.backButton} />
 
       <View style={[styles.container, { writingDirection: 'rtl' }]}>
-        {/* ברוך הבא */}
         <View>
           <Text style={styles.welcomeText}>היי,</Text>
           <Text style={styles.welcomeText}>ברוך שובך!</Text>
         </View>
 
-        {/* טופס התחברות */}
         <View style={styles.form}>
           <Text style={styles.subtext}>אנא היכנס כדי להמשיך</Text>
           <Input
@@ -59,7 +56,10 @@ const Login = () => {
             iconPosition="right"
             placeholder="הכנס את כתובת האימייל שלך"
             onChangeText={(value) => (emailRef.current = value)}
-            style={{ textAlign: 'right' }}
+            style={{ 
+              textAlign: 'right', 
+              color: 'white' 
+            }}
           />
           <Input
             icon={<Icon name="lock" size={26} strokeWidth={1.6} color={theme.colors.textLight} />}
@@ -67,8 +67,10 @@ const Login = () => {
             placeholder="הכנס את הסיסמה שלך"
             secureTextEntry
             onChangeText={(value) => (passwordRef.current = value)}
-            style={{ textAlign: 'right' }}
-          />
+            style={{ 
+              textAlign: 'right', 
+              color: 'white' 
+            }}          />
           <TouchableOpacity onPress={() => router.push('/forgotPassword')}>
             <Text style={styles.forgotPassword}>שכחת סיסמה?</Text>
           </TouchableOpacity>

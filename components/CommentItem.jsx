@@ -73,38 +73,39 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
         gap: 7,
+        
     },
     content: {
-        backgroundColor: 'rgba(0,0,0,0.06)',
+        backgroundColor: '#1a1a1a',
         flex: 1,
-    gap: 5,
+        gap: 5,
         paddingHorizontal: 14,
         paddingVertical: 10,
         borderRadius: theme.radius.md,
         borderCurve: 'continuous',
-    },
-    
-    highlight: {
-        borderWidth: 0.2,
-        backgroundColor: 'white',
-        borderColor: theme.colors.dark,
-        shadowColor: theme.colors.dark,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 5,
-    },
+        borderWidth: 1.5,
+        borderColor: theme.colors.primary, 
+      },
+      highlight: {
+        backgroundColor: '#292929',
+        borderColor: theme.colors.secondary,
+        borderWidth: 2,
+        shadowColor: theme.colors.secondary,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.4,
+        shadowRadius: 4,
+        elevation: 6,
+      },
     
     nameContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 3,
     },
-    
     text: {
         fontSize: hp(1.6),
         fontWeight: theme.fonts.medium,
-        color: theme.colors.textDark,
-    }    
+        color: theme.colors.textPrimary, 
+      },   
 })
 

@@ -5,9 +5,9 @@ import { supabaseUrl } from '../constants';
 
 export const getUserImageSrc = (imagePath) => {
   if (imagePath && imagePath.startsWith("http")) {
-    return { uri: imagePath }; // אם זה URL חוקי, החזר אותו
+    return { uri: imagePath }; 
   } else {
-    return require('../assets/images/defaultUser.png'); // תמונת ברירת מחדל
+    return require('../assets/images/defaultUser.png'); 
   }
 };
 

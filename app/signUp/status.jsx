@@ -76,7 +76,6 @@ const Status = () => {
 
   return (
     <ScrollView style={styles.container}>
-      {/* שורת כותרת עם כפתור חזור וטקסט */}
       <View style={styles.headerRow}>
         <Pressable onPress={goBack} style={styles.backButton}>
           <Text style={styles.backText}>חזור</Text>

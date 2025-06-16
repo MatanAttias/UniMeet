@@ -23,7 +23,7 @@ const BirthSignUp = () => {
         fullName,
         email,
         password,
-        birth_date: date.toISOString(), // תאריך לידה כ־string
+        birth_date: date.toISOString(), 
         role,
       },
     });
@@ -47,7 +47,7 @@ const BirthSignUp = () => {
             if (selectedDate) setDate(selectedDate);
           }}
           style={styles.datePicker}
-          {...(Platform.OS === 'ios' ? { textColor: 'white' } : {})} // textColor עובד רק ב-iOS
+          {...(Platform.OS === 'ios' ? { textColor: 'white' } : {})} 
         />
       </View>
 

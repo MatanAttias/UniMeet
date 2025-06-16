@@ -104,13 +104,9 @@ const NewPost = () => {
       Alert.alert('פוסט', res.msg)
     }
   }
-  console.log("Profile Image URL:", user?.image);
-  console.log("Full user object:", user);
   return (
     <ScreenWrapper bg="black">
-      {/* ✅ עטיפה לסגירת המקלדת בלחיצה בחוץ */}
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        {/* ✅ התאמה אוטומטית של האלמנטים כאשר המקלדת פתוחה */}
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -189,7 +185,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     paddingHorizontal: wp(4),
     gap: 15,
-    backgroundColor: theme.colors.background,  // שימוש ברקע הראשי מתוך theme
+    backgroundColor: theme.colors.background,  
     writingDirection: 'rtl',
   },
   content: {
@@ -198,7 +194,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: hp(2.8),
     fontWeight: 'bold',
-    color: theme.colors.primary,  // צבע טקסט ראשי פריימרי כהה יותר
+    color: theme.colors.primary,  
     textAlign: 'center',
     marginTop: -5,
   },
@@ -211,7 +207,7 @@ const styles = StyleSheet.create({
   username: {
     fontSize: hp(2.2),
     fontWeight: theme.fonts.semibold,
-    color: theme.colors.primary, // צבע בהיר ונקי
+    color: theme.colors.primary, 
     textAlign: 'right',
   },
   textEditor: {
@@ -221,9 +217,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 5,
-    backgroundColor: theme.colors.black + 'cc', // פריימרי עם שקיפות קלה
+    backgroundColor: theme.colors.black + 'cc', 
     elevation: 6,
-    // אנימציה קטנה בכניסה:
     transform: [{ scale: 1 }],
     transitionDuration: '300ms',
   },
@@ -233,7 +228,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.lg,
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: '#e0e0e5',  // רקע חלונית בהיר
+    backgroundColor: '#e0e0e5', 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
@@ -244,7 +239,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-    backgroundColor: 'rgba(0,0,0,0.4)', // שקיפות נמוכה יותר
+    backgroundColor: 'rgba(0,0,0,0.4)', 
     padding: 5,
     borderRadius: 20,
     opacity: 0.8,
@@ -254,7 +249,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: theme.colors.primary + 'cc', // פריימרי עם שקיפות קלה
+    backgroundColor: theme.colors.primary + 'cc', 
     borderRadius: theme.radius.xl,
     padding: 12,
     gap: 15,
@@ -266,7 +261,7 @@ const styles = StyleSheet.create({
   },
   addImageText: {
     fontSize: hp(1.8),
-    color: theme.colors.black + 'dd', // צבע בהיר ונקי
+    color: theme.colors.black + 'dd', 
     flex: 1,
     textAlign: 'right',
   },
@@ -287,7 +282,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 4,
-    alignSelf: 'flex-end',  // זה יזיז אותו לקצה הימני בקונטיינר
+    alignSelf: 'flex-end',  
     marginTop: 13,
   },
   backText: {

@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { theme } from '../constants/theme';
 import { hp, wp } from '../constants/helpers/common';
 import BackButton from './BackButton';
-import Avatar from './Avatar'; // וודא שקיים
+import Avatar from './Avatar'; 
 import BookMark from '../assets/icons/BookMark';
 
 

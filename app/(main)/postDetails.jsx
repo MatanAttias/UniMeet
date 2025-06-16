@@ -1,4 +1,4 @@
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View, Pressable, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { createComment, fetchPostDetails, removeComment, removePost } from '../../services/PostService';
@@ -24,7 +24,6 @@ const PostDetails = () => {
   const [startLoading, setStartLoading] = useState(true);
   const [loading, setLoading] = useState(false);
 
-  // Fetch post details once
   const getPostDetails = async () => {
     const res = await fetchPostDetails(postId);
     if (res.success) {
@@ -33,7 +32,6 @@ const PostDetails = () => {
     setStartLoading(false);
   };
 
-  // Handle new comments via realtime
   const handleNewComment = async ({ new: newCommentRaw }) => {
     if (!newCommentRaw) return;
     const newComment = { ...newCommentRaw };
@@ -45,7 +43,6 @@ const PostDetails = () => {
 
   useEffect(() => {
     getPostDetails();
-    // subscribe to new comments
     const channel = supabase
       .channel(`comments_post_details_${postId}`)
       .on(
@@ -57,7 +54,6 @@ const PostDetails = () => {
         if (error) console.error('Comments channel error', error);
         else console.log('Comments channel status', status);
       });
-    // polling fallback every 5s
     const polling = setInterval(async () => {
       const res = await fetchPostDetails(postId);
       if (res.success) {
@@ -81,7 +77,6 @@ const PostDetails = () => {
     const res = await createComment(data);
     setLoading(false);
     if (res.success) {
-      // append locally
       const appended = { ...res.data, user, created_at: res.data.created_at || new Date().toISOString() };
       setPost(prev => prev ? { ...prev, comments: [appended, ...prev.comments] } : prev);
       if (user.id !== post.userId) {
@@ -94,6 +89,7 @@ const PostDetails = () => {
       Alert.alert('Comment Error', res.msg || 'Failed to post comment.');
     }
   };
+  const goBack = () => router.back();
 
   const onDeleteComment = async comment => {
     const res = await removeComment(comment.id);
@@ -119,36 +115,52 @@ const PostDetails = () => {
   if (!post) return <View style={[styles.center, { justifyContent: 'flex-start', marginTop: 100 }]}><Text style={styles.notFound}>Post not found!</Text></View>;
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? hp(10) : 0}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
-        <PostCard
-          item={{ ...post, comments: [{ count: post.comments.length }] }}
-          currentUser={user}
-          router={router}
-          hasShadow={false}
-          showMoreIcon={false}
-          showDelete={true}
-          onDelete={onDeletePost}
-          onEdit={onEditPost}
-        />
-        <View style={styles.inputContainer}>
-          <TextInput
-            ref={inputRef}
-            placeholder="Type your comment..."
-            onChangeText={value => (commentRef.current = value)}
-            placeholderTextColor={theme.colors.textLight}
-            style={styles.inputStyle}
-            multiline
-            textAlignVertical="top"
+    <View style={{ flex: 1, backgroundColor: '#111111' }}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? hp(10) : 0}
+      >
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.list}
+          keyboardShouldPersistTaps="handled"
+        >
+          <PostCard
+            item={{ ...post, comments: [{ count: post.comments.length }] }}
+            currentUser={user}
+            router={router}
+            hasShadow={false}
+            showMoreIcon={false}
+            showDelete={true}
+            onDelete={onDeletePost}
+            onEdit={onEditPost}
           />
-          {loading ? <View style={styles.loading}><Loading size="small" /></View> : <TouchableOpacity style={styles.sendIcon} onPress={onNewComment}><Icon name="send" color={theme.colors.primaryDark} /></TouchableOpacity>}
-        </View>
-        <View style={{ marginVertical: 15, gap: 17 }}>
-          {post.comments.map(comment => <CommentItem key={comment.id.toString()} item={comment} onDelete={onDeleteComment} highlight={commentId == comment.id} canDelete={user.id === comment.userId || user.id === post.userId} />)}
-          {post.comments.length === 0 && <Text style={{ color: theme.colors.text, marginLeft: 5 }}>Be first to comment!</Text>}
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+  
+          <View style={{ marginVertical: 15, gap: 17 }}>
+            {post.comments.map(comment => (
+              <CommentItem
+                key={comment.id.toString()}
+                item={comment}
+                onDelete={onDeleteComment}
+                highlight={commentId == comment.id}
+                canDelete={user.id === comment.userId || user.id === post.userId}
+              />
+            ))}
+            {post.comments.length === 0 && (
+              <Text style={{ color: theme.colors.text, marginLeft: 5 }}>
+                Be first to comment!
+              </Text>
+            )}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+  
+      {/* כפתור חזור מעל הכול */}
+      <Pressable style={styles.backButton} onPress={goBack}>
+        <Text style={styles.backText}>חזור</Text>
+      </Pressable>
+    </View>
   );
 };
 
@@ -157,7 +169,8 @@ export default PostDetails;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#666666', // רקע בהיר לאזור התגובה
+        backgroundColor: '#111111', 
+        marginTop: 100,
       },
       inputContainer: {
         flexDirection: 'row',
@@ -165,31 +178,34 @@ const styles = StyleSheet.create({
         gap: wp(2),
         paddingHorizontal: wp(4),
         paddingVertical: hp(2),
-        backgroundColor: '#4A4A4A', // אפור עכבר כהה ונעים
-        borderRadius: 12, // עיגול פינות למראה עדין
-        shadowColor: '#000', // צל שחור
+        backgroundColor: '#4A4A4A', 
+        borderRadius: 12, 
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.3,
         shadowRadius: 5,
-        elevation: 6, // עבור אנדרואיד
+        elevation: 6, 
       },
     list: {
         paddingHorizontal: wp(4),
-        paddingBottom: hp(20), // רווח גדול יותר בתחתית
+        paddingBottom: hp(20), 
+        
+        
         
     },
     inputStyle: {
-        flex: 1,
-        height: hp(10), // גובה גדול יותר
-        borderRadius: theme.radius.xl,
-        paddingHorizontal: wp(4),
-        paddingVertical: hp(1.5),
-        borderWidth: 1,
-        borderColor: theme.colors.primaryLight,
-        backgroundColor: 'white',
-        fontSize: hp(2),
-        lineHeight: hp(2.5),
-    },
+      flex: 1,
+      height: hp(10),
+      borderRadius: theme.radius.xl,
+      paddingHorizontal: wp(4),
+      paddingVertical: hp(1.5),
+      borderWidth: 1.5,
+      borderColor: theme.colors.primary, 
+      color: theme.colors.textPrimary,
+      backgroundColor: '#1a1a1a', 
+      fontSize: hp(2),
+      lineHeight: hp(2.5),
+  },
     sendIcon: {
         alignItems: 'center',
         justifyContent: 'center',
@@ -204,6 +220,7 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
+        
     },
     notFound: {
         fontSize: hp(2.5),
@@ -217,4 +234,25 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         transform: [{ scale: 1.3 }],
     },
+    backButton: {
+      position: 'absolute',
+      top: hp(8),
+      right: hp(4),
+      backgroundColor: theme.colors.primary,
+      paddingVertical: hp(1),
+      paddingHorizontal: wp(3),
+      borderRadius: theme.radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: theme.colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.15,
+      shadowRadius: 6,
+      elevation: 4,
+    },
+    backText: {
+      color: theme.colors.black,
+      fontSize: hp(2),
+      fontWeight: theme.fonts.semibold,
+    },
 });

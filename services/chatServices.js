@@ -18,7 +18,6 @@ export const fetchUserChats = async (userId) => {
     .order('updated_at', { ascending: false });
 
   if (error) throw error;
-  console.log('Raw chats data from Supabase:', data);
 
   return data.map((chat) => {
     const isUser1 = chat.user1_id === userId;

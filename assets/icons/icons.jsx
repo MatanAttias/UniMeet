@@ -1,4 +1,3 @@
-// assets/icons.jsx
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 
 export const Icon = Ionicons;

@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   },
   bottomButton: {
     position: 'absolute',
-    bottom: hp(4), // גובה מהרצפה
+    bottom: hp(4), 
     left: wp(6),
     right: wp(6),
     paddingVertical: hp(1.5),

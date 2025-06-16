@@ -25,7 +25,7 @@ import {
   import { useFocusEffect } from '@react-navigation/native';
   import { useCallback } from 'react';
   import * as FileSystem from 'expo-file-system';
-  import { Buffer } from 'buffer'; // ודא שהתקנת את זה: npm i buffer
+  import { Buffer } from 'buffer'; 
 
   const Settings = () => {
     const { user } = useAuth();
@@ -109,7 +109,6 @@ import {
         if (!chatObj || !user) return;
       
         try {
-          // שליפת המזהים של שני המשתמשים מהטבלה chats
           const { data: chatData, error: chatError } = await supabase
             .from('chats')
             .select('user1_id, user2_id')
@@ -123,7 +122,6 @@ import {
       
           const partnerId = chatData.user1_id === user.id ? chatData.user2_id : chatData.user1_id;
       
-          // שליפה של שם ותמונה מהטבלה users
           const { data, error } = await supabase
             .from('users')
             .select('name, image')
@@ -134,7 +132,7 @@ import {
             console.error('שגיאה בשליפת נתוני בן השיחה:', error);
           } else {
             setChatPartnerName(data.name);
-            setChatPartnerImage(data.image); // ודא שיש לך useState כזה
+            setChatPartnerImage(data.image); 
           }
         } catch (err) {
           console.error('שגיאה כללית בשליפת שם/תמונה של בן השיחה:', err.message);
@@ -156,7 +154,6 @@ import {
     
       const messageContent = messageText.trim();
     
-      // הוספת ההודעה לטבלת messages
       const { data: messageData, error: messageError } = await supabase
         .from('messages')
         .insert({
@@ -173,7 +170,6 @@ import {
         return;
       }
     
-      // עדכון הצ'אט עם ההודעה האחרונה
       const { error: updateChatError } = await supabase
         .from('chats')
         .update({
@@ -186,7 +182,6 @@ import {
         console.error('שגיאה בעדכון הצ׳אט:', updateChatError);
       }
     
-      // שליפת נתוני הצ׳אט כדי לדעת מי המשתמש 1 ומי 2
       const { data: chatData, error: chatError } = await supabase
         .from('chats')
         .select('user1_id, user2_id')
@@ -198,7 +193,6 @@ import {
       } else {
         const isUser1 = chatData.user1_id === user.id;
     
-        // עדכון שדות הקריאה: שולח = true, מקבל = false
         const updates = isUser1
           ? { user1_read: true, user2_read: false }
           : { user2_read: true, user1_read: false };
@@ -213,7 +207,6 @@ import {
         }
       }
     
-      // עדכון ההודעות במסך
       setMessages((prev) => [...prev, messageData]);
       setMessageText('');
     };
@@ -331,13 +324,7 @@ import {
       const goBack = () => {
         router.replace('/chats?refresh=true');
       };  
-    if (!chatObj || !user) {
-        return (
-          <ScreenWrapper bg="black">
-            <Text style={{ color: 'white', textAlign: 'center', marginTop: hp(10) }}>טוען...</Text>
-          </ScreenWrapper>
-        );
-      }
+    
       useEffect(() => {
         if (!chatObj?.id) return;
       
@@ -410,30 +397,46 @@ import {
   <FlatList
   ref={flatListRef}
   data={messages}
-  keyExtractor={(item, index) => `${item.id || item.created_at}-${index}`}  renderItem={({ item }) => {
+  keyExtractor={(item, index) => `${item.id || item.created_at}-${index}`} 
+  renderItem={({ item }) => {
     const isMine = item.sender_id === user.id;
-
+  
+    const bubbleStyle =
+      item.message_type === 'image'
+        ? isMine
+          ? styles.imageBubbleMine
+          : styles.imageBubbleOther
+        : isMine
+          ? styles.messageBubbleMine
+          : styles.messageBubbleOther;
+  
+    const renderMessageContent = () => {
+      if (item.message_type === 'image') {
+        return (
+          <Image
+            source={{ uri: item.content }}
+            style={{
+              width: 250,
+              height: 370,
+              borderRadius: 20,
+            }}
+            resizeMode="cover"
+          />
+        );
+      }
+  
+      if (typeof item.content === 'string' || typeof item.content === 'number') {
+        return <Text style={styles.messageText}>{item.content}</Text>;
+      }
+  
+      return <Text style={styles.messageText}>[תוכן לא זמין]</Text>;
+    };
+  
     return (
-          <View style={
-            item.message_type === 'image'
-              ? (isMine ? styles.imageBubbleMine : styles.imageBubbleOther)
-              : (isMine ? styles.messageBubbleMine : styles.messageBubbleOther)
-          }>        {item.message_type === 'image' ? (
-              <Image
-                source={{ uri: item.content }}
-                style={{
-                  width: 250,
-                  height: 370,
-                  borderRadius: 20,
-                }}
-                resizeMode="cover"
-              />
-            ) : (
-      <Text style={styles.messageText}>{String(item.content)}</Text>  
-      )}
+      <View style={bubbleStyle}>
+        {renderMessageContent()}
       </View>
     );
-    
   }}
   contentContainerStyle={{
     flexGrow: 1,
@@ -445,7 +448,6 @@ import {
   showsVerticalScrollIndicator={false}
 />
  <View style={styles.inputContainer}>
-  {/* כפתור הפלוס - בצד שמאל */}
   <TouchableOpacity onPress={toggleModal} style={styles.plusButton}>
     <MaterialCommunityIcons name="plus" size={28} color="white" />
   </TouchableOpacity>
@@ -456,13 +458,8 @@ import {
     placeholder="כתוב הודעה..."
     style={[styles.input, { color: theme.colors.textSecondary }]}
     />
-  <TouchableOpacity onPress={sendMessage} disabled={!messageText.trim()}>
-    <Animated.Text style={[styles.sendButtonText, { color: animatedSendColor }]}>
-      שלח
-    </Animated.Text>
-  </TouchableOpacity>
+  
 
-  {/* כפתור השליחה - בצד ימין */}
   <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
     <MaterialCommunityIcons name="send" size={24} color="white" />
   </TouchableOpacity>
@@ -493,6 +490,7 @@ import {
         shadowOpacity: 0.2,
         shadowRadius: 4,
         elevation: 5,
+        marginTop: -50,
       },
     backButton: {
       marginLeft: wp(3),
@@ -634,7 +632,7 @@ import {
         alignItems: 'center',
       },
       plusButton: {
-        padding: 10, // או כל ערך מתאים
+        padding: 10,
         backgroundColor: '#2c2c2e',
         borderRadius: 20,
       },

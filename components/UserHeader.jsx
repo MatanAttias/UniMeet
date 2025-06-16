@@ -1,4 +1,3 @@
-// components/UserHeader.jsx
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
@@ -14,7 +13,7 @@ export default function UserHeader({ user, router, onLogout }) {
   const [sound, setSound] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackStatus, setPlaybackStatus] = useState(null);
-  const isCurrentUser = !!onLogout; // או prop אחר אם יש
+  const isCurrentUser = !!onLogout; 
   useEffect(() => {
     return () => {
       if (sound) sound.unloadAsync();
@@ -71,7 +70,6 @@ export default function UserHeader({ user, router, onLogout }) {
 
   return (
     <View style={styles.wrapper}>
-      {/* כותרת + עריכה */}
       <View style={styles.headerRow}>
   <Text style={styles.screenTitle}>
     {isCurrentUser ? 'הפרופיל שלי' : user.name}
@@ -132,7 +130,6 @@ export default function UserHeader({ user, router, onLogout }) {
       {renderTagList('זהויות', user.identities)}
       {renderTagList('צרכים', user.supportNeeds)}
 
-      {/* Audio */}
       {user.audio && (
         <View style={styles.audioContainer}>
           <Pressable style={styles.audioBtn} onPress={playSound}>

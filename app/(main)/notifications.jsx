@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.semibold,
   },
   listStyle: {
-    paddingTop: hp(2), // הקטנתי מ-hp(12) ל-hp(2) כדי שיהיה יותר למעלה
+    paddingTop: hp(2), 
     paddingBottom: hp(5),
     gap: hp(1),
     flexGrow: 1,

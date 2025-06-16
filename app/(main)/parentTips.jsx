@@ -12,39 +12,28 @@ import { supabase } from '../../lib/supabase';
 import { PARENT_TIPS_SYSTEM_PROMPT, createAgeAppropriateUserMessage } from '../../constants/prompts';
 import { saveParentTip, unsaveParentTip, isParentTipSaved } from '../../services/PostService';
 
-// רשימה מורחבת של מונחי מוגבלות לולידציה
 const disabilityTerms = [
-  // מונחים כלליים
   'מוגבלות', 'נכות', 'צרכים מיוחדים', 'התפתחותי', 'קוגניטיבי',
   
-  // מוגבלויות שכליות וקוגניטיביות
   'שכלית התפתחותית', 'למידה', 'דיסלקסיה', 'ADHD', 'קשב וריכוז', 'זיכרון',
   
-  // תסמונות נפוצות
   'דאון', 'אוטיזם', 'אספרגר', 'ספקטרום אוטיסטי',
   
-  // מוגבלויות פיזיות
   'שיתוק מוחין', 'ספינה ביפידה', 'שרירי', 'תנועתי', 'ניידות',
   
-  // מוגבלויות חושיות
   'עיוורון', 'לקות ראיה', 'חירשות', 'כבדות שמיעה', 'עיבוד חושי',
   
-  // מוגבלויות נפשיות
   'דיכאון', 'חרדה', 'דו קוטבי', 'PTSD',
   
-  // תקשורת
   'תקשורת', 'דיבור', 'שפה', 'גמגום',
   
-  // מונחי תמיכה
   'תמיכה', 'נגישות', 'התאמות', 'ליווי', 'עצמאות', 'תפקוד יומיומי'
 ];
 
-// פונקציה לולידציה קלינית
 const validateClinicalContent = (tips) => {
   const validationErrors = [];
 
   tips.forEach((tip, index) => {
-    // בדיקה - האם יש לפחות מונח אחד רלוונטי
     const hasDisabilityContext = disabilityTerms.some(term => 
       tip.content.includes(term) || tip.example.includes(term) || tip.practicalSteps.includes(term)
     );
@@ -53,7 +42,6 @@ const validateClinicalContent = (tips) => {
       validationErrors.push(`טיפ ${index + 1}: חסר הקשר למוגבלות`);
     }
 
-    // בדיקות בסיסיות נוספות
     if (!tip.scientificBasis || tip.scientificBasis.length < 20) {
       validationErrors.push(`טיפ ${index + 1}: חסר בסיס מדעי`);
     }
@@ -82,7 +70,6 @@ const TIP_CATEGORIES = [
   { id: 'self_care', title: 'טיפול עצמי להורים', icon: 'heart', color: '#FF6B9D', description: 'שמירה על הבריאות הנפשית שלכם' },
 ];
 
-// פונקציות עזר
 const parseJsonField = (value) => {
   if (!value) return [];
   if (typeof value === 'string') {
@@ -124,7 +111,7 @@ const ParentTips = () => {
   const [checkingTipStatus, setCheckingTipStatus] = useState(false);
 
 
-  const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 שעות
+  const CACHE_DURATION = 24 * 60 * 60 * 1000; 
 
   useEffect(() => {
   console.log('🔍 Debug - ParentTips state:');
@@ -136,25 +123,21 @@ const ParentTips = () => {
 }, [isTipsCacheLoaded, parentTipsCache, tips.length, user?.identities]);
 
 
-  // הוספת debug console.log
   useEffect(() => {
     console.log('🔍 Current tips state:', tips);
     console.log('🔍 Selected category:', selectedCategory);
     console.log('🔍 Filtered tips count:', filteredTips.length);
   }, [tips, selectedCategory]);
 
-  // שליפת נתונים מלאים מהטבלה
   useEffect(() => {
     const fetchCompleteUserData = async () => {
       if (!user?.id) return;
-      console.log('🔍 Fetching complete user data...');
       const { data, error } = await supabase
         .from('users')
         .select('identities, supportNeeds, birth_date, gender')
         .eq('id', user.id)
         .single();
       if (data && !error) {
-        console.log('✅ Complete user data fetched:', data);
         setUserData({ ...user, ...data });
       } else {
         console.error('❌ Error fetching user data:', error);
@@ -178,12 +161,10 @@ const ParentTips = () => {
   const now = Date.now();
   const currentProfileHash = generateProfileHash();
   
-  // בדוק קאש עם validation מלא
   const { tips: cachedTips, lastFetchTime: cachedTime, profileHash } = parentTipsCache;
   const isCacheFresh = cachedTime && (now - cachedTime) <= CACHE_DURATION;
   const isSameProfile = profileHash === currentProfileHash;
   
-  // רק אם הקאש טרי **וגם** הפרופיל זהה
   if (cachedTips.length > 0 && isCacheFresh && isSameProfile) {
     console.log('⚡ Using cached tips - profile and time match perfectly');
     setTips(cachedTips);
@@ -192,13 +173,11 @@ const ParentTips = () => {
     return;
   }
 
-  // 🛡️ מניעת קריאות כפולות
   if (isFetching) {
     console.log('⏳ Already fetching tips, skipping duplicate request');
     return;
   }
   
-  // אחרת - טען טיפים חדשים
   if (!isSameProfile) {
     console.log('🔄 Profile changed, fetching new tips');
   } else {
@@ -214,18 +193,15 @@ const ParentTips = () => {
 useEffect(() => {
   if (!isTipsCacheLoaded) return;
 
-  // בדיקה זהירה של קאש עם פרופיל
   const { tips: cachedTips, lastFetchTime: cachedTime, profileHash } = parentTipsCache;
   const now = Date.now();
   const isFresh = cachedTime && (now - cachedTime) <= CACHE_DURATION;
   
   
-  // פתרון: אם יש קאש טרי, בדוק אם הפרופיל הבסיסי תואם
   const basicUserId = user?.id;
   const cachedUserId = profileHash ? JSON.parse(profileHash)?.userId : null;
   
   if (cachedTips.length > 0 && isFresh) {
-    // אם יש קאש טרי, בדוק לפחות שזה אותו משתמש
     if (basicUserId && cachedUserId && basicUserId === cachedUserId) {
       console.log('⚡ Loading cached tips - same user, fresh cache');
       setTips(cachedTips);
@@ -233,7 +209,6 @@ useEffect(() => {
       setUserProfileHash(profileHash);
       return;
     } else if (!basicUserId) {
-      // משתמש עדיין נטען - חכה קצת
       console.log('⏳ User still loading, waiting...');
       return;
     } else {
@@ -241,7 +216,6 @@ useEffect(() => {
     }
   }
 
-  // אם אין קאש טרי או משתמש שונה - המתן לנתוני משתמש מלאים
   const identities = parseJsonField(user?.identities);
   const supportNeeds = parseJsonField(user?.supportNeeds);
   
@@ -260,7 +234,6 @@ useEffect(() => {
 
 
 const fetchTipsFromAI = async () => {
-  // בדיקה אם כבר טוענים
   if (isFetching) {
     console.log('⏳ Fetch already in progress, skipping');
     return;
@@ -268,9 +241,8 @@ const fetchTipsFromAI = async () => {
 
   try {
     setLoading(true);
-    setIsFetching(true); // 🔒 נעל fetch
+    setIsFetching(true); 
 
-    // בניית פרופיל המשתמש עם בדיקות
     const userProfile = {
       identities: parseJsonField(user?.identities) || [],
       supportNeeds: parseJsonField(user?.supportNeeds) || [],
@@ -278,21 +250,17 @@ const fetchTipsFromAI = async () => {
       gender: user?.gender || 'לא צוין',
     };
 
-    // חשב hash של הפרופיל כדי לשמור בקאש
     const currentProfileHash = generateProfileHash();
 
     console.log('User profile for tips:', userProfile);
 
-    // בדיקה שה-prompt קיים
     if (!PARENT_TIPS_SYSTEM_PROMPT) {
       console.error('PARENT_TIPS_SYSTEM_PROMPT is missing!');
       throw new Error('System prompt is missing');
     }
 
-    // שימוש בפונקציה החדשה ליצירת הודעת משתמש מותאמת גיל
     const userMessage = createAgeAppropriateUserMessage(userProfile);
 
-    // הכנת ההודעות
     const messages = [
       { role: 'system', content: PARENT_TIPS_SYSTEM_PROMPT },
       { role: 'user',   content: userMessage }
@@ -300,7 +268,6 @@ const fetchTipsFromAI = async () => {
 
     console.log('Sending messages to OpenAI:', messages);
 
-    // קריאה ל-API
     const aiResponse = await sendToChat(messages, {
       model: 'gpt-4o-mini',
       max_tokens: 5500,
@@ -314,11 +281,9 @@ const fetchTipsFromAI = async () => {
       throw new Error('AI returned empty response');
     }
 
-    // ניתוח התשובה
     const parsed = parseAIResponse(aiResponse.content);
     console.log('✅ Parsed AI response:', parsed);
 
-    // עיבוד הטיפים
     const formattedTips = parsed.tips.map((tip, index) => ({
       id:                tip.id || (index + 1).toString(),
       category:          tip.category,
@@ -339,7 +304,6 @@ const fetchTipsFromAI = async () => {
       createdAt:         new Date().toISOString(),
     }));
 
-    // וידוא שיש 6 טיפים
     if (formattedTips.length < 6) {
       console.warn(`Received only ${formattedTips.length} tips instead of 6`);
       const fallbackTips = generateFallbackTips(
@@ -351,13 +315,11 @@ const fetchTipsFromAI = async () => {
       );
     }
 
-    // עדכון ה-state המקומי
     const now = Date.now();
     setTips(formattedTips);
     setLastFetchTime(now);
     setUserProfileHash(currentProfileHash);
 
-    // **שמירה ב־AuthContext וב־AsyncStorage**
     updateParentTipsCache({
       tips:           formattedTips,
       lastFetchTime:  now,
@@ -370,7 +332,6 @@ const fetchTipsFromAI = async () => {
     console.error('Error fetching tips:', err);
     console.error('Error details:', err.message);
 
-    // טעינת טיפים מקומיים במקרה של שגיאה
     const fallbackTips = generateFallbackTips(
       parseJsonField(user?.identities) || [],
       parseJsonField(user?.supportNeeds) || []
@@ -391,14 +352,13 @@ const fetchTipsFromAI = async () => {
     );
   } finally {
     setLoading(false);
-    setIsFetching(false); // 🔓 שחרר fetch
+    setIsFetching(false); 
   }
 };
 
 const parseAIResponse = (rawResponse) => {
   console.log('🏥 Parsing clinical response...');
 
-  // 1. וידוא טיפוס
   if (typeof rawResponse !== 'string') {
     console.error('Unexpected type for AI response:', typeof rawResponse);
     return { tips: [] };
@@ -406,17 +366,14 @@ const parseAIResponse = (rawResponse) => {
 
   let cleaned = rawResponse.trim();
 
-  // 2. הסרת markdown code blocks
   cleaned = cleaned.replace(/```json\s*/g, '').replace(/```\s*/g, '');
   
-  // 3. ניקוי בסיסי: BOM, תווי בקרה
   cleaned = cleaned
     .replace(/^\uFEFF/, '')
     .replace(/[\u0000-\u001F\u007F-\u009F]/g, ' ')
     .replace(/\s{2,}/g, ' ')
     .trim();
 
-  // 4. חיפוש גבולות JSON
   const firstBrace = cleaned.indexOf('{');
   const lastBrace = cleaned.lastIndexOf('}');
   
@@ -427,18 +384,15 @@ const parseAIResponse = (rawResponse) => {
 
   let jsonString = cleaned.slice(firstBrace, lastBrace + 1);
 
-  // 5. תיקונים זהירים בלבד
   jsonString = jsonString
-    .replace(/,(\s*[}\]])/g, '$1')  // הסרת פסיקים עודפים לפני סגירה
-    .replace(/([}\]])(\s*)([{[])/g, '$1,$2$3');  // הוספת פסיקים בין אובייקטים
+    .replace(/,(\s*[}\]])/g, '$1') 
+    .replace(/([}\]])(\s*)([{[])/g, '$1,$2$3');  
 
-  // 6. בדיקת איזון סוגריים
   const openBraces = (jsonString.match(/{/g) || []).length;
   const closeBraces = (jsonString.match(/}/g) || []).length;
   const openBrackets = (jsonString.match(/\[/g) || []).length;
   const closeBrackets = (jsonString.match(/]/g) || []).length;
 
-  // תיקון איזון אם נחוץ
   if (closeBraces < openBraces) {
     jsonString += '}'.repeat(openBraces - closeBraces);
   }
@@ -448,7 +402,6 @@ const parseAIResponse = (rawResponse) => {
 
   console.log('Cleaned JSON string (first 300 chars):', jsonString.substring(0, 300) + '...');
 
-  // 7. ניסיון parsing
   try {
     const parsed = JSON.parse(jsonString);
     
@@ -470,7 +423,6 @@ const parseAIResponse = (rawResponse) => {
   }
 };
 
-// פונקציה עזר לולידציה
 const validateAndReturn = (parsed) => {
   if (parsed.tips && parsed.tips.length > 0) {
     const validationErrors = validateClinicalContent(parsed.tips);
@@ -478,7 +430,6 @@ const validateAndReturn = (parsed) => {
     if (validationErrors.length > 0) {
       console.warn('⚠️ Clinical validation issues:', validationErrors);
       
-      // אם יש יותר מ-3 שגיאות, דחה את התגובה
       if (validationErrors.length > 3) {
         console.error('❌ Too many validation errors, using fallback');
         return { tips: [] };
@@ -570,7 +521,6 @@ const validateAndReturn = (parsed) => {
     ];
   };
 
-  // חישוב הטיפים המסוננים לפי קטגוריה בלבד
   const filteredTips = tips.filter((tip) => {
     if (!tip) return false;
     return selectedCategory === 'all' || tip.category === selectedCategory;
@@ -695,11 +645,9 @@ const validateAndReturn = (parsed) => {
               setRefreshing(true);
               console.log('🔄 Manual refresh triggered');
               
-              // נקה state מקומי כדי לאלץ טעינה מחדש
               setTips([]);
               setLastFetchTime(null);
               
-              // בדוק קאש או טען מחדש
               await new Promise(resolve => {
                 checkAndFetchTips();
                 setTimeout(resolve, 500);
@@ -786,7 +734,6 @@ const validateAndReturn = (parsed) => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
-            {/* Header עם גרדיאנט */}
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderContent}>
                 <View style={styles.categoryIconLarge}>
@@ -806,20 +753,17 @@ const validateAndReturn = (parsed) => {
               </View>
             </View>
 
-            {/* תוכן הטיפ בתוך ScrollView */}
             <ScrollView 
               style={styles.modalContentScrollView} 
               contentContainerStyle={styles.modalContentContainer}
               showsVerticalScrollIndicator={false}
             >
-              {/* סיכום */}
               {selectedTip?.summary && (
                 <View style={styles.modalSection}>
                   <Text style={styles.modalSummary}>{selectedTip.summary}</Text>
                 </View>
               )}
 
-              {/* תוכן עיקרי */}
               {selectedTip?.content && (
                 <View style={styles.modalSection}>
                   <View style={styles.sectionHeader}>
@@ -830,7 +774,6 @@ const validateAndReturn = (parsed) => {
                 </View>
               )}
 
-              {/* צעדים מעשיים */}
               {selectedTip?.practicalSteps && (
                 <View style={styles.modalSection}>
                   <View style={styles.sectionHeader}>
@@ -850,7 +793,6 @@ const validateAndReturn = (parsed) => {
                 </View>
               )}
 
-              {/* דוגמה */}
               {selectedTip?.example && (
                 <View style={styles.modalSection}>
                   <View style={styles.sectionHeader}>
@@ -863,7 +805,6 @@ const validateAndReturn = (parsed) => {
                 </View>
               )}
 
-              {/* טעויות נפוצות */}
               {selectedTip?.commonMistakes && (
                 <View style={styles.modalSection}>
                   <View style={styles.sectionHeader}>
@@ -876,7 +817,6 @@ const validateAndReturn = (parsed) => {
                 </View>
               )}
 
-              {/* בסיס מדעי */}
               {selectedTip?.scientificBasis && (
                 <View style={styles.modalSection}>
                   <View style={styles.sectionHeader}>
@@ -887,7 +827,6 @@ const validateAndReturn = (parsed) => {
                 </View>
               )}
 
-              {/* פוטר עם פרטי המחבר */}
               <View style={styles.modalFooter}>
                 <View style={styles.authorSection}>
                   <MaterialCommunityIcons name="account-tie" size={20} color={theme.colors.textLight} />
@@ -900,7 +839,6 @@ const validateAndReturn = (parsed) => {
               </View>
             </ScrollView>
 
-            {/* כפתורי פעולה */}
             <View style={styles.modalActions}>
               <Pressable
                 style={[styles.actionButton, styles.bookmarkButton]}

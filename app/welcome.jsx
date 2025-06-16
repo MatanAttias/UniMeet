@@ -159,9 +159,8 @@ const styles = StyleSheet.create({
     fontSize: hp(1.6),
     marginBottom: 30,
   },
-  // 🛠️ סטיילים לכפתורי הניפוי
   debugContainer: {
-    backgroundColor: 'rgba(228, 113, 163, 0.2)', // צבע primary שקוף
+    backgroundColor: 'rgba(228, 113, 163, 0.2)', 
     borderRadius: 10,
     padding: 15,
     marginVertical: 10,

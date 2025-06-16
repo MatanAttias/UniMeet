@@ -10,8 +10,8 @@ const PassSignUp = () => {
   const router = useRouter();
   const { fullName, email, role } = useLocalSearchParams();
 
-  const [password, setPassword] = useState(''); // שינוי מ-useRef ל-useState
-  const [confirmPassword, setConfirmPassword] = useState(''); // שינוי מ-useRef ל-useState
+  const [password, setPassword] = useState(''); 
+  const [confirmPassword, setConfirmPassword] = useState(''); 
   const [loading, setLoading] = useState(false);
 
   const goToPreviousStep = () => {
@@ -21,7 +21,6 @@ const PassSignUp = () => {
   const goToNextStep = () => {
     console.log('password:', password);
 
-    // משתמשים בערכים ישירות מה-state במקום מה-ref
     const trimmedPassword = password.trim();
     const trimmedConfirm = confirmPassword.trim();
 
@@ -37,13 +36,12 @@ const PassSignUp = () => {
       return Alert.alert('שגיאה', 'הסיסמאות לא תואמות');
     }
 
-    // מעבר לדף הבא עם כל הפרמטרים
     router.push({
       pathname: '/signUp/birthSignUp',
       params: { 
         fullName, 
         email, 
-        password: trimmedPassword, // שימוש בערך מה-state
+        password: trimmedPassword, 
         role,
       },
     });
@@ -62,21 +60,21 @@ const PassSignUp = () => {
         <Input
           placeholder="סיסמה..."
           secureTextEntry
-          onChangeText={(text) => setPassword(text)} // שימוש ב-setState במקום ref
+          onChangeText={(text) => setPassword(text)} 
           containerStyle={styles.inputContainer}
           inputStyle={styles.inputText}
           placeholderTextColor="gray"
-          value={password} // הוספת ערך מקושר ל-state
+          value={password} 
         />
 
         <Input
           placeholder="אימות סיסמה..."
           secureTextEntry
-          onChangeText={(text) => setConfirmPassword(text)} // שימוש ב-setState במקום ref
+          onChangeText={(text) => setConfirmPassword(text)} 
           containerStyle={styles.inputContainer}
           inputStyle={styles.inputText}
           placeholderTextColor="gray"
-          value={confirmPassword} // הוספת ערך מקושר ל-state
+          value={confirmPassword} 
         />
       </View>
 
