@@ -45,7 +45,6 @@ const SupportNeeds = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
 
-  // initialize animated values once
   const animationRefs = useRef(
     SUPPORT_NEEDS.reduce((acc, need) => {
       acc[need] = new Animated.Value(1);

@@ -24,7 +24,6 @@ const PostDetails = () => {
   const [startLoading, setStartLoading] = useState(true);
   const [loading, setLoading] = useState(false);
 
-  // Fetch post details once
   const getPostDetails = async () => {
     const res = await fetchPostDetails(postId);
     if (res.success) {
@@ -33,7 +32,6 @@ const PostDetails = () => {
     setStartLoading(false);
   };
 
-  // Handle new comments via realtime
   const handleNewComment = async ({ new: newCommentRaw }) => {
     if (!newCommentRaw) return;
     const newComment = { ...newCommentRaw };
@@ -45,7 +43,6 @@ const PostDetails = () => {
 
   useEffect(() => {
     getPostDetails();
-    // subscribe to new comments
     const channel = supabase
       .channel(`comments_post_details_${postId}`)
       .on(
@@ -57,7 +54,6 @@ const PostDetails = () => {
         if (error) console.error('Comments channel error', error);
         else console.log('Comments channel status', status);
       });
-    // polling fallback every 5s
     const polling = setInterval(async () => {
       const res = await fetchPostDetails(postId);
       if (res.success) {
@@ -81,7 +77,6 @@ const PostDetails = () => {
     const res = await createComment(data);
     setLoading(false);
     if (res.success) {
-      // append locally
       const appended = { ...res.data, user, created_at: res.data.created_at || new Date().toISOString() };
       setPost(prev => prev ? { ...prev, comments: [appended, ...prev.comments] } : prev);
       if (user.id !== post.userId) {
@@ -174,7 +169,7 @@ export default PostDetails;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#111111', // רקע בהיר לאזור התגובה
+        backgroundColor: '#111111', 
         marginTop: 100,
       },
       inputContainer: {
@@ -183,17 +178,17 @@ const styles = StyleSheet.create({
         gap: wp(2),
         paddingHorizontal: wp(4),
         paddingVertical: hp(2),
-        backgroundColor: '#4A4A4A', // אפור עכבר כהה ונעים
-        borderRadius: 12, // עיגול פינות למראה עדין
-        shadowColor: '#000', // צל שחור
+        backgroundColor: '#4A4A4A', 
+        borderRadius: 12, 
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.3,
         shadowRadius: 5,
-        elevation: 6, // עבור אנדרואיד
+        elevation: 6, 
       },
     list: {
         paddingHorizontal: wp(4),
-        paddingBottom: hp(20), // רווח גדול יותר בתחתית
+        paddingBottom: hp(20), 
         
         
         
@@ -205,9 +200,9 @@ const styles = StyleSheet.create({
       paddingHorizontal: wp(4),
       paddingVertical: hp(1.5),
       borderWidth: 1.5,
-      borderColor: theme.colors.primary, // צבע המסגרת
-      backgroundColor: '#1a1a1a', // רקע כהה
-      color: theme.colors.textPrimary, // צבע טקסט לבן/בהיר
+      borderColor: theme.colors.primary, 
+      color: theme.colors.textPrimary,
+      backgroundColor: '#1a1a1a', 
       fontSize: hp(2),
       lineHeight: hp(2.5),
   },

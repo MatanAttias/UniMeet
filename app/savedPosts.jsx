@@ -13,7 +13,7 @@ import Loading from '../components/Loading';
 export default function SavedPosts() {
   const { user } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('posts'); // 'posts' or 'tips'
+  const [activeTab, setActiveTab] = useState('posts');
   const [posts, setPosts] = useState([]);
   const [tips, setTips] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -77,7 +77,6 @@ export default function SavedPosts() {
         <Pressable 
           style={styles.readMoreButton}
           onPress={() => {
-            // פתח את הטיפ המלא או חזור לדף הטיפים
             router.push('/parentTips');
           }}
         >

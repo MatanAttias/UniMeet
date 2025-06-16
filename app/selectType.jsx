@@ -22,12 +22,10 @@ export default function SelectType() {
 
   return (
     <View style={styles.safe}>
-      {/* כפתור חזור */}
       <Pressable style={styles.backToWelcomeButton} onPress={handleBack}>
         <Text style={styles.backToWelcomeText}>חזור</Text>
       </Pressable>
 
-      {/* תוכן מרכזי כולל כפתורים */}
       <View style={styles.container}>
         <Text style={styles.title}>איך נרצה להכיר אותך?</Text>
 
@@ -87,7 +85,7 @@ const styles = StyleSheet.create({
     fontSize: hp(2.3),
     fontWeight: theme.fonts.semibold,
     textAlign: 'center',
-    flexShrink: 1, // מונע חיתוך של טקסט
+    flexShrink: 1, 
   },
   backToWelcomeButton: {
     position: 'absolute',

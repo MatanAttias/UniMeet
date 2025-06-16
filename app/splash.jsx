@@ -13,7 +13,7 @@ const SplashScreen = () => {
 
   useEffect(() => {
     const hide = async () => {
-      await SplashScreen.hideAsync(); // ✅ הסתרת ה־Splash ה־native ברגע שהמסך שלך מוכן
+      await SplashScreen.hideAsync(); 
     };
   
     hide();
@@ -26,10 +26,8 @@ const SplashScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* ניצוצות רקע */}
       <Sparkle />
 
-      {/* כותרת אנימטיבית */}
       <MotiText
         from={{ opacity: 0, translateY: 40, scale: 0.9 }}
         animate={{ opacity: 1, translateY: 0, scale: 1 }}
@@ -39,7 +37,6 @@ const SplashScreen = () => {
         UniMeet
       </MotiText>
 
-      {/* משפט צבעוני + אפקטים */}
       <MotiText
         style={styles.subtitle}
         from={{ opacity: 0, scale: 0.8, translateY: 30 }}
@@ -110,7 +107,7 @@ const Sparkle = () => {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#1c1c1e', // סגלגל כהה
+      backgroundColor: '#1c1c1e', 
       justifyContent: 'center',
       alignItems: 'center',
     },

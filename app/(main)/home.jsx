@@ -48,7 +48,6 @@ export default function Home() {
       setPosts([]);
       setHasMore(true);
   
-      // טען את המשתמש
       const fetchUserData = async () => {
         setLoading(true);
         const { data, error } = await supabase
@@ -71,10 +70,10 @@ export default function Home() {
       }
   
       return () => {
-        // ניקוי אופציונלי
       };
     }, [user?.id])
   );
+
   useEffect(() => {
 
     if (!user?.id || subscriptionsRef.current[user.id]) return;
@@ -258,6 +257,9 @@ export default function Home() {
       <View style={styles.tabsContainer}>
         <Pressable style={[styles.tab, selectedTab === 'home' && styles.tabActive]} onPress={() => setSelectedTab('home')}>
           <Text style={[styles.tabText, selectedTab === 'home' && styles.tabTextActive]}>דף הבית</Text>
+        </Pressable>
+        <Pressable style={[styles.tab, selectedTab === 'matches' && styles.tabActive]} onPress={() => setSelectedTab('matches')}>
+          <Text style={[styles.tabText, selectedTab === 'matches' && styles.tabTextActive]}>התאמות</Text>
         </Pressable>
         
         {/* Tab נוסף להורים */}

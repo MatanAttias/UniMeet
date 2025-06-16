@@ -30,13 +30,11 @@ const EmailSignUp = () => {
     return Alert.alert('שגיאה', 'אנא הכנס אימייל');
   }
 
-  // ולידציה פשוטה לאימייל (פשוט regex בסיסי)
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return Alert.alert('שגיאה', 'אנא הכנס כתובת אימייל חוקית');
   }
 
-  // אם הכל טוב, ממשיכים
   router.push({
     pathname: '/signUp/passSignUp',
     params: { email, fullName, role },

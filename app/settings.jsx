@@ -46,7 +46,6 @@ const Settings = () => {
       return Alert.alert('שגיאה', 'סיסמה נוכחית שגויה');
     }
 
-    // עדכון סיסמה
     const { error } = await supabase.auth.updateUser({
       password: newPassword,
     });
@@ -63,7 +62,7 @@ const Settings = () => {
   };
 
   const handleChangeEmail = async () => {
-    const cleanEmail = email.trim(); // אפשר לשמור הכל - גם מיילים לא תקינים
+    const cleanEmail = email.trim(); 
   
     if (!cleanEmail || cleanEmail === user.email) {
       return Alert.alert('שגיאה', 'אנא הזן אימייל חדש ושונה');
@@ -74,7 +73,7 @@ const Settings = () => {
     const { data, error } = await supabase
       .from('users')
       .update({ email: cleanEmail })
-      .eq('id', user.id); // או 'user_id' לפי מבנה הטבלה שלך
+      .eq('id', user.id);
   
     setLoading(false);
   
@@ -164,7 +163,7 @@ export default Settings;
 const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.colors.background, // רקע כללי נעים
+      backgroundColor: theme.colors.background,
       padding: wp(5),
       justifyContent: 'center',
       marginTop: -30,

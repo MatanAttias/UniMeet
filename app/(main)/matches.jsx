@@ -73,7 +73,7 @@ export default function Matches() {
     translateX.value = 0;
     opacity.value = 1;
     setIndex((prev) => prev + 1);
-    setShowFullProfile(false); // חזרה לתצוגת תמונה במשתמש הבא
+    setShowFullProfile(false); 
   };
 
   const animateAndNext = () => {
@@ -83,7 +83,6 @@ export default function Matches() {
     });
   };
 
-  // פונקציה לניווט לצ'אט עם הנתונים הנכונים
   const navigateToChat = (chatId, targetUser) => {
     console.log('🚀 Navigating to chat:', { chatId, userName: targetUser.name });
     
@@ -156,7 +155,6 @@ export default function Matches() {
     try {
       const result = await friendUser(user.id, current.id);
       if (result?.success && result?.chatId) {
-        // Immediate friendship match → open chat
         Alert.alert(
           '👫 חברות נוצרה!',
           `נוצרה חברות עם ${current.name}!\nרוצה לפתוח את הצ'אט?`,
@@ -173,7 +171,6 @@ export default function Matches() {
           ]
         );
       } else {
-        // Interaction recorded, no match yet
         animateAndNext();
       }
     } catch (error) {
@@ -189,7 +186,6 @@ export default function Matches() {
     try {
       const result = await likeUser(user.id, current.id);
       if (result?.matched && result?.chatId) {
-        // Romantic match → open chat
         Alert.alert(
           '🎉 זה התאמה!',
           `יצרת התאמה עם ${current.name}!\nרוצה לפתוח את הצ'אט?`,
@@ -206,7 +202,6 @@ export default function Matches() {
           ]
         );
       } else {
-        // Like recorded, no match yet
         animateAndNext();
       }
     } catch (error) {
@@ -261,7 +256,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: wp(2),
     marginTop: -700,
-    direction: I18nManager.isRTL ? 'rtl' : 'ltr', // תמיכה בכיוון עברי
+    direction: I18nManager.isRTL ? 'rtl' : 'ltr', 
 
   },
   center: {

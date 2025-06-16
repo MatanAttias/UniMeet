@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext'; // עדכן את הנתיב לפי מיקום הקובץ האמיתי
+import { useAuth } from '../../contexts/AuthContext'; 
 import { uploadAudioFile } from '../../services/audioServices';
 import {
   View,
@@ -141,8 +141,7 @@ export default function RecordPrompt() {
     }
   };
 
-  const { setUserData } = useAuth(); // הוסף את זה בתוך הקומפוננטה
-
+  const { setUserData } = useAuth(); 
   const saveAndContinue = async () => {
     
     if (!recordedUri) return;
@@ -153,10 +152,8 @@ export default function RecordPrompt() {
       if (result.success) {
         const publicUrl = result.data;
   
-        // 👇 כאן אתה שומר את הקישור של האודיו לזיכרון (Context)
         setUserData({ audioUrl: publicUrl });
   
-        // ממשיכים לדף הבא
         router.push({
           pathname: '/signUp/status',
           params: {
@@ -180,7 +177,7 @@ export default function RecordPrompt() {
             supportNeeds,
             showSupportNeeds,
             introduction,
-            audio: publicUrl, // 👈 גם כאן תעביר את הקישור האמיתי
+            audio: publicUrl, 
             prompt,
           },
         });

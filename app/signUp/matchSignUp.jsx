@@ -47,7 +47,7 @@ const MatchSignUp = () => {
         image,
         wantsNotificationsBool,
         location,
-        preferredMatch, // העברה נכונה
+        preferredMatch, 
         role,
       },
     });

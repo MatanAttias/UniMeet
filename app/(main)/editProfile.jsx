@@ -77,14 +77,12 @@ export default function EditProfile() {
   useEffect(() => {
     if (!currentUser) return;
   
-    // ממיר connectionTypes מ"string" למערך
     const connectionTypesArray = typeof currentUser.connectionTypes === 'string'
       ? currentUser.connectionTypes.split(',').map(s => s.trim())
       : Array.isArray(currentUser.connectionTypes)
         ? currentUser.connectionTypes
         : [];
   
-    // ממיר hobbies מ"string" למערך
     const hobbiesArray = typeof currentUser.hobbies === 'string'
       ? currentUser.hobbies.split(',').map(s => s.trim())
       : Array.isArray(currentUser.hobbies)
@@ -310,13 +308,11 @@ const filteredSupportNeeds = SUPPORT_NEEDS.filter(need =>
       
   
     if (Array.isArray(raw)) {
-      // פורמט תקין - מערך
       setConnectionTypes(raw);
       return;
     }
   
     if (typeof raw === 'string') {
-      // מנסה לפרש כ-JSON (אם זה נראה כמו ["..."])
       if (raw.trim().startsWith('[')) {
         try {
           const parsed = JSON.parse(raw);
@@ -329,13 +325,11 @@ const filteredSupportNeeds = SUPPORT_NEEDS.filter(need =>
         }
       }
   
-      // פיצול לפי פסיקים - הפורמט המועדף
       const values = raw.split(',').map(s => s.trim()).filter(Boolean);
       setConnectionTypes(values);
       return;
     }
   
-    // אם כל השאר לא עבד - נשתמש בערך ריק
     setConnectionTypes([]);
   }, [currentUser]);
   
@@ -347,9 +341,9 @@ const filteredSupportNeeds = SUPPORT_NEEDS.filter(need =>
     setLoading(true);
     try {
       const connectionTypesString = form.connectionTypes
-         .map(type => type.trim())         // מסיר רווחים מיותרים
-        .filter(type => type !== '')      // מסנן ערכים ריקים
-        .join(',');                       // יוצר את המחרוזת בלי פסיק מיותר
+         .map(type => type.trim())         
+        .filter(type => type !== '')      
+        .join(',');                      
 
       let imageUrl = form.image;
 
@@ -481,7 +475,7 @@ const [recordedUri, setRecordedUri] = useState(null);
 const [sound, setSound] = useState(null);
 const [isRecording, setIsRecording] = useState(false);
 const [isPlaying, setIsPlaying] = useState(false);
-const [isEnabled, setIsEnabled] = useState(false); // false = כבוי בהתחלה
+const [isEnabled, setIsEnabled] = useState(false)
 const toggleSwitch = () => setIsEnabled(previousState => !previousState);
 const toggleTraitsSwitch = () => setIsEnabled(previousState => !previousState);
 
@@ -586,7 +580,7 @@ const startRecording = async () => {
       if (result.success) {
         const publicUrl = result.data;
         setUserData({ audioUrl: publicUrl });
-        setRecordingModalVisible(false); // סוגר את המודל
+        setRecordingModalVisible(false);
       }
     } catch (error) {
       console.error('Failed to upload and save audio', error);
@@ -607,7 +601,7 @@ const PromptCard = ({ icon, onPress }) => (
 
 const handlePromptSelected = (selected) => {
   setForm(f => ({ ...f, prompt: selected }));
-  setModalVisible(false); // סוגרים את המודל אחרי בחירה
+  setModalVisible(false); 
 };
 
 const openModal = () => {
@@ -864,7 +858,7 @@ const onCancel = () => {
               visible={isTraitsModalVisible}
               animationType="slide"
               backdropColor="#0000" 
-              transparent={false} // שים לב לזה
+              transparent={false} 
               onRequestClose={() => setTraitsModalVisible(false)}
             >
           <Pressable onPress={goBack} style={styles.backButton}>
@@ -874,7 +868,7 @@ const onCancel = () => {
             
           <TextInput
               placeholder="חפש תכונה..."
-              placeholderTextColor="#aaa" // שים לב: צריך גם להגדיר את צבע הטקסט של ה-placeholder
+              placeholderTextColor="#aaa"  
               value={searchTerm}
               onChangeText={setSearchTerm}
               style={[styles.input, { color: 'white' }]}
@@ -963,7 +957,6 @@ const onCancel = () => {
           backdropColor="#0000" 
           onRequestClose={() => setHobbiesModalVisible(false)}
         >
-           {/* שלב 1 – כפתור חזור */}
     <Pressable onPress={() => setHobbiesModalVisible(false)} style={styles.backButton}>
       <Text style={styles.backText}>חזור</Text>
     </Pressable>
@@ -971,7 +964,6 @@ const onCancel = () => {
     
    
 
-    {/* שלב 2 – שדה חיפוש */}
     <TextInput
       placeholder="חפש תחביב או כתוב בעצמך..."
       placeholderTextColor="#aaa"
@@ -981,12 +973,10 @@ const onCancel = () => {
       textAlign="right"
     />
 
-    {/* שלב 3 – מונה תחביבים */}
     <Text style={styles.counterText}>
       {selectedHobbies.length} / 5 תחביבים נבחרו
     </Text>
 
-    {/* שלב 4 – רשימת התחביבים עם אנימציה ובחירה */}
     <ScrollView contentContainerStyle={styles.traitsContainer}>
         {filteredHobbies.map(hobby => (
           <Animated.View
@@ -1209,7 +1199,7 @@ const onCancel = () => {
                 onChangeText={v => setForm(f => ({ ...f, introduction: v }))}
                 multiline
                 numberOfLines={3}
-                textAlignVertical="top"  // חשוב לטקסט רב שורות
+                textAlignVertical="top"  
               />
             </View>
             
@@ -1320,7 +1310,6 @@ const onCancel = () => {
     <View style={styles.recordingModalContainer}>
       <Text style={styles.modalTitle}>הקליטו את עצמכם</Text>
 
-      {/* כותרת עם הפרומפט הנבחר */}
       {form.prompt ? (
         <Text style={styles.promptSubtitle}>{form.prompt}</Text>
       ) : null}
@@ -1354,7 +1343,6 @@ const onCancel = () => {
 </Modal>
                                   
                         
-               {/* wantsNotifications - בוליאני */}
           <View style={styles.switchRow}>
             <Text style={styles.switchLabel}>קבל התראות</Text>
             <Switch
@@ -1363,7 +1351,6 @@ const onCancel = () => {
             />
           </View>
       
-              {/* כפתור שמירה */}
               <Button
                 loading={loading}
                 onPress={onSubmit}
@@ -1390,7 +1377,7 @@ const onCancel = () => {
           fontWeight: 'bold',
           marginBottom: 8,
           color:theme.colors.primaryDark,
-          textAlign: 'right', // כי עברית
+          textAlign: 'right', 
         },
         avatarContainer: {
           alignItems: 'center',
@@ -1413,15 +1400,15 @@ const onCancel = () => {
           marginBottom: hp(2),
         },
         switchRow: {
-          flexDirection: 'row-reverse', // הכי חשוב!
+          flexDirection: 'row-reverse', 
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginVertical: 10, // או hp(1) אם אתה משתמש בזה
+          marginVertical: 10, 
           
         },
         switchLabel: {
           fontSize: 16,
-          color: 'white', // או theme.colors.textPrimary אם יש לך theme
+          color: 'white', 
           textAlign: 'right',
           
         },
@@ -1439,7 +1426,6 @@ const onCancel = () => {
           paddingHorizontal: wp(5),
         },
       
-        // שונה כאן
         genderOption: {
           borderWidth: 1,
           borderColor: theme.colors.border,
@@ -1447,7 +1433,7 @@ const onCancel = () => {
           paddingVertical: 10,
           paddingHorizontal: 14,
           marginVertical: 5,
-          backgroundColor: theme.colors.background, // ← עדכון
+          backgroundColor: theme.colors.background, 
         },
         genderOptionSelected: {
           backgroundColor: theme.colors.primaryLight,
@@ -1464,7 +1450,7 @@ const onCancel = () => {
         modalTitle: {
           fontSize: 18,
           fontWeight: '600',
-          color: 'white', // <-- שים לב להוספה הזו
+          color: 'white', 
           marginBottom: 10,
           textAlign: 'right'
         },
@@ -1481,7 +1467,6 @@ const onCancel = () => {
           borderRadius: 10,
           marginBottom: 20,
         },
-        // שונה כאן
         connectionTypeOption: {
           paddingVertical: hp(1.5),
           paddingHorizontal: wp(4),
@@ -1490,7 +1475,7 @@ const onCancel = () => {
           marginVertical: hp(0.5),
           borderWidth: 1,
           borderColor: theme.colors.border,
-          backgroundColor: theme.colors.background, // ← עדכון
+          backgroundColor: theme.colors.background,
           alignItems: 'center',
           flexDirection: 'row-reverse',
           justifyContent: 'flex-start',
@@ -1515,8 +1500,8 @@ const onCancel = () => {
         connectionTypeOptionText: {
           fontSize: 16,
           color: theme.colors.textPrimary,
-          textAlign: 'right',             // יישור טקסט לימין
-          writingDirection: 'rtl',        // כתיבה מימין לשמאל
+          textAlign: 'right',            
+          writingDirection: 'rtl',        
         },
         connectionTypeOptionTextSelected: {
           color: '#fff',
@@ -1671,13 +1656,13 @@ const onCancel = () => {
         },
         modalBackdrop: {
           flex: 1,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)', // רקע שחור עם שקיפות 80%
+          backgroundColor: 'rgba(0, 0, 0, 0.8)', 
           justifyContent: 'center',
           paddingHorizontal: 30,
           
         },
         modalContainer: {
-          backgroundColor: 'rgba(84, 81, 85, 0.7)', // רקע שחור עם שקיפות 80%
+          backgroundColor: 'rgba(84, 81, 85, 0.7)', 
           borderRadius: 12,
           padding: 20,
           elevation: 10,    
@@ -1688,13 +1673,13 @@ const onCancel = () => {
           flexDirection: 'row',
           justifyContent: 'space-around',
           
-          marginTop: 40,              // הזזת האופציות למטה יותר
+          marginTop: 40,             
           marginBottom: 30,
           
         },
         statusButton: {
           borderWidth: 1,
-          borderColor: '#fff',        // מסגרת לבנה במקום כחול
+          borderColor: '#fff',       
           borderRadius: 50,
           paddingVertical: 15,
           paddingHorizontal: 30,
@@ -1702,7 +1687,7 @@ const onCancel = () => {
         },
         selectedButton: {
           backgroundColor: theme.colors.primary,
-          borderColor: '#fff',        // גם כאן לבן כדי לא להבליט מסגרת כחולה
+          borderColor: '#fff',     
         },
         buttonText: {
           fontSize: 16,
@@ -1719,29 +1704,29 @@ const onCancel = () => {
         },
         cancelButton2: {
           backgroundColor: '#2C2C2E',
-          paddingVertical: hp(1.6),         // גובה אלגנטי ועדין
-          paddingHorizontal: hp(3.5),       // רוחב דומה ל־fancyButton
-          borderRadius: 12,                 // פינות מעוגלות כמו fancyButton
+          paddingVertical: hp(1.6),         
+          paddingHorizontal: hp(3.5),     
+          borderRadius: 12,                
           alignItems: 'center',
           justifyContent: 'center',
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.2,
           shadowRadius: 4,
-          elevation: 4,                     // עומק נחמד באנדרואיד
+          elevation: 4,                    
           marginTop: hp(2),
         },
         cancelButton: {
-          flex: 1,                   // כפתור ריבוע קטן פרופורציונלי
+          flex: 1,              
           marginRight: 10,
           paddingVertical: 12,
-          backgroundColor: '#333',   // אפור כהה לכפתור ביטול
+          backgroundColor: '#333',  
           borderRadius: 8,
           alignItems: 'center',
           justifyContent: 'center',
         },
         saveButton: {
-          flex: 2,                   // כפתור שמור גדול יותר ביחס לכפתור ביטול
+          flex: 2,                  
           paddingVertical: 12,
           backgroundColor: theme.colors.primary,
           borderRadius: 8,
@@ -1877,7 +1862,7 @@ const onCancel = () => {
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.2,
           shadowRadius: 4,
-          elevation: 5, // עבור אנדרואיד
+          elevation: 5, 
           marginTop: hp(2),
           marginTop: 30,
         },

@@ -118,7 +118,6 @@ const TopTraits = () => {
 
   return (
     <View style={styles.container}>
-      {/* שורה: חזור + כותרת */}
       <View style={styles.headerRow}>
         <Pressable onPress={goBack} style={styles.backButton}>
           <Text style={styles.backText}>חזור</Text>

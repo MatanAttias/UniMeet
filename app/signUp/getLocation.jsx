@@ -15,7 +15,7 @@ const LocationPermission = () => {
     birth_date,
     connectionTypes,
     image,
-    wantsNotifications = 'false', // טיפול במידה ולא הגיע מהעמוד הקודם
+    wantsNotifications = 'false', 
     role,
   } = useLocalSearchParams();
 
@@ -45,7 +45,6 @@ const LocationPermission = () => {
       }
 
       if (status === Location.PermissionStatus.GRANTED) {
-        // קבל מיקום מדויק ביותר, timeout של 10 שניות, maxAge 5 שניות
         const { coords } = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Highest,
           timeout: 10000,

@@ -36,8 +36,8 @@ const Profile = () => {
   const [posts, setPosts] = useState([]);
   const [hasMore, setHasMore] = useState(true);
   const [showPosts, setShowPosts] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile'); // או 'posts'
-  const [menuVisible, setMenuVisible] = useState(false); // ✅ גם זה פה
+  const [activeTab, setActiveTab] = useState('profile'); 
+  const [menuVisible, setMenuVisible] = useState(false); 
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -123,15 +123,15 @@ const Profile = () => {
       <TouchableOpacity
         onPress={() => setMenuVisible(!menuVisible)}
         style={{
-          width: 30, // תפריט לא רחב מדי
+          width: 30, 
 
         }}
       >
       <TouchableOpacity
         onPress={() => setMenuVisible(!menuVisible)}
         style={{
-          marginTop: -30,   // שלילי = מעלה
-          right: -15,     // יותר קטן = יותר ימינה
+          marginTop: -30,   
+          right: -15,     
           zIndex: 10     
             }}
       >
@@ -235,8 +235,8 @@ const UserHeader = ({ user, router, handleLogout }) => {
   const [playbackStatus, setPlaybackStatus] = useState(null);
   const [posts, setPosts] = useState([]);
   const [showPosts, setShowPosts] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile'); // profile or posts
-  const [showEdit, setShowEdit] = useState(true); // או false – לפי ההגיון שלך
+  const [activeTab, setActiveTab] = useState('profile'); 
+  const [showEdit, setShowEdit] = useState(true);
 
   const playSound = async () => {
     if (!user.audio) return;
@@ -307,7 +307,6 @@ const UserHeader = ({ user, router, handleLogout }) => {
   const renderTagList = (label, tags) => {
     if (!tags) return null;
   
-    // אם tags הוא מחרוזת – נפצל לפסיקים
     const tagList = Array.isArray(tags)
       ? tags
       : typeof tags === 'string'
@@ -397,10 +396,8 @@ const UserHeader = ({ user, router, handleLogout }) => {
               )}
             </View>
           
-            {/* פס שקוף מתחת לשלושת הפרמטרים */}
             <View style={styles.separator} />
           
-            {/* הצגת connectionTypes */}
             {user.connectionTypes && (
               <View style={[styles.inlineItem, { flexDirection: 'row-reverse', marginTop: 8 }]}>
                 <MaterialCommunityIcons name="magnify-plus-outline" size={28} color={theme.colors.primary} />
@@ -408,7 +405,6 @@ const UserHeader = ({ user, router, handleLogout }) => {
               </View>
             )}
           
-            {/* הצגת preferredMatch מתחת ל connectionTypes */}
             {user.preferredMatch && (
               <View style={[styles.inlineItem, { flexDirection: 'row-reverse', marginTop: 8 }]}>
                 <MaterialCommunityIcons name="account-heart" size={28} color={theme.colors.primary} />
@@ -418,7 +414,6 @@ const UserHeader = ({ user, router, handleLogout }) => {
           </MotiView>
           )}
 
-          {/* תיקון הטקסט של ההקדמה להיות RTL */}
           {user?.introduction && (
             <MotiView
               from={{ opacity: 0, translateY: 10 }}
@@ -529,7 +524,7 @@ export default Profile;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '##CDB0AA', // אפור רגוע
+    backgroundColor: '##CDB0AA', 
   },
   avatarContainer: {
     height: hp(12),
@@ -601,7 +596,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: hp(1.5),
     fontWeight: '600',
-    marginRight: 6, // מרחק בין הטקסט לאייקון
+    marginRight: 6, 
   },
   
   listStyle: {
@@ -795,7 +790,6 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.semibold,
   },
   
-  // סטיילים חדשים לתיאור בעברית
   introductionContainer: {
     flexDirection: 'row-reverse',
     alignItems: 'flex-start',
@@ -812,25 +806,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     position: 'absolute',
     top: 10,
-    left: 1,                  // ✅ מיקום מצד שמאל בלבד
+    left: 1,                 
     borderRadius: 12,
-    elevation: 4,              // ✅ צל לאנדרואיד
-    shadowColor: '#000',       // ✅ צל לאייפון
+    elevation: 4,              
+    shadowColor: '#000',       
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     paddingVertical: 1,
     paddingHorizontal: 8,
     zIndex: 999,
-    alignItems: 'flex-start',  // ✅ כל התוכן בתוך התפריט מיושר לשמאל
-    
+    alignItems: 'flex-start',      
   },
   
   menuItem: {
     paddingVertical: 12,
-    paddingLeft: 8,            // ✅ השאר את ה-left
-    paddingRight: 12,          // אפשר גם להוריד אם אתה לא צריך ריווח מימין
-    flexDirection: 'row',      // אם יש אייקון וטקסט – שים אותם בשורה
+    paddingLeft: 8,           
+    paddingRight: 12,          
+    flexDirection: 'row',      
     alignItems: 'center',
     
   },
@@ -839,7 +832,7 @@ const styles = StyleSheet.create({
   menuText: {
     fontSize: 16,
     color: theme.colors.text,
-    textAlign: 'left',         // ✅ תוכן הטקסט יתחיל משמאל
+    textAlign: 'left',   
     fontWeight: '500',
   },
   

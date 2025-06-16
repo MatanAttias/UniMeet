@@ -25,7 +25,7 @@ import {
   import { useFocusEffect } from '@react-navigation/native';
   import { useCallback } from 'react';
   import * as FileSystem from 'expo-file-system';
-  import { Buffer } from 'buffer'; // ודא שהתקנת את זה: npm i buffer
+  import { Buffer } from 'buffer'; 
 
   const Settings = () => {
     const { user } = useAuth();
@@ -109,7 +109,6 @@ import {
         if (!chatObj || !user) return;
       
         try {
-          // שליפת המזהים של שני המשתמשים מהטבלה chats
           const { data: chatData, error: chatError } = await supabase
             .from('chats')
             .select('user1_id, user2_id')
@@ -123,7 +122,6 @@ import {
       
           const partnerId = chatData.user1_id === user.id ? chatData.user2_id : chatData.user1_id;
       
-          // שליפה של שם ותמונה מהטבלה users
           const { data, error } = await supabase
             .from('users')
             .select('name, image')
@@ -134,7 +132,7 @@ import {
             console.error('שגיאה בשליפת נתוני בן השיחה:', error);
           } else {
             setChatPartnerName(data.name);
-            setChatPartnerImage(data.image); // ודא שיש לך useState כזה
+            setChatPartnerImage(data.image); 
           }
         } catch (err) {
           console.error('שגיאה כללית בשליפת שם/תמונה של בן השיחה:', err.message);
@@ -156,7 +154,6 @@ import {
     
       const messageContent = messageText.trim();
     
-      // הוספת ההודעה לטבלת messages
       const { data: messageData, error: messageError } = await supabase
         .from('messages')
         .insert({
@@ -173,7 +170,6 @@ import {
         return;
       }
     
-      // עדכון הצ'אט עם ההודעה האחרונה
       const { error: updateChatError } = await supabase
         .from('chats')
         .update({
@@ -186,7 +182,6 @@ import {
         console.error('שגיאה בעדכון הצ׳אט:', updateChatError);
       }
     
-      // שליפת נתוני הצ׳אט כדי לדעת מי המשתמש 1 ומי 2
       const { data: chatData, error: chatError } = await supabase
         .from('chats')
         .select('user1_id, user2_id')
@@ -198,7 +193,6 @@ import {
       } else {
         const isUser1 = chatData.user1_id === user.id;
     
-        // עדכון שדות הקריאה: שולח = true, מקבל = false
         const updates = isUser1
           ? { user1_read: true, user2_read: false }
           : { user2_read: true, user1_read: false };
@@ -213,7 +207,6 @@ import {
         }
       }
     
-      // עדכון ההודעות במסך
       setMessages((prev) => [...prev, messageData]);
       setMessageText('');
     };
@@ -432,12 +425,10 @@ import {
         );
       }
   
-      // הגנה: רק טקסט תקין יוצג, אחרת שגיאה תימנע
       if (typeof item.content === 'string' || typeof item.content === 'number') {
         return <Text style={styles.messageText}>{item.content}</Text>;
       }
   
-      // במקרה של תוכן לא חוקי
       return <Text style={styles.messageText}>[תוכן לא זמין]</Text>;
     };
   
@@ -457,7 +448,6 @@ import {
   showsVerticalScrollIndicator={false}
 />
  <View style={styles.inputContainer}>
-  {/* כפתור הפלוס - בצד שמאל */}
   <TouchableOpacity onPress={toggleModal} style={styles.plusButton}>
     <MaterialCommunityIcons name="plus" size={28} color="white" />
   </TouchableOpacity>
@@ -470,7 +460,6 @@ import {
     />
   
 
-  {/* כפתור השליחה - בצד ימין */}
   <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
     <MaterialCommunityIcons name="send" size={24} color="white" />
   </TouchableOpacity>
@@ -643,7 +632,7 @@ import {
         alignItems: 'center',
       },
       plusButton: {
-        padding: 10, // או כל ערך מתאים
+        padding: 10,
         backgroundColor: '#2c2c2e',
         borderRadius: 20,
       },

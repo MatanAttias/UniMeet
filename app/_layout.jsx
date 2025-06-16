@@ -1,4 +1,3 @@
-// app/_layout.jsx - גרסה מתוקנת עם SplashScreen ו-Realtime Channels
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
@@ -15,7 +14,6 @@ import {
   Poppins_600SemiBold,
 } from '@expo-google-fonts/poppins';
 
-// מניעת הסתרה אוטומטית של splash screen
 SplashScreen.preventAutoHideAsync();
 
 LogBox.ignoreLogs([
@@ -25,7 +23,7 @@ LogBox.ignoreLogs([
   'VirtualizedList: You have a large list that is slow to update',
   'expo-app-loading is deprecated',
   'expo-notifications: Android Push notifications',
-  'Warning: tried to subscribe multiple times', // הוסף את זה
+  'Warning: tried to subscribe multiple times', 
 ]);
 
 const _layout = () => (
@@ -34,7 +32,6 @@ const _layout = () => (
   </AuthProvider>
 );
 
-// 🔧 הוצא את המשתנים מחוץ לקומפוננטה כדי שישמרו בין renders
 let postChannel = null;
 let notificationChannel = null;
 let commentsChannel = null;
@@ -49,7 +46,6 @@ const MainLayout = () => {
   const { setAuth, setAuthWithFullData, setUserData } = useAuth();
   const router = useRouter();
 
-  // 🔧 פונקציה לניקוי channels משופרת
   const cleanupChannels = async (userId) => {
     console.log('Cleaning up realtime channels for user:', userId || 'unknown');
     
@@ -72,7 +68,6 @@ const MainLayout = () => {
         }
       }
       
-      // אפס את המשתנים
       postChannel = null;
       notificationChannel = null;
       commentsChannel = null;
@@ -82,11 +77,9 @@ const MainLayout = () => {
     }
   };
 
-  // 🔧 פונקציה להגדרת channels משופרת
   const setupRealtimeChannels = async (userId) => {
     if (!userId) return;
     
-    // בדוק אם כבר יש channels פעילים
     if (postChannel || notificationChannel || commentsChannel) {
       console.log('⚠️ Channels already exist, cleaning up first...');
       await cleanupChannels(userId);
@@ -97,7 +90,6 @@ const MainLayout = () => {
     try {
       const timestamp = Date.now();
       
-      // צור channels חדשים עם שמות ייחודיים
       postChannel = supabase
         .channel(`posts-${userId}-${timestamp}`)
         .on('postgres_changes', {
@@ -155,8 +147,7 @@ const MainLayout = () => {
         } = await supabase.auth.getSession();
 
         if (session) {
-          // 🔧 השתמש בפונקציה החדשה שטוענת נתונים מלאים
-          await setAuthWithFullData(session.user); // במקום setAuth
+          await setAuthWithFullData(session.user); 
           router.replace('/home');
         } else {
           setAuth(null);
@@ -177,8 +168,7 @@ const MainLayout = () => {
       console.log('Session user:', session?.user?.id);
 
       if (session) {
-        // 🔧 השתמש בפונקציה החדשה
-        await setAuthWithFullData(session.user); // במקום setAuth
+        await setAuthWithFullData(session.user); 
         if (_event === 'SIGNED_IN') {
           await setupRealtimeChannels(session.user.id);
         }
@@ -190,10 +180,8 @@ const MainLayout = () => {
       }
     });
 
-    // 🔧 cleanup function
     return () => {
       listener.subscription?.unsubscribe();
-      // נקה channels כשהקומפוננטה נהרסת
       cleanupChannels();
     };
   }, [fontsLoaded]);

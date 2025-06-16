@@ -176,7 +176,6 @@ const VisitedProfile = () => {
 
   return (
     <ScreenWrapper bg="black">
-      {/* Header עם כפתורי חזור והודעה */}
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={goBack}>
           <Text style={styles.backText}>חזור</Text>
@@ -189,7 +188,6 @@ const VisitedProfile = () => {
         )}
       </View>
 
-      {/* טאב של פרופיל/פוסטים */}
       <View style={styles.tabs}>
         <Pressable onPress={() => setActiveTab('profile')} style={styles.tabButton}>
           <Text style={activeTab === 'profile' ? styles.activeTab : styles.inactiveTab}>פרופיל</Text>
@@ -228,7 +226,6 @@ const VisitedProfile = () => {
         contentContainerStyle={{ paddingBottom: 30 }}
       />
 
-      {/* מודל לשליחת הודעה */}
       <Modal animationType="slide" transparent visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -311,17 +308,17 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3, // לאנדרואיד
+    elevation: 3, 
   },
   noMorePosts: {
-    color: '#aaa', // אפור בהיר ונעים לעין
+    color: '#aaa',
     fontSize: 16,
     fontWeight: '500',
     textAlign: 'center',
     marginVertical: 20,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: '#1e1e1e', // רקע כהה אלגנטי
+    backgroundColor: '#1e1e1e', 
     borderRadius: 10,
     alignSelf: 'center',
     maxWidth: '80%',

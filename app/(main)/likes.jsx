@@ -1,4 +1,3 @@
-// app/(main)/likes.jsx
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -21,13 +20,12 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import {
   fetchLikesAndRequests,
   likeUserBack,
-  friendUserBack, // ← הוספת הפונקציה לקבלת בקשת חברות חזרה
+  friendUserBack, 
 } from '../../services/matchService';
 import BottomBar from '../../components/BottomBar';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = (SCREEN_WIDTH - wp(8)) / 2; // 2 קלפים בשורה
-
+const CARD_WIDTH = (SCREEN_WIDTH - wp(8)) / 2; 
 export default function Likes() {
   const router = useRouter();
   const { user } = useAuth();
@@ -156,7 +154,6 @@ export default function Likes() {
           </View>
         )}
 
-        {/* צבע משתנה: ורוד ללייק, צהוב־סמיילי לבקשת חברות */}
         <View 
           style={[
             styles.cardOverlay, 
@@ -192,7 +189,6 @@ export default function Likes() {
           </Text>
         </View>
 
-        {/* כפתור פעולה בפינה התחתונה־ימנית */}
         <Pressable 
           style={[
             styles.actionBtn, 
@@ -219,7 +215,6 @@ export default function Likes() {
     );
   };
 
-  // רינדור קלף עבור התאמה
   const renderMatchCard = (matchData) => (
     <View key={matchData.id} style={styles.card}>
       {matchData.user.image ? (
@@ -361,7 +356,6 @@ export default function Likes() {
       <View style={styles.headerContainer}>
         <Header title="לייקים" />
         
-        {/* Filter Tabs */}
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false} 
@@ -487,7 +481,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: wp(4),
-    paddingBottom: hp(12), // מקום לבוטום בר
+    paddingBottom: hp(12), 
   },
   grid: {
     flexDirection: 'row',

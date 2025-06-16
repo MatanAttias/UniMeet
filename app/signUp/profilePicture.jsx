@@ -22,7 +22,6 @@ const ProfilePicture = () => {
 
   const [image, setImage] = useState(null);
   
-  // בדיקת הרשאות בעת טעינת המסך
   useEffect(() => {
     (async () => {
       if (Platform.OS !== 'web') {
@@ -42,14 +41,12 @@ const ProfilePicture = () => {
     try {
       console.log('ניסיון לפתוח את בורר התמונות');
       
-      // בדיקת הרשאה לגישה לגלריה
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('שגיאה', 'לא קיבלנו הרשאה לגישה לגלריה');
         return;
       }
 
-      // פתיחת הגלריה
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -59,7 +56,6 @@ const ProfilePicture = () => {
 
       console.log('תוצאת בחירת התמונה:', result);
 
-      // בדיקה האם המשתמש בחר תמונה
       if (!result.canceled && result.assets && result.assets.length > 0) {
         console.log('תמונה נבחרה:', result.assets[0].uri);
         setImage(result.assets[0]);
