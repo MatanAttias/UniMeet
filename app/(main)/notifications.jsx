@@ -28,8 +28,9 @@ const Notifications = () => {
   return (
     <ScreenWrapper bg={theme.colors.background}>
       <View style={styles.container}>
-        <Header title="התראות" />
-        
+      <View style={{ alignItems: 'center', marginVertical: 20 }}>
+  <Text style={styles.title}>התראות</Text>
+</View>        
         {/* כפתור חזור */}
         <Pressable style={styles.backButton} onPress={goBack}>
           <Text style={styles.backText}>חזור</Text>
@@ -67,7 +68,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: wp(4),
-    marginTop:50,
+    marginTop: 50,
   },
   backButton: {
     position: 'absolute',
@@ -84,7 +85,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 4,
-    marginTop:-120,
+    marginTop: -120,
     zIndex: 10,
   },
   backText: {
@@ -119,4 +120,15 @@ const styles = StyleSheet.create({
     lineHeight: hp(2.5),
     writingDirection: 'rtl',
   },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+    textAlign: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: theme.colors.primaryDark,
+    paddingBottom: 6,
+    marginBottom: -50,
+    marginTop: -40,
+  }
 });
