@@ -47,7 +47,6 @@ const MainLayout = () => {
   const router = useRouter();
 
   const cleanupChannels = async (userId) => {
-    console.log('Cleaning up realtime channels for user:', userId || 'unknown');
     
     try {
       const channelsToClean = [
@@ -73,7 +72,6 @@ const MainLayout = () => {
       commentsChannel = null;
       
     } catch (error) {
-      console.error('Error cleaning up channels:', error);
     }
   };
 
@@ -81,11 +79,9 @@ const MainLayout = () => {
     if (!userId) return;
     
     if (postChannel || notificationChannel || commentsChannel) {
-      console.log('⚠️ Channels already exist, cleaning up first...');
       await cleanupChannels(userId);
     }
     
-    console.log('Setting up realtime channels for user:', userId);
     
     try {
       const timestamp = Date.now();
@@ -97,10 +93,8 @@ const MainLayout = () => {
           schema: 'public',
           table: 'posts'
         }, (payload) => {
-          console.log('Post change received:', payload);
         })
         .subscribe((status) => {
-          console.log('postChannel status:', status);
         });
 
       notificationChannel = supabase
@@ -111,10 +105,8 @@ const MainLayout = () => {
           table: 'notifications',
           filter: `user_id=eq.${userId}`
         }, (payload) => {
-          console.log('Notification change received:', payload);
         })
         .subscribe((status) => {
-          console.log('notificationChannel status:', status);
         });
 
       commentsChannel = supabase
@@ -127,7 +119,6 @@ const MainLayout = () => {
           console.log('Comment change received:', payload);
         })
         .subscribe((status) => {
-          console.log('commentsChannel status:', status);
         });
         
       console.log('✅ All channels set up successfully');
@@ -164,8 +155,6 @@ const MainLayout = () => {
     getSession();
 
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log('Auth change event:', _event);
-      console.log('Session user:', session?.user?.id);
 
       if (session) {
         await setAuthWithFullData(session.user); 
@@ -191,10 +180,8 @@ const MainLayout = () => {
       let res = await getUserData(user?.id);
       if (res?.success) {
         setUserData({ ...res.data, email });
-        console.log('User data updated successfully');
       }
     } catch (error) {
-      console.error('Error updating user data:', error);
     }
   };
 

@@ -52,7 +52,6 @@ export default function Matches() {
     setLoading(true);
     fetchAttributeMatches(user.id)
       .then((data) => {
-        console.log('📊 Loaded matches:', data?.length || 0);
         setMatches(data || []);
         data.forEach((u) => u.image && Image.prefetch(u.image));
       })

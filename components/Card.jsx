@@ -1,4 +1,3 @@
-// components/ui/Card.js
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { theme } from '../constants/theme'; 

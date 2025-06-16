@@ -104,8 +104,6 @@ const NewPost = () => {
       Alert.alert('פוסט', res.msg)
     }
   }
-  console.log("Profile Image URL:", user?.image);
-  console.log("Full user object:", user);
   return (
     <ScreenWrapper bg="black">
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>

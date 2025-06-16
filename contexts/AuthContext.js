@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
-import { getUserData } from '../services/userService'; // הוסף את זה
+import { getUserData } from '../services/userService'; 
 
 const AuthContext = createContext();
 
@@ -18,30 +18,19 @@ export const AuthProvider = ({ children }) => {
     const [isTipsCacheLoaded, setIsTipsCacheLoaded] = useState(false);
 
     const setAuth = authUser => {
-        console.log('Setting auth user:', authUser?.id || 'null');
         setUser(authUser);
     };
 
-    // 🔧 פונקציה חדשה שטוענת נתונים מלאים
     const setAuthWithFullData = async (authUser) => {
-        console.log('Setting auth user with full data:', authUser?.id || 'null');
         
         if (authUser) {
             try {
-                // שמור נתונים בסיסיים מיד
                 setUser(authUser);
                 
-                // טען נתונים מלאים
-                console.log('🔄 Loading complete user data...');
                 const res = await getUserData(authUser.id);
                 
                 if (res.success) {
-                    console.log('✅ Complete user data loaded:', {
-                        hasImage: !!res.data.image,
-                        hasName: !!res.data.name,
-                        hasRole: !!res.data.role,
-                        imageUrl: res.data.image
-                    });
+                  
                     
                     setUser({
                         ...authUser,
@@ -60,14 +49,12 @@ export const AuthProvider = ({ children }) => {
     };
 
     const setUserData = userData => {
-        console.log('Updating user data:', userData);
         setUser(prev => ({ 
             ...prev, 
             ...userData 
         }));
     };
 
-    // 🔧 פונקציה לרענון נתוני משתמש
     const refreshUserData = async () => {
         if (!user?.id) return false;
         
@@ -88,39 +75,28 @@ export const AuthProvider = ({ children }) => {
         return false;
     };
 
-    // טעינת קאש הטיפים מ-AsyncStorage
     useEffect(() => {
         const loadTipsCache = async () => {
             try {
-            console.log('🔄 Loading tips cache from AsyncStorage...');
             const json = await AsyncStorage.getItem('ParentTipsCache');
             
             if (json) {
                 const parsed = JSON.parse(json);
                 const { tips, lastFetchTime, profileHash } = parsed;
                 
-                console.log('📦 Found cached tips:', {
-                tipsCount: tips?.length || 0,
-                lastFetchTime: lastFetchTime ? new Date(lastFetchTime).toLocaleString() : 'None',
-                profileHash: profileHash?.substring(0, 20) + '...' || 'None'
-                });
                 
-                // ודא שהנתונים תקינים
                 if (Array.isArray(tips) && tips.length > 0 && lastFetchTime) {
                 setParentTipsCache({ tips, lastFetchTime, profileHash });
-                console.log('✅ Tips cache loaded successfully');
                 } else {
                 console.warn('⚠️ Invalid cache data, using empty cache');
                 setParentTipsCache({ tips: [], lastFetchTime: null, profileHash: '' });
                 }
             } else {
-                console.log('📭 No cached tips found in AsyncStorage');
                 setParentTipsCache({ tips: [], lastFetchTime: null, profileHash: '' });
             }
             
             setIsTipsCacheLoaded(true);
             } catch (e) {
-            console.error('❌ Error loading tips cache:', e);
             setParentTipsCache({ tips: [], lastFetchTime: null, profileHash: '' });
             setIsTipsCacheLoaded(true);
             }
@@ -129,13 +105,8 @@ export const AuthProvider = ({ children }) => {
         loadTipsCache();
     }, []);
 
-    // עדכון קאש הטיפים ב-state וב-AsyncStorage
     const updateParentTipsCache = async ({ tips, lastFetchTime, profileHash }) => {
-        console.log('💾 Saving tips cache:', {
-            tipsCount: tips.length,
-            lastFetchTime: new Date(lastFetchTime).toLocaleString(),
-            profileHash: profileHash.substring(0, 20) + '...'
-        });
+       
         
         setParentTipsCache({ tips, lastFetchTime, profileHash });
         
@@ -145,9 +116,7 @@ export const AuthProvider = ({ children }) => {
             'ParentTipsCache',
             JSON.stringify(dataToSave)
             );
-            console.log('✅ Tips cache saved to AsyncStorage successfully');
             
-            // וריפיקציה שהשמירה עברה
             const verification = await AsyncStorage.getItem('ParentTipsCache');
             if (verification) {
             const parsed = JSON.parse(verification);
@@ -158,11 +127,9 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // פונקציה לניקוי מלא של Auth storage
     const clearAuthStorage = async () => {
         try {
             console.log('Clearing auth storage...');
-            // רשימת מפתחות שקשורים ל-authentication
             const authKeys = [
                 'supabase.auth.token',
                 'sb-dlkxwivlcbnlukylcceq-auth-token',
@@ -193,7 +160,6 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // פונקציה לבדיקת תקינות session
     const validateSession = async () => {
         try {
             const { data: { session }, error } = await supabase.auth.getSession();
@@ -201,7 +167,6 @@ export const AuthProvider = ({ children }) => {
             if (error) {
                 console.error('Session validation error:', error);
                 
-                // אם זו שגיאת refresh token, נקה הכל
                 if (error.message?.includes('Refresh Token') || 
                     error.message?.includes('Invalid') ||
                     error.message?.includes('expired')) {
@@ -218,7 +183,6 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // פונקציה לרענון session
     const refreshSession = async () => {
         try {
             console.log('Attempting to refresh session...');
@@ -244,13 +208,11 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // פונקציה לטיפול בשגיאות auth
     const handleAuthError = async (error) => {
         console.error('Handling auth error:', error);
         
         const errorMessage = error?.message || '';
         
-        // שגיאות שדורשות ניקוי מלא
         const criticalErrors = [
             'Refresh Token Not Found',
             'Invalid Refresh Token',
@@ -266,18 +228,16 @@ export const AuthProvider = ({ children }) => {
         if (isCriticalError) {
             console.log('Critical auth error detected, clearing storage');
             await clearAuthStorage();
-            return true; // מציין שהשגיאה טופלה
+            return true; 
         }
         
-        return false; // השגיאה לא טופלה
+        return false; 
     };
 
-    // פונקציה לניפוי מצב Auth (למפתחים)
     const debugAuthState = async () => {
         try {
             console.log('=== AUTH DEBUG ===');
             
-            // בדיקת AsyncStorage
             const allKeys = await AsyncStorage.getAllKeys();
             const authKeys = allKeys.filter(key => 
                 key.includes('auth') || key.includes('supabase')
@@ -290,7 +250,6 @@ export const AuthProvider = ({ children }) => {
                 console.log(`${key}:`, value ? 'EXISTS' : 'NULL');
             }
             
-            // בדיקת Supabase session
             const { data: { session }, error } = await supabase.auth.getSession();
             console.log('Current session exists:', !!session);
             console.log('Session error:', error?.message || 'None');
@@ -311,7 +270,6 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // פונקציה לאתחול מלא
     const initializeAuth = async () => {
         if (isInitialized) return;
         
@@ -340,9 +298,9 @@ export const AuthProvider = ({ children }) => {
             isLoading,
             isInitialized,
             setAuth, 
-            setAuthWithFullData, // 🔧 הוסף את זה
+            setAuthWithFullData, 
             setUserData, 
-            refreshUserData, // 🔧 הוסף את זה
+            refreshUserData,
             clearAuthStorage,
             validateSession,
             refreshSession,

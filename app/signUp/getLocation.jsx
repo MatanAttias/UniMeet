@@ -36,7 +36,6 @@ const LocationPermission = () => {
 
   const handleLocationPermission = async () => {
     try {
-      // בקש הרשאת מיקום (אם לא נתנה עדיין)
       let { status } = await Location.getForegroundPermissionsAsync();
 
       if (status !== Location.PermissionStatus.GRANTED) {

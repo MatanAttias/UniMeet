@@ -2,7 +2,7 @@ import { supabase } from "../lib/supabase";
 
 /**
  * יצירת התראה חדשה
- * @param {Object} notification - אובייקט עם פרטי ההתראה
+ * @param {Object} notification 
  */
 export const createNotification = async (notification) => {
   try {
@@ -25,7 +25,6 @@ export const createNotification = async (notification) => {
 };
 
 /**
- * שליפת התראות לפי מזהה מקבל (receiverId)
  * @param {string} receiverId
  */
 export const fetchNotifications = async (receiverId) => {

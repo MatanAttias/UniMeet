@@ -1,4 +1,3 @@
-// index.js (בשורש הפרויקט)
 import 'node-libs-expo/globals';
 import 'stream-browserify';
 import 'crypto-browserify';

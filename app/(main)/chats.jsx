@@ -11,7 +11,7 @@ export default function ChatsPage() {
   const router = useRouter();
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null); // ← שונה מ-userId כדי שתהיה גישה לכל ה-object
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const loadChats = async () => {
@@ -22,7 +22,6 @@ export default function ChatsPage() {
         }
 
         const currentUser = data.user;
-        console.log('Logged in user ID (UUID):', currentUser.id);
 
         setUser(currentUser);
         const chatsData = await fetchUserChats(currentUser.id);

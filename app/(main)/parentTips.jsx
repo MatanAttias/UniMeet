@@ -132,14 +132,12 @@ const ParentTips = () => {
   useEffect(() => {
     const fetchCompleteUserData = async () => {
       if (!user?.id) return;
-      console.log('🔍 Fetching complete user data...');
       const { data, error } = await supabase
         .from('users')
         .select('identities, supportNeeds, birth_date, gender')
         .eq('id', user.id)
         .single();
       if (data && !error) {
-        console.log('✅ Complete user data fetched:', data);
         setUserData({ ...user, ...data });
       } else {
         console.error('❌ Error fetching user data:', error);

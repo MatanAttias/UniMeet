@@ -9,7 +9,7 @@ export const uploadAudioFile = async (fileUri) => {
       return { success: false, msg: 'Missing audio file URI' };
     }
 
-    const fileName = getAudioFilePath(); // יוצא משהו כמו audio/1715709872034.m4a
+    const fileName = getAudioFilePath(); 
 
     const fileBase64 = await FileSystem.readAsStringAsync(fileUri, {
       encoding: FileSystem.EncodingType.Base64,

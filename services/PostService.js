@@ -335,7 +335,6 @@ export const saveParentTip = async (userId, tipData) => {
     if (error) {
       console.error('Save tip error:', error);
       
-      // טיפול בשגיאת duplicate
       if (error.code === '23505') {
         return { success: false, msg: 'הטיפ כבר שמור ברשימה שלך' };
       }

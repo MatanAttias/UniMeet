@@ -78,7 +78,6 @@ export default function Home() {
 
     if (!user?.id || subscriptionsRef.current[user.id]) return;
 
-    console.log('Setting up realtime channels for user:', user.id);
   
     const postChannel = supabase
       .channel(`posts-${user.id}`)
@@ -94,7 +93,6 @@ export default function Home() {
         if (error) {
           console.error('postChannel error:', error);
         } else {
-          console.log('postChannel status:', status);
         }
       });
   
@@ -117,7 +115,6 @@ export default function Home() {
         if (error) {
           console.error('notificationChannel error:', error);
         } else {
-          console.log('notificationChannel status:', status);
         }
       });
     
@@ -137,7 +134,6 @@ export default function Home() {
         if (error) {
           console.error('commentsChannel error:', error);
         } else {
-          console.log('commentsChannel status:', status);
         }
       });
   
@@ -150,7 +146,6 @@ export default function Home() {
 
     
     return () => {
-      console.log('Cleaning up realtime channels for user:', user.id);
       if (subscriptionsRef.current[user.id]) {
         const { postChannel, notificationChannel, commentsChannel } = subscriptionsRef.current[user.id];
         supabase.removeChannel(postChannel);

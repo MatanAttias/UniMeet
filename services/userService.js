@@ -13,12 +13,7 @@ export const getUserData = async (userId) => {
 
     if (error) return { success: false, msg: error.message };
     
-    // 🔧 הוסף debug לראות מה חזר
-    console.log('📦 getUserData result:', {
-      hasImage: !!data.image,
-      imageValue: data.image,
-      allFields: Object.keys(data)
-    });
+   
     
     return { success: true, data };
   } catch (err) {
@@ -34,7 +29,7 @@ export const searchUsersByName = async (searchTerm) => {
   try {
     const { data, error } = await supabase
       .from('users')
-      .select('id, name, role, image')  // <-- הוסף כאן את שדה התמונה הרלוונטי
+      .select('id, name, role, image')  
       .ilike('name', `%${searchTerm}%`);
 
     if (error) return { success: false, msg: error.message };
@@ -44,6 +39,7 @@ export const searchUsersByName = async (searchTerm) => {
     return { success: false, msg: err.message };
   }
 };
+
 // עדכון פרטי משתמש לפי מזהה
 export const updateUser = async (userId, data) => {
   if (!userId || !data) return { success: false, msg: 'נתונים חסרים לעדכון' };
