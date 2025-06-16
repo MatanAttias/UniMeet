@@ -6,6 +6,7 @@ import { hp, wp } from '../constants/helpers/common';
 const HomeTabs = ({ selectedTab, onSelectTab, isParent = false }) => {
   return (
     <View style={styles.tabContainer}>
+      {/* דף הבית */}
       <Pressable
         style={[styles.tab, selectedTab === 'home' && styles.activeTab]}
         onPress={() => onSelectTab('home')}
@@ -15,6 +16,7 @@ const HomeTabs = ({ selectedTab, onSelectTab, isParent = false }) => {
         </Text>
       </Pressable>
 
+      {/* שמורים - זמין לכולם */}
       <Pressable
         style={[styles.tab, selectedTab === 'saved' && styles.activeTab]}
         onPress={() => onSelectTab('saved')}
@@ -24,6 +26,7 @@ const HomeTabs = ({ selectedTab, onSelectTab, isParent = false }) => {
         </Text>
       </Pressable>
 
+      {/* טיפים להורים - רק להורים */}
       {isParent && (
         <Pressable
           style={[styles.tab, selectedTab === 'parentTips' && styles.activeTab]}
@@ -43,7 +46,7 @@ export default HomeTabs;
 const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row-reverse',
-    justifyContent: 'center',  
+    justifyContent: 'right',  // מרכז את הtabs
     paddingHorizontal: wp(4),
     paddingBottom: hp(1),
     borderBottomWidth: 1,
@@ -51,9 +54,9 @@ const styles = StyleSheet.create({
     marginBottom: hp(1),
   },
   tab: {
-    marginHorizontal: wp(2),  
+    marginHorizontal: wp(2),  // שינוי מmarginLeft לmarginHorizontal לחלוקה שווה
     paddingVertical: hp(1.2),
-    paddingHorizontal: wp(4),  
+    paddingHorizontal: wp(4),  // הגדלת padding לכפתורים יותר גדולים
     borderBottomWidth: 2,
     borderColor: 'transparent',
   },

@@ -83,6 +83,7 @@ const PostCard = React.memo((props) => {
 
 
   if (!item || typeof item !== 'object') {
+    console.warn('Invalid post item:', item);
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>
@@ -204,9 +205,11 @@ const PostCard = React.memo((props) => {
             })
           };
           
+          console.log('🔔 Creating like notification:', notificationData);
           const notificationResult = await createNotification(notificationData);
           
           if (notificationResult.success) {
+            console.log('✅ Like notification created successfully');
           } else {
             console.log('❌ Failed to create like notification:', notificationResult.msg);
           }
@@ -250,9 +253,11 @@ const PostCard = React.memo((props) => {
             })
           };
           
+          console.log('🔔 Creating comment notification:', notificationData);
           const notificationResult = await createNotification(notificationData);
           
           if (notificationResult.success) {
+            console.log('✅ Comment notification created successfully');
           } else {
             console.log('❌ Failed to create comment notification:', notificationResult.msg);
           }

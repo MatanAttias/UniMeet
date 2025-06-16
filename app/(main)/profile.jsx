@@ -797,6 +797,7 @@ const styles = StyleSheet.create({
   },
   introductionText: {
     fontSize: hp(2),
+    color: theme.colors.text,
     fontWeight: theme.fonts.semibold,
     marginLeft: 8,
     fontSize: 16,

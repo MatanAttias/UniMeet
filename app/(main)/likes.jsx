@@ -184,7 +184,7 @@ export default function Likes() {
           </Text>
           <Text style={styles.cardSubtitle} numberOfLines={1}>
             {isFriendRequest 
-              ? 'שלח לך בקשת חברות' 
+              ? 'רוצה להיות חבר שלך' 
               : 'עשה לך לייק'}
           </Text>
         </View>
