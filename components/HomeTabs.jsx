@@ -46,7 +46,7 @@ export default HomeTabs;
 const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row-reverse',
-    justifyContent: 'center',  // מרכז את הtabs
+    justifyContent: 'right',  // מרכז את הtabs
     paddingHorizontal: wp(4),
     paddingBottom: hp(1),
     borderBottomWidth: 1,
