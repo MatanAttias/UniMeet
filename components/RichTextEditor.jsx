@@ -16,7 +16,6 @@ const RichTextEditor = ({ editorRef, onChange }) => {
           onChange={onChange}
           editorInitializedCallback={() => {
             editorRef?.current?.registerToolbar(() => {
-              // לוגיקה של בר הכלים במידת הצורך
             });
           }}
           style={styles.editorInlineStyle}
@@ -33,15 +32,14 @@ const styles = StyleSheet.create({
   container: {
     minHeight: 285,
     padding: 16,
-    backgroundColor: '#3e2e3e', // טיפה יותר בהיר מ-#1a1a1a
+    backgroundColor: '#3e2e3e', 
     borderRadius: 16,
   
-    // הצללה עמוקה למראה "מרחף"
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
-    elevation: 10, // בולט באנדרואיד
+    elevation: 10, 
     borderWidth: 1,
     borderColor: '#3a3a3a',
   },
@@ -54,14 +52,13 @@ const styles = StyleSheet.create({
     writingDirection: 'rtl',
   },
   editorContainer: {
-    backgroundColor: '#e2e2e8', // אפור כהה יותר מהרקע הכללי (למשל #f5f5f7)
+    backgroundColor: '#e2e2e8',
     borderRadius: 12,
     padding: 8,
     minHeight: 140,
     borderWidth: 1,
-    borderColor: '#c0c0c5', // גבול אפור כהה יותר
+    borderColor: '#c0c0c5', 
   
-    // צל מודגש טיפה יותר
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.12,

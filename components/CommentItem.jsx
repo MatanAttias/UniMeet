@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
         
     },
     content: {
-        backgroundColor: '#1a1a1a', // רקע כהה
+        backgroundColor: '#1a1a1a',
         flex: 1,
         gap: 5,
         paddingHorizontal: 14,
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
         borderRadius: theme.radius.md,
         borderCurve: 'continuous',
         borderWidth: 1.5,
-        borderColor: theme.colors.primary, // מסגרת בצבע ראשי
+        borderColor: theme.colors.primary, 
       },
       highlight: {
         backgroundColor: '#292929',
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     text: {
         fontSize: hp(1.6),
         fontWeight: theme.fonts.medium,
-        color: theme.colors.textPrimary, // טקסט לבן/בהיר
+        color: theme.colors.textPrimary, 
       },   
 })
 

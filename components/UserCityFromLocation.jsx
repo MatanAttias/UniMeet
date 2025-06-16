@@ -12,7 +12,7 @@ const UserCityFromLocation = ({ location }) => {
         const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}`;
         const response = await fetch(url, {
           headers: {
-            'User-Agent': 'UniMeetApp/1.0 (1maorhuri1@gmail.com)', // חשוב לכלול זיהוי פשוט
+            'User-Agent': 'UniMeetApp/1.0 (1maorhuri1@gmail.com)', 
           },
         });
         const data = await response.json();

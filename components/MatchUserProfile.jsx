@@ -16,7 +16,6 @@ import Icon from '../assets/icons';
 import { hp, wp } from '../constants/helpers/common';
 import { theme } from '../constants/theme';
 
-// קומפוננטת שורת מידע (אייקון + טקסט)
 const InfoItem = ({ icon, text }) => (
   <View style={styles.infoItemContainer}>
     <MaterialCommunityIcons name={icon} size={18} color={theme.colors.primary} />
@@ -24,7 +23,6 @@ const InfoItem = ({ icon, text }) => (
   </View>
 );
 
-// קומפוננטת רשימת תגיות
 const TagList = ({ label, tags }) => {
   if (!tags?.length) return null;
   return (
@@ -107,7 +105,6 @@ export default function MatchUserProfile({
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
-  // פונקציה להתאמת הסטטוס לפי מין
   const getStatusText = (status, gender) => {
     if (!status) return status;
     
@@ -124,12 +121,11 @@ export default function MatchUserProfile({
       return gender === 'נקבה' ? 'אלמנה' : 'אלמן';
     }
     
-    return status; // החזר את הסטטוס המקורי אם לא נמצא התאמה
+    return status; 
   };
 
   const age = calculateAge(user.birth_date);
 
-  // תצוגת תמונה בלבד (כמו שהיה קודם)
   if (!showFullProfile) {
     return (
       <View style={styles.imageOnlyContainer}>
@@ -147,7 +143,6 @@ export default function MatchUserProfile({
             transition={250}
           />
 
-          {/* אייקון לפתיחת פרופיל מלא */}
           <View style={styles.expandIcon}>
             <MaterialCommunityIcons
               name="account-details"
@@ -183,16 +178,13 @@ export default function MatchUserProfile({
     );
   }
 
-  // תצוגת פרופיל מלא
   return (
     <ScrollView style={styles.fullProfileContainer} showsVerticalScrollIndicator={false}>
-      {/* כפתור חזרה לתצוגת תמונה */}
       <Pressable style={styles.backToImageBtn} onPress={onToggleView}>
         <MaterialCommunityIcons name="arrow-right" size={24} color={theme.colors.primary} />
         <Text style={styles.backToImageText}>חזור לתמונה</Text>
       </Pressable>
 
-      {/* Avatar + Name */}
       <View style={styles.avatarContainer}>
         <Avatar uri={user?.image} size={hp(12)} rounded={theme.radius.xxl * 1.4} />
       </View>
@@ -221,7 +213,6 @@ export default function MatchUserProfile({
           </View>
         )}
       
-        {/* הצגת preferredMatch מתחת ל connectionTypes */}
         {user.preferredMatch && (
           <View style={[styles.inlineItem, { flexDirection: 'row-reverse', marginTop: 8 }]}>
             <MaterialCommunityIcons name="account-heart" size={28} color={theme.colors.primary} />
@@ -230,7 +221,6 @@ export default function MatchUserProfile({
         )}
       </MotiView>
 
-      {/* הקדמה אישית */}
       {user.introduction && (
         <MotiView
           from={{ opacity: 0, translateY: 10 }}
@@ -249,7 +239,6 @@ export default function MatchUserProfile({
         </MotiView>
       )}
 
-      {/* תגיות */}
       {(user.traits?.length > 0 ||
         user.identities?.length > 0 ||
         user.supportNeeds?.length > 0) && (
@@ -275,7 +264,6 @@ export default function MatchUserProfile({
         </MotiView>
       )}
 
-      {/* אודיו */}
       {user.audio && (
         <View style={styles.audioContainer}>
           {user.prompt && <Text style={styles.audioPrompt}>{user.prompt}</Text>}
@@ -307,7 +295,6 @@ export default function MatchUserProfile({
         </View>
       )}
 
-      {/* כפתורי פעולה בתחתית */}
       <View style={styles.fullProfileActions}>
         <Pressable
           style={[styles.actionButton, styles.rejectButton]}
@@ -342,7 +329,6 @@ export default function MatchUserProfile({
 }
 
 const styles = StyleSheet.create({
-  // תצוגת תמונה בלבד
   imageOnlyContainer: {
     width: wp(95),
     alignItems: 'center',
@@ -352,10 +338,10 @@ const styles = StyleSheet.create({
     fontSize: hp(3.1),
     fontWeight: 'bold',
     marginBottom: hp(1),
-    alignSelf: 'flex-end', // שינוי מ-flex-start ל-flex-end
+    alignSelf: 'flex-end', 
     paddingHorizontal: wp(2),
-    textAlign: 'right', // הוספה
-    writingDirection: 'rtl', // הוספה
+    textAlign: 'right', 
+    writingDirection: 'rtl',
   },
   imageWrapper: {
     width: '99%',
@@ -410,7 +396,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // תצוגת פרופיל מלא
   fullProfileContainer: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -459,7 +444,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     marginTop: hp(1),
   },
-  // סטיילים חדשים ל-InfoItem
   infoItemContainer: {
     flexDirection: 'row-reverse',
     alignItems: 'center',

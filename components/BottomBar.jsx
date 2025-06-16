@@ -1,13 +1,12 @@
 import React from 'react';
 import { View, Pressable, StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
-import Icon from '../assets/icons'; // עדכן נתיב במידת הצורך
+import Icon from '../assets/icons';
 import Avatar from './Avatar';
 import { theme } from '../constants/theme';
 import { hp, wp } from '../constants/helpers/common';
 
 
-// באדג' לכמות הודעות לא נקראות
 const ChatTabIcon = ({ color, size, unreadCount }) => (
   <View style={{ width: size, height: size }}>
     <Icon name="chat" size={size} color={color} />
@@ -24,7 +23,6 @@ export default function BottomBar({ currentUser, selected, unreadMessages = 0, u
 
   return (
     <View style={styles.container}>
-      {/* פרופיל */}
       <Pressable style={styles.tab} onPress={() => router.push('/profile')}>
         <Avatar
           uri={currentUser?.image}
@@ -34,7 +32,6 @@ export default function BottomBar({ currentUser, selected, unreadMessages = 0, u
         />
         <Text style={[styles.label, selected === 'profile' && styles.selectedLabel]}>פרופיל</Text>
       </Pressable>
-      {/* צ׳אט */}
       <Pressable style={styles.tab} onPress={() => router.push('chats')}>
         <ChatTabIcon
           color={selected === 'chats' ? theme.colors.primary : theme.colors.textSecondary}
@@ -44,7 +41,6 @@ export default function BottomBar({ currentUser, selected, unreadMessages = 0, u
         <Text style={[styles.label, selected === 'chats' && styles.selectedLabel]}>צ׳אט</Text>
       </Pressable>
 
-      {/* התאמות */}
       <Pressable style={styles.tab} onPress={() => router.push('/matches')}>
         <Icon
           name="match"
@@ -57,7 +53,6 @@ export default function BottomBar({ currentUser, selected, unreadMessages = 0, u
       </Pressable>
 
 
-      {/* לייקים */}
       <Pressable style={styles.tab} onPress={() => router.push('/likes')}>
         <View style={{ width: hp(3), height: hp(3) }}>
           <Icon
@@ -74,7 +69,6 @@ export default function BottomBar({ currentUser, selected, unreadMessages = 0, u
         <Text style={[styles.label, selected === 'likes' && styles.selectedLabel]}>לייקים</Text>
       </Pressable>
 
-      {/* בית */}
       <Pressable style={styles.tab} onPress={() => router.push('/home')}>
         <Icon
           name="home"

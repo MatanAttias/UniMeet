@@ -18,26 +18,20 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import { createNotification } from '../services/notificationService';
 
-// 🔧 פונקציה לזיהוי כיוון טקסט
 const detectTextDirection = (text) => {
   if (!text) return 'ltr';
   
-  // הסר HTML tags לפני בדיקה
   const cleanText = stripHtmlTags(text);
   
-  // רגקס לזיהוי אותיות עבריות וערביות
   const rtlRegex = /[\u0590-\u05FF\u0600-\u06FF]/;
   const ltrRegex = /[a-zA-Z]/;
   
-  // ספור אותיות RTL ו-LTR
   const rtlMatches = (cleanText.match(rtlRegex) || []).length;
   const ltrMatches = (cleanText.match(ltrRegex) || []).length;
   
-  // אם יש יותר RTL - החזר rtl, אחרת ltr
   return rtlMatches > ltrMatches ? 'rtl' : 'ltr';
 };
 
-// 🔧 פונקציה משופרת לזמן
 const getTimeAgo = (dateString) => {
   if (!dateString) return 'לא ידוע';
   
@@ -84,13 +78,11 @@ const PostCard = React.memo((props) => {
     showDelete = false, 
     onDelete = () => {}, 
     onEdit = () => {},
-    isInSavedTab = false  // הוסף prop חדש
+    isInSavedTab = false 
   } = props;
 
-  // Debug - בדוק אם isInSavedTab מועבר נכון
   console.log('PostCard props:', { isInSavedTab, postId: item.id });
 
-  // Early validation with more descriptive error messages
   if (!item || typeof item !== 'object') {
     console.warn('Invalid post item:', item);
     return (
@@ -114,20 +106,17 @@ const PostCard = React.memo((props) => {
   
 
 
-  // State management
   const [likes, setLikes] = useState(item.postLikes || []);
   const [commentCount, setCommentCount] = useState(item.comments?.[0]?.count || 0);
   const [showOptions, setShowOptions] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [sending, setSending] = useState(false);
   
-  // Animation
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
-  // 🔧 Memoized calculations משופרים
   const postTimeAgo = useMemo(() => 
     getTimeAgo(item.created_at), 
     [item.created_at]
@@ -138,23 +127,19 @@ const PostCard = React.memo((props) => {
     [likes, currentUser.id]
   );
 
-  // 🔧 זיהוי כיוון טקסט
   const textDirection = useMemo(() => 
     detectTextDirection(item.body), 
     [item.body]
   );
 
-  // 🔧 זיהוי כיוון טקסט לתגובה
   const commentDirection = useMemo(() => 
     detectTextDirection(commentText), 
     [commentText]
   );
 
-  // Real-time subscriptions with cleanup
   useEffect(() => {
     const channelName = `comments_post_${item.id}`;
     
-    // בדוק אם כבר קיים channel כזה (Supabase לא עושה את זה אוטומטית)
     const existing = supabase.getChannels().find(c => c.topic === `realtime:${channelName}`);
     if (existing) return;
   
@@ -187,12 +172,10 @@ const PostCard = React.memo((props) => {
     };
   }, [item.id]);
 
-  // Update likes when item changes
   useEffect(() => {
     setLikes(item.postLikes || []);
   }, [item.postLikes]);
 
-  // Callbacks for performance optimization
   const onLike = useCallback(async () => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
@@ -202,15 +185,12 @@ const PostCard = React.memo((props) => {
       }, 50);
 
       if (liked) {
-        // הסרת לייק
         setLikes(ls => ls.filter(l => l.userId !== currentUser.id));
         await removePostLike(item.id, currentUser.id);
       } else {
-        // הוספת לייק
         setLikes(ls => [...ls, { userId: currentUser.id }]);
         await createPostLike({ userId: currentUser.id, postId: item.id });
         
-        // 🆕 יצירת התראה אם זה לא הפוסט של המשתמש עצמו
         if (item.userId !== currentUser.id) {
           const notificationData = {
             "senderId": currentUser.id,
@@ -258,7 +238,6 @@ const PostCard = React.memo((props) => {
         setCommentCount(c => c + 1);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         
-        // 🆕 יצירת התראה אם זה לא הפוסט של המשתמש עצמו
         if (item.userId !== currentUser.id) {
           const notificationData = {
             "senderId": currentUser.id,
@@ -318,7 +297,6 @@ const PostCard = React.memo((props) => {
       
       const result = await unsavePost(currentUser.id, item.id);
       if (result.success) {
-        // הסר מהרשימה מקומית
         onDelete(item);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
@@ -336,7 +314,6 @@ const PostCard = React.memo((props) => {
 
   return (
     <View style={[styles.container, hasShadow && styles.shadow]}>
-      {/* Header */}
       <View style={styles.header}>
       <TouchableOpacity style={styles.userInfo} onPress={onUserPress}>
 
@@ -397,7 +374,6 @@ const PostCard = React.memo((props) => {
         </View>
       </View>
 
-      {/* Content with dynamic text direction */}
       <View style={[
         styles.content,
         { alignItems: textDirection === 'rtl' ? 'flex-end' : 'flex-start' }
@@ -461,7 +437,6 @@ const PostCard = React.memo((props) => {
         )}
       </View>
 
-      {/* Footer with improved actions */}
       <View style={styles.footer}>
         <View style={styles.footerButton}>
           <Animated.View style={animatedStyle}>
@@ -494,7 +469,6 @@ const PostCard = React.memo((props) => {
           <Text style={styles.count}>{commentCount}</Text>
         </View>
         
-        {/* כפתור הסרה מהשמורים או שיתוף */}
         <View style={styles.footerButton}>
           {isInSavedTab ? (
             <TouchableOpacity 
@@ -522,7 +496,6 @@ const PostCard = React.memo((props) => {
         </View>
       </View>
 
-      {/* Quick reply with dynamic direction */}
       <View style={styles.quickReplyContainer}>
         <TextInput
           placeholder="הגב לפוסט..."
@@ -555,7 +528,6 @@ const PostCard = React.memo((props) => {
         </TouchableOpacity>
       </View>
 
-      {/* Options modal */}
       <PostOptions 
         visible={showOptions} 
         onClose={() => setShowOptions(false)} 

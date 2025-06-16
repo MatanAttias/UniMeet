@@ -6,10 +6,10 @@ import { hp } from '../constants/helpers/common';
 
 /**
  * Avatar component
- * @param {string|object} uri - URL string או אובייקט Asset מ-ImagePicker עם שדה .uri
- * @param {number} size - גובה ורוחב של האוואטר
- * @param {number} rounded - רדיוס הפינות
- * @param {object} style - סגנונות נוספים
+ * @param {string|object} uri 
+ * @param {number} size 
+ * @param {number} rounded
+ * @param {object} style 
  */
 const Avatar = ({
   uri,
@@ -17,7 +17,6 @@ const Avatar = ({
   rounded = theme.radius.md,
   style = {},
 }) => {
-  // אם uri הוא אובייקט עם שדה .uri (כמו result.assets[0]), יוצא את המחרוזת
   const resolvedUri = uri && typeof uri === 'object' && uri.uri
     ? uri.uri
     : uri;

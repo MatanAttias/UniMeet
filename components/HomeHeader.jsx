@@ -10,17 +10,14 @@ const HomeHeader = ({ activeTab, onTabChange }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* שורת אייקונים ולוגו */}
       <View style={styles.topRow}>
-        {/* אייקון תפריט חבור (hamburger) */}
-        <Pressable onPress={() => {/* כאן אפשר לפתוח את הקטגוריות */}} style={styles.iconButton}>
+        <Pressable onPress={() => {/* כאן אפשר לפתוח את הקטגוריות */}} 
+        style={styles.iconButton}>
           <Ionicons name="menu-outline" size={24} color={theme.colors.pink} />
         </Pressable>
 
-        {/* לוגו UniMeet */}
         <Text style={styles.logoText}>UniMeet</Text>
 
-        {/* שורת אייקונים מימין */}
         <View style={styles.iconRow}>
   <Pressable onPress={() => router.push('/newPost')} style={styles.iconButton}>
     <Ionicons name="add-circle-outline" size={26} color={theme.colors.pink} />
@@ -34,7 +31,6 @@ const HomeHeader = ({ activeTab, onTabChange }) => {
 </View>
       </View>
 
-      {/* לשוניות Home / Matches */}
       <HomeTabs activeTab={activeTab} onTabChange={onTabChange} />
     </SafeAreaView>
   );
