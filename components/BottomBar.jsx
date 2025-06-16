@@ -1,46 +1,101 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Pressable, StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import Icon from '../assets/icons';
 import Avatar from './Avatar';
 import { theme } from '../constants/theme';
 import { hp, wp } from '../constants/helpers/common';
+import { supabase } from '../lib/supabase'; // ✅ ודא שהנתיב נכון
 
+// 👉 פונקציה להבאת הצ'אטים של המשתמש
+const fetchUserChats = async (userId) => {
+  const { data, error } = await supabase
+    .from('chats')
+    .select('*')
+    .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
 
-const ChatTabIcon = ({ color, size, unreadCount }) => (
-  <View style={{ width: size, height: size }}>
-    <Icon name="chat" size={size} color={color} />
-    {unreadCount > 0 && (
-      <View style={styles.badge}>
-        <Text style={styles.badgeText}>{unreadCount}</Text>
-      </View>
-    )}
-  </View>
-);
+  if (error) {
+    console.error('Error fetching chats:', error.message);
+    return [];
+  }
 
-export default function BottomBar({ currentUser, selected, unreadMessages = 0, unreadLikes = 0 }) {
+  return data || [];
+};
+
+export default function BottomBar({ selected }) {
   const router = useRouter();
+  const [currentUser, setCurrentUser] = useState(null);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [unreadLikes, setUnreadLikes] = useState(0);
+
+  
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // 🧑‍💻 שליפת המשתמש המחובר
+        const { data, error } = await supabase.auth.getUser();
+        if (error || !data?.user) throw error || new Error('No user logged in');
+        const user = data.user;
+        setCurrentUser(user);
+  
+        // 💬 שליפת שיחות ועדכון הודעות שלא נקראו
+        const chats = await fetchUserChats(user.id);
+        const unread = chats.reduce((count, chat) => {
+          const isUser1 = user.id === chat.user1_id;
+          return count + ((isUser1 ? !chat.user1_read : !chat.user2_read) ? 1 : 0);
+        }, 0);
+        setUnreadMessages(unread);
+  
+        // ❤️ שליפת לייקים שלא נקראו מטבלת interactions
+        const { data: likes, error: likesError } = await supabase
+          .from('interactions')
+          .select('*')
+          .eq('user_id', user.id)
+  
+        if (likesError) throw likesError;
+  
+        setUnreadLikes(likes?.length || 0);
+  
+      } catch (err) {
+        console.error('Error in BottomBar useEffect:', err);
+      }
+    };
+  
+    fetchData();
+  }, []);
 
   return (
     <View style={styles.container}>
+      {/* פרופיל */}
       <Pressable style={styles.tab} onPress={() => router.push('/profile')}>
         <Avatar
-          uri={currentUser?.image}
+          uri={currentUser?.user_metadata?.image}
           size={hp(3.3)}
           rounded={theme.radius.full}
           style={styles.avatar}
         />
         <Text style={[styles.label, selected === 'profile' && styles.selectedLabel]}>פרופיל</Text>
       </Pressable>
-      <Pressable style={styles.tab} onPress={() => router.push('chats')}>
-        <ChatTabIcon
-          color={selected === 'chats' ? theme.colors.primary : theme.colors.textSecondary}
-          size={hp(3)}
-          unreadCount={unreadMessages}
-        />
+
+      {/* צ'אט */}
+      <Pressable style={styles.tab} onPress={() => router.push('/chats')}>
+        <View style={{ width: hp(3), height: hp(3) }}>
+          <Icon
+            name="chat"
+            size={hp(3)}
+            color={selected === 'chats' ? theme.colors.primary : theme.colors.textSecondary}
+          />
+          {unreadMessages > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{unreadMessages}</Text>
+            </View>
+          )}
+        </View>
         <Text style={[styles.label, selected === 'chats' && styles.selectedLabel]}>צ׳אט</Text>
       </Pressable>
 
+      {/* התאמות */}
       <Pressable style={styles.tab} onPress={() => router.push('/matches')}>
         <Icon
           name="match"
@@ -52,7 +107,7 @@ export default function BottomBar({ currentUser, selected, unreadMessages = 0, u
         </Text>
       </Pressable>
 
-
+      {/* לייקים */}
       <Pressable style={styles.tab} onPress={() => router.push('/likes')}>
         <View style={{ width: hp(3), height: hp(3) }}>
           <Icon
@@ -69,6 +124,7 @@ export default function BottomBar({ currentUser, selected, unreadMessages = 0, u
         <Text style={[styles.label, selected === 'likes' && styles.selectedLabel]}>לייקים</Text>
       </Pressable>
 
+      {/* בית */}
       <Pressable style={styles.tab} onPress={() => router.push('/home')}>
         <Icon
           name="home"

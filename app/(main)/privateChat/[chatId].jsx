@@ -105,6 +105,9 @@ import {
         loadChats();
       }, [])
     );
+    const handleUserPress = (userId) => {
+      router.push({ pathname: '/visitedProfile', params: { userId } });
+    };
     const fetchChatPartnerName = async () => {
         if (!chatObj || !user) return;
       
@@ -371,9 +374,9 @@ import {
       ) : (
         <Avatar />
       )}
-      <Text style={styles.chatPartnerName}>
-        {chatPartnerName || '...'}
-      </Text>
+     <Pressable onPress={() => handleUserPress(chatObj.user1_id === user.id ? chatObj.user2_id : chatObj.user1_id)}>
+        <Text style={styles.partnerName}>{chatPartnerName}</Text>
+      </Pressable>
     </View>
   </View>
 
@@ -492,13 +495,26 @@ import {
         elevation: 5,
         marginTop: -50,
       },
-    backButton: {
-      marginLeft: wp(3),
-    },
-    backText: {
-      color: '#fff',
-      fontSize: 16,
-    },
+      backButton: {
+        backgroundColor: theme.colors.card,
+        paddingVertical: hp(1),
+        paddingHorizontal: wp(3),
+        borderRadius: theme.radius.md,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: theme.colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 6,
+        elevation: 4,
+        marginLeft: 10,
+
+      },
+      backText: {
+        color: theme.colors.primary,
+        fontSize: hp(2),
+        fontWeight: theme.fonts.semibold,
+      },
     chatInfoContainer: {
       flexDirection: 'row-reverse',
       alignItems: 'center',
@@ -509,6 +525,7 @@ import {
         fontSize: 20,
         fontWeight: 'bold',
         marginRight: 12,
+        
       },
       profileImage: {
         width: 42,
@@ -651,6 +668,11 @@ import {
         padding: 0,
         borderRadius: 20,
         maxWidth: '75%',
+      },
+      partnerName: {
+        fontWeight: 'bold',
+        fontSize: 16,
+        color: theme.colors.primary,
       },
   });
   

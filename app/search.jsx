@@ -187,4 +187,10 @@ const styles = StyleSheet.create({
     fontSize: hp(2),
     fontWeight: theme.fonts.semibold,
   },
+  partnerName: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    color: theme.colors.primary,
+    textDecorationLine: 'underline',
+  }
 });

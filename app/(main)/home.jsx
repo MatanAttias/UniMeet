@@ -44,12 +44,14 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const [loadingSaved, setLoadingSaved] = useState(false);
   const subscriptionsRef = useRef({});
+  const [chats, setChats] = useState([]);
 
   const [fontsLoaded] = useFonts({
     Poppins_600SemiBold,
     Poppins_700Bold,
     Poppins_400Regular,
   });
+
 
   useEffect(() => {
 
@@ -301,6 +303,7 @@ export default function Home() {
       </ScreenWrapper>
     );
   }
+  
 
   return (
     <ScreenWrapper bg={theme.colors.background}>
@@ -375,15 +378,16 @@ export default function Home() {
 
       {/* BottomBar */}
       <BottomBar
-        currentUser={user}
-        selected={selectedTab === 'home' ? 'home' : selectedTab === 'saved' ? 'saved' : 'home'}
-        onTabChange={tab => {
-          if (tab === 'search') router.push('Search');
-          if (tab === 'saved') setSelectedTab('saved');
-          if (tab === 'profile') router.push('profile');
-          if (tab === 'home') setSelectedTab('home');
-        }}
-      />
+          currentUser={user}
+          selected={selectedTab === 'home' ? 'home' : selectedTab === 'saved' ? 'saved' : 'home'}
+          chats={chats} // 👈 העברה חשובה של רשימת הצ׳אטים
+          onTabChange={tab => {
+            if (tab === 'search') router.push('Search');
+            if (tab === 'saved') setSelectedTab('saved');
+            if (tab === 'profile') router.push('profile');
+            if (tab === 'home') setSelectedTab('home');
+          }}
+        />
     </ScreenWrapper>
   );
 }
@@ -403,6 +407,7 @@ const styles = StyleSheet.create({
     paddingBottom: hp(1),
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.surface,
+    marginTop: -50,
   },
   logo: {
     flexDirection: 'row',

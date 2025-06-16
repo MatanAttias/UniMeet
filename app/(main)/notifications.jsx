@@ -67,6 +67,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: wp(4),
+    marginTop:50,
   },
   backButton: {
     position: 'absolute',
@@ -83,6 +84,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 4,
+    marginTop:-120,
     zIndex: 10,
   },
   backText: {
