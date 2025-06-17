@@ -6,6 +6,8 @@ import Avatar from './Avatar';
 import { theme } from '../constants/theme';
 import { hp, wp } from '../constants/helpers/common';
 import { supabase } from '../lib/supabase'; // ✅ ודא שהנתיב נכון
+import { fetchLikesAndRequests } from '../services/matchService';
+import { useAuth } from '../contexts/AuthContext';
 
 // 👉 פונקציה להבאת הצ'אטים של המשתמש
 const fetchUserChats = async (userId) => {
@@ -27,8 +29,28 @@ export default function BottomBar({ selected }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [unreadLikes, setUnreadLikes] = useState(0);
+  const [likesData, setLikesData] = useState({
+    liked_you: [],
+    matches: [],
+    active_chats: []
+  });
+  const { user } = useAuth();
 
+  useEffect(() => {
+    if (!user?.id) return;
   
+    const loadLikes = async () => {
+      try {
+        const data = await fetchLikesAndRequests(user.id);
+        setLikesData(data); // שומר את כל האובייקט
+        setUnreadLikes(data.liked_you?.length || 0); // שומר את כמות הלייקים
+      } catch (error) {
+        console.error('Error loading likes:', error);
+      }
+    };
+  
+    loadLikes();
+  }, [user?.id]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,7 +74,7 @@ export default function BottomBar({ selected }) {
           .from('interactions')
           .select('*')
           .eq('user_id', user.id)
-  
+          .eq('type', 'liked_you'); // <== הוספה קריטית
         if (likesError) throw likesError;
   
         setUnreadLikes(likes?.length || 0);
@@ -109,19 +131,24 @@ export default function BottomBar({ selected }) {
 
       {/* לייקים */}
       <Pressable style={styles.tab} onPress={() => router.push('/likes')}>
-        <View style={{ width: hp(3), height: hp(3) }}>
-          <Icon
-            name="heart"
-            size={hp(3)}
-            color={selected === 'likes' ? theme.colors.primary : theme.colors.textSecondary}
-          />
-          {unreadLikes > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{unreadLikes}</Text>
-            </View>
-          )}
+        <View style={{ alignItems: 'center' }}>
+          {/* container שמגדיר position: 'relative' */}
+          <View style={{ width: hp(3), height: hp(3), position: 'relative' }}>
+            <Icon
+              name="heart"
+              size={hp(3)}
+              color={selected === 'likes' ? theme.colors.primary : theme.colors.textSecondary}
+            />
+            {unreadLikes > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{unreadLikes}</Text>
+              </View>
+            )}
+          </View>
+          <Text style={[styles.label, selected === 'likes' && styles.selectedLabel]}>
+            לייקים
+          </Text>
         </View>
-        <Text style={[styles.label, selected === 'likes' && styles.selectedLabel]}>לייקים</Text>
       </Pressable>
 
       {/* בית */}
@@ -178,20 +205,19 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: -7,
-    right: -9,
-    backgroundColor: theme.colors.rose ?? '#FF4F93',
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
-    justifyContent: 'center',
+    top: -5,
+    right: -5,
+    backgroundColor: theme.colors.primary, // ✅ צבע ורוד/פריימרי
+    borderRadius: 10,
+    paddingHorizontal: 5,
+    height: 18,
+    minWidth: 18,
     alignItems: 'center',
-    paddingHorizontal: 3,
-    zIndex: 10,
+    justifyContent: 'center',
   },
   badgeText: {
-    color: '#fff',
-    fontSize: 11,
+    color: 'white',
+    fontSize: 10,
     fontWeight: 'bold',
   },
 });
