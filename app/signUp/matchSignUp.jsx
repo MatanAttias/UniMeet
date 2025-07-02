@@ -27,15 +27,8 @@ const MatchSignUp = () => {
   const goBack = () => router.back();
 
   const onNext = () => {
-
-
-    if (!preferredMatch) {
-      Alert.alert('שגיאה', 'אנא בחר/י העדפה להמשך');
-      return;
-    }
-
+    const match = preferredMatch ?? ''; // אם null או undefined -> ""
     router.push({
-
       pathname: '/signUp/buildProfile',
       params: {
         fullName,
@@ -47,12 +40,11 @@ const MatchSignUp = () => {
         image,
         wantsNotificationsBool,
         location,
-        preferredMatch, 
+        preferredMatch: match, // פה נשלח "" אם לא נבחר כלום
         role,
       },
     });
   };
-
   return (
     <View style={styles.container}>
       <Pressable style={styles.backButton} onPress={goBack}>
