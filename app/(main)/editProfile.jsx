@@ -661,6 +661,7 @@ const onCancel = () => {
           </View>
 
           <Text style={styles.subtext}>אנא מלא/י את פרטי הפרופיל שלך</Text>
+          <View style={styles.separator} />
 
           {/* טקסט בסיסי */}
           <Input
@@ -676,6 +677,7 @@ const onCancel = () => {
             value={form.email}
             onChangeText={v => setForm(f => ({ ...f, email: v }))}
           />
+            <View style={styles.separator} />
 
           <View style={{ gap: 6, alignItems: 'flex-end' }}>
             <Text style={[styles.switchLabel, { textAlign: 'right', writingDirection: 'rtl' }]}>
@@ -728,6 +730,7 @@ const onCancel = () => {
               />
             )}
           </View>
+          <View style={styles.separator} />
 
           <View style={styles.modalContent}>
           <Text style={[styles.modalTitle, { textAlign: 'center', writingDirection: 'rtl' }]}>
@@ -785,6 +788,7 @@ const onCancel = () => {
               </View>
             </Pressable>
           </Modal>
+          <View style={styles.separator} />
 
           {/* connectionTypes - רשימה */}
           
@@ -813,7 +817,8 @@ const onCancel = () => {
 
          
 
-         
+          <View style={styles.separator} />
+
 
           {/* preferredMatch */}
           <View style={styles.modalContent}>
@@ -845,6 +850,7 @@ const onCancel = () => {
 
 
 
+        <View style={styles.separator} />
 
         {/*traits*/}
         <View style={styles.switchRow}>
@@ -940,6 +946,7 @@ const onCancel = () => {
           </View>
         </Modal>
         
+        <View style={styles.separator} />
 
 
     {/* hobbies */}
@@ -1033,6 +1040,7 @@ const onCancel = () => {
 
 
 
+    <View style={styles.separator} />
 
               {/* identities */}
               <View style={styles.switchRow}>
@@ -1121,7 +1129,8 @@ const onCancel = () => {
               </Pressable>
             </View>
             </Modal>
-      
+            <View style={styles.separator} />
+
               {/* supportNeeds */}
               <View style={styles.switchRow}>
                 <Text style={styles.switchLabel}>הצג צרכי תמיכה בפרופיל</Text>
@@ -1209,7 +1218,8 @@ const onCancel = () => {
                   </View>
                 </View>
               </Modal>
-      
+              <View style={styles.separator} />
+
               {/* introduction */}
               <View style={styles.container}>
               <Text style={styles.title}>רשמו משהו על עצמכם, שאחרים יכירו אתכם טוב יותר:</Text>
@@ -1223,7 +1233,7 @@ const onCancel = () => {
                 textAlignVertical="top"  
               />
             </View>
-            
+            <View style={styles.separator} />
              {/* status */}
              <Text style={styles.title}>בחרו סטטוס:</Text>
 
@@ -1293,7 +1303,8 @@ const onCancel = () => {
                 </View>
               </View>
             </Modal>
-            
+            <View style={styles.separator} />
+
               {/* prompt */}
               <View style={styles.promptRow}>
                 <View style={styles.promptRow}>
@@ -1487,6 +1498,20 @@ const onCancel = () => {
           backgroundColor: theme.colors.background,
           borderRadius: 10,
           marginBottom: 20,
+        },
+        separator: {
+          height: 1,
+          backgroundColor: theme.colors.textDark,
+          marginVertical: 10,
+        
+          // הצללה (ל-iOS)
+          shadowColor: theme.colors.primaryDark, // סגול כהה (אפשר גם theme.colors.primaryDark אם מוגדר)
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.5,
+          shadowRadius: 2,
+        
+          // הצללה ל-Android
+          elevation: 3,
         },
         connectionTypeOption: {
           paddingVertical: hp(1.5),
