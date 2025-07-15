@@ -290,6 +290,10 @@ const PostCard = React.memo((props) => {
     );
   }, [item, onDelete]);
 
+  const handleUserPress = (userId) => {
+    router.push({ pathname: '/visitedProfile', params: { userId } });
+  };
+  
   const handleUnsaveFromSaved = useCallback(async () => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -314,21 +318,23 @@ const PostCard = React.memo((props) => {
   return (
     <View style={[styles.container, hasShadow && styles.shadow]}>
       <View style={styles.header}>
-      <TouchableOpacity style={styles.userInfo} onPress={onUserPress}>
+      <TouchableOpacity
+  style={styles.userInfo}
+  onPress={() => handleUserPress(item.user?.id)}>
+          <View style={styles.userInfo}>
+            <Avatar 
+              size={hp(4.5)} 
+              uri={item.user?.image} 
+              rounded={theme.radius.md} 
+            />
 
-        <View style={styles.userInfo}>
-          <Avatar 
-            size={hp(4.5)} 
-            uri={item.user?.image} 
-            rounded={theme.radius.md} 
-          />
-          <View style={styles.nameTime}>
-            <Text style={styles.username}>
-              {item.user?.name || 'משתמש'}
-            </Text>
-            <Text style={styles.postTime}>{postTimeAgo}</Text>
+            <View style={styles.nameTime}>
+              <Text style={styles.username}>
+                {item.user?.name || 'משתמש'}
+              </Text>
+              <Text style={styles.postTime}>{postTimeAgo}</Text>
+            </View>
           </View>
-        </View>
         </TouchableOpacity>
         
         <View style={styles.actionsRight}>
