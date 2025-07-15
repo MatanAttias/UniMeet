@@ -359,13 +359,34 @@ const filteredSupportNeeds = SUPPORT_NEEDS.filter(need =>
           .eq('id', currentUser.id);
         if (imgErr) throw imgErr;
       }
-
+     
       const { success, error } = await updateUser(currentUser.id, {
-        ...form,
-        connectionTypes: connectionTypesString, 
+        name: form.name,
+        phoneNumber: form.phoneNumber,
+        email: form.email,
+        bio: form.bio,
         image: imageUrl,
+        birth_date: form.birth_date,
+        gender: form.gender,
+        connectionTypes: connectionTypesString,
+        wantsNotifications: form.wantsNotifications,
+        preferredMatch: form.preferredMatch,
+        traits: form.traits,
+        showTraits: form.showTraits,
+        hobbies: form.hobbies,
+        showHobbies: form.showHobbies,
+        identities: form.identities,
+        showIdentities: form.showIdentities,
+        supportNeeds: form.supportNeeds,
+        showSupportNeeds: form.showSupportNeeds,
+        introduction: form.introduction,
+        audio: form.audio,
+        prompt: form.prompt,
+        status: form.status,
       });
       if (!success) throw new Error(error || 'עדכון המשתמש נכשל');
+
+      
 
       setUserData(u => ({ ...u, ...form, image: imageUrl }));
       Alert.alert('הצלחה', 'הפרופיל עודכן בהצלחה');
