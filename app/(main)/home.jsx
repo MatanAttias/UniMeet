@@ -27,6 +27,7 @@ import BottomBar from '../../components/BottomBar';
 import HomeTabs from '../../components/HomeTabs';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as Haptics from 'expo-haptics';
+import { fetchLikesAndRequests } from '../../services/matchService';
 
 let limit = 0;
 
@@ -43,12 +44,28 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const [loadingSaved, setLoadingSaved] = useState(false);
   const [chats, setChats] = useState([]);
+  const [likesCount, setLikesCount] = useState(0);
 
   const [fontsLoaded] = useFonts({
     Poppins_600SemiBold,
     Poppins_700Bold,
     Poppins_400Regular,
   });
+
+  useEffect(() => {
+    if (!user?.id) return;
+  
+    const loadLikes = async () => {
+      try {
+        const data = await fetchLikesAndRequests(user.id);
+        setLikesCount(data.liked_you?.length || 0);
+      } catch (error) {
+        console.error('Error loading likes:', error);
+      }
+    };
+  
+    loadLikes();
+  }, [user?.id]);
 
   useEffect(() => {
     // Debug user data (ניתן להסיר בפרודקשן)
