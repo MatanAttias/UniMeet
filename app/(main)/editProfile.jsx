@@ -422,7 +422,7 @@ const toggleIdentity = (identity) => {
   } else if (selectedIdentities.length < 5) {
     setSelectedIdentities([...selectedIdentities, identity]);
   } else {
-    Alert.alert('מקסימום זהויות', 'ניתן לבחור עד 5 זהויות בלבד');
+    Alert.alert('מקסימום בחירות', 'ניתן לבחור 5 בלבד');
   }
 };
 const toggleTrait = (trait) => {
@@ -1015,7 +1015,7 @@ const onCancel = () => {
 
               {/* identities */}
               <View style={styles.switchRow}>
-                <Text style={styles.switchLabel}>הצג זהויות בפרופיל</Text>
+                <Text style={styles.switchLabel}>הצג רקע בריאותי בפרופיל</Text>
                 <Switch
                   value={form.showIdentities}
                   onValueChange={v => setForm(f => ({ ...f, showIdentities: v }))}
@@ -1028,7 +1028,7 @@ const onCancel = () => {
                     onPress={() => setIdentitiesModalVisible(true)}
                     style={styles.selectTraitsButton}
                   >
-                    <Text style={styles.selectTraitsText}>בחר זהויות</Text>
+                    <Text style={styles.selectTraitsText}>בחר רקע בריאותי</Text>
                   </Pressable>
                   {form.identities.length > 0 && (
                     <View style={styles.traitsPreviewContainer}>
@@ -1064,7 +1064,7 @@ const onCancel = () => {
               />
 
               <Text style={styles.counterText}>
-                {selectedIdentities.length} / 5 זהויות נבחרו
+                {selectedIdentities.length} / 5 נבחרו
               </Text>
 
               <ScrollView contentContainerStyle={styles.traitsContainer}>

@@ -467,7 +467,7 @@ const UserHeader = ({ user, router, handleLogout }) => {
           
             {user.identities?.length > 0 && (
               <>
-                <Text style={styles.subSectionTitle}>זהויות</Text>
+                <Text style={styles.subSectionTitle}>רקע בריאותי</Text>
                 {renderTagList('', user.identities)}
               </>
             )}

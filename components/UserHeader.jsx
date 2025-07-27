@@ -127,7 +127,7 @@ export default function UserHeader({ user, router, onLogout }) {
 
       {/* תגים */}
       {renderTagList('תכונות', user.traits)}
-      {renderTagList('זהויות', user.identities)}
+      {renderTagList('רקע בריאותי', user.identities)}
       {renderTagList('צרכים', user.supportNeeds)}
 
       {user.audio && (

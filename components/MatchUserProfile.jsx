@@ -259,7 +259,7 @@ export default function MatchUserProfile({
           </View>
 
           <TagList label="תכונות" tags={user.traits} />
-          <TagList label="זהויות" tags={user.identities} />
+          <TagList label="רקע בריאותי" tags={user.identities} />
           <TagList label="צרכים" tags={user.supportNeeds} />
         </MotiView>
       )}
