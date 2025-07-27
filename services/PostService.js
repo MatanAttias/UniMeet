@@ -394,3 +394,72 @@ export const fetchSavedTips = async (userId) => {
     return { success: false, msg: error.message };
   }
 };
+
+export const deletePost = async (postId, userId) => {
+  try {
+    console.log('🔄 Attempting to delete post:', { postId, userId });
+
+    // בדיקה שהפוסט קיים
+    const { data: postData, error: fetchError } = await supabase
+      .from('posts')
+      .select('userId, body')
+      .eq('id', postId)
+      .single();
+
+    if (fetchError) {
+      if (fetchError.code === 'PGRST116') {
+        console.log('❌ Post not found:', postId);
+        return { success: false, msg: 'הפוסט לא קיים במערכת' };
+      }
+      console.error('Fetch post error:', fetchError);
+      return { success: false, msg: 'שגיאה בשליפת הפוסט' };
+    }
+
+    // בדיקת הרשאות - רק בעלים או אדמין יכולים למחוק
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .single();
+
+    if (userError) {
+      console.error('User fetch error:', userError);
+      return { success: false, msg: 'שגיאה בבדיקת הרשאות' };
+    }
+
+    const isOwner = postData.userId === userId;
+    const isAdmin = userData.role === 'admin';
+
+    if (!isOwner && !isAdmin) {
+      console.log('❌ Unauthorized delete attempt:', { 
+        userId, 
+        postOwnerId: postData.userId, 
+        userRole: userData.role 
+      });
+      return { success: false, msg: 'אין הרשאה למחוק את הפוסט' };
+    }
+
+    // מחיקת הפוסט
+    const { error: deleteError } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', postId);
+
+    if (deleteError) {
+      console.error('Delete post error:', deleteError);
+      return { success: false, msg: 'לא ניתן למחוק את הפוסט' };
+    }
+
+    console.log('✅ Post deleted successfully:', { 
+      postId, 
+      deletedBy: userId, 
+      isAdmin, 
+      isOwner 
+    });
+
+    return { success: true, data: { postId } };
+  } catch (error) {
+    console.error('❌ Delete post error:', error);
+    return { success: false, msg: 'שגיאה במחיקת פוסט' };
+  }
+};

@@ -3,7 +3,6 @@ import { Stack } from 'expo-router';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'expo-router';
-import { getUserData } from '../services/userService';
 import { LogBox } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import {
@@ -14,8 +13,7 @@ import {
   Poppins_600SemiBold,
 } from '@expo-google-fonts/poppins';
 
-SplashScreen.preventAutoHideAsync();
-
+// השתקת האזהרות
 LogBox.ignoreLogs([
   'Warning: TNodeChildrenRenderer',
   'Warning: MemoizedTNodeRenderer',
@@ -23,7 +21,9 @@ LogBox.ignoreLogs([
   'VirtualizedList: You have a large list that is slow to update',
   'expo-app-loading is deprecated',
   'expo-notifications: Android Push notifications',
-  'Warning: tried to subscribe multiple times', 
+  'Warning: tried to subscribe multiple times',
+  'Internal React error: Expected static flag was missing',
+  '[Reanimated] Reading from `value` during component render',
 ]);
 
 const _layout = () => (
@@ -46,156 +46,117 @@ const MainLayout = () => {
   const { setAuth, setAuthWithFullData, setUserData } = useAuth();
   const router = useRouter();
 
-  const cleanupChannels = async (userId) => {
-    
-    try {
-      const channelsToClean = [
-        { channel: postChannel, name: 'postChannel' },
-        { channel: notificationChannel, name: 'notificationChannel' },
-        { channel: commentsChannel, name: 'commentsChannel' }
-      ];
+  // Prevent native splash from auto-hiding until we're ready
+  useEffect(() => {
+    SplashScreen.preventAutoHideAsync().catch(() => {
+      /* ignore */
+    });
+  }, []);
 
-      for (const { channel, name } of channelsToClean) {
-        if (channel) {
-          console.log(`${name} status:`, channel.state);
-          try {
-            await supabase.removeChannel(channel);
-            console.log(`${name} removed successfully`);
-          } catch (error) {
-            console.warn(`Error removing ${name}:`, error);
-          }
-        }
-      }
-      
-      postChannel = null;
-      notificationChannel = null;
-      commentsChannel = null;
-      
-    } catch (error) {
-    }
-  };
-
-  const setupRealtimeChannels = async (userId) => {
-    if (!userId) return;
-    
-    if (postChannel || notificationChannel || commentsChannel) {
-      await cleanupChannels(userId);
-    }
-    
-    
-    try {
-      const timestamp = Date.now();
-      
-      postChannel = supabase
-        .channel(`posts-${userId}-${timestamp}`)
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'posts'
-        }, (payload) => {
-        })
-        .subscribe((status) => {
-        });
-
-      notificationChannel = supabase
-        .channel(`notifications-${userId}-${timestamp}`)
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${userId}`
-        }, (payload) => {
-        })
-        .subscribe((status) => {
-        });
-
-      commentsChannel = supabase
-        .channel(`comments-${userId}-${timestamp}`)
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'comments'
-        }, (payload) => {
-          console.log('Comment change received:', payload);
-        })
-        .subscribe((status) => {
-        });
-        
-      console.log('✅ All channels set up successfully');
-        
-    } catch (error) {
-      console.error('Error setting up channels:', error);
-    }
-  };
-
+  // Once fonts are loaded, check session, navigate and hide splash
   useEffect(() => {
     if (!fontsLoaded) return;
 
-    const getSession = async () => {
+    const init = async () => {
       try {
         const {
           data: { session },
         } = await supabase.auth.getSession();
 
         if (session) {
-          await setAuthWithFullData(session.user); 
-          router.replace('/home');
+          const success = await setAuthWithFullData(session.user);
+
+          if (success) {
+            await setupRealtimeChannels(session.user.id);
+            router.replace('/home');
+          } else {
+            router.replace('/splash');
+          }
         } else {
           setAuth(null);
-          router.replace('/welcome');
+          router.replace('/splash');
         }
-      } catch (error) {
-        console.error('Session error:', error);
+      } catch {
         router.replace('/splash');
       } finally {
+        // Now that navigation decision is made, hide the native splash
         await SplashScreen.hideAsync();
       }
     };
 
-    getSession();
+    init();
 
+    // Listen for auth changes
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (_event === 'SIGNED_OUT') {
+        await cleanupChannels(session?.user?.id);
+        setAuth(null);
+        setTimeout(() => router.replace('/splash'), 100);
+        return;
+      }
 
-      if (session) {
-        await setAuthWithFullData(session.user); 
+      if (session?.user) {
+        const success = await setAuthWithFullData(session.user);
         if (_event === 'SIGNED_IN') {
           await setupRealtimeChannels(session.user.id);
         }
-        router.replace('/home');
-      } else {
-        await cleanupChannels(session?.user?.id);
-        setAuth(null);
-        router.replace('/splash');
+        if (success) {
+          setTimeout(() => router.replace('/home'), 100);
+        } else {
+          router.replace('/splash');
+        }
       }
     });
 
     return () => {
-      listener.subscription?.unsubscribe();
-      cleanupChannels();
+      listener?.subscription?.unsubscribe();
+      cleanupChannels().catch(() => {
+        /* ignore */
+      });
     };
   }, [fontsLoaded]);
-
-  const updateUserData = async (user, email) => {
-    try {
-      let res = await getUserData(user?.id);
-      if (res?.success) {
-        setUserData({ ...res.data, email });
-      }
-    } catch (error) {
-    }
-  };
 
   if (!fontsLoaded) {
     return null;
   }
 
-  return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-    />
-  );
+  return <Stack screenOptions={{ headerShown: false }} />;
 };
+
+async function cleanupChannels(userId) {
+  try {
+    for (const channel of [postChannel, notificationChannel, commentsChannel]) {
+      if (channel) {
+        await supabase.removeChannel(channel).catch(() => {});
+      }
+    }
+  } catch {}
+  postChannel = notificationChannel = commentsChannel = null;
+}
+
+async function setupRealtimeChannels(userId) {
+  if (!userId) return;
+  await cleanupChannels(userId);
+
+  const timestamp = Date.now();
+  postChannel = supabase
+    .channel(`posts-${userId}-${timestamp}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => {})
+    .subscribe(() => {});
+
+  notificationChannel = supabase
+    .channel(`notifications-${userId}-${timestamp}`)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+      () => {}
+    )
+    .subscribe(() => {});
+
+  commentsChannel = supabase
+    .channel(`comments-${userId}-${timestamp}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, () => {})
+    .subscribe(() => {});
+}
 
 export default _layout;

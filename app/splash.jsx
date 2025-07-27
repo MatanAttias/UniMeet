@@ -5,6 +5,7 @@ import { MotiText, MotiView } from 'moti'
 import { theme } from '../constants/theme'
 import { hp } from '../constants/helpers/common'
 import Icon from 'react-native-vector-icons/Ionicons'
+import * as ExpoSplashScreen from 'expo-splash-screen' 
 
 const { width, height } = Dimensions.get('window')
 
@@ -13,7 +14,7 @@ const SplashScreen = () => {
 
   useEffect(() => {
     const hide = async () => {
-      await SplashScreen.hideAsync(); 
+      await ExpoSplashScreen.hideAsync(); 
     };
   
     hide();
@@ -31,7 +32,10 @@ const SplashScreen = () => {
       <MotiText
         from={{ opacity: 0, translateY: 40, scale: 0.9 }}
         animate={{ opacity: 1, translateY: 0, scale: 1 }}
-        transition={{ duration: 800 }}
+        transition={{ 
+          type: 'timing', 
+          duration: 800 
+        }}
         style={styles.logoText}
       >
         UniMeet
@@ -41,7 +45,11 @@ const SplashScreen = () => {
         style={styles.subtitle}
         from={{ opacity: 0, scale: 0.8, translateY: 30 }}
         animate={{ opacity: 1, scale: 1, translateY: 0 }}
-        transition={{ delay: 1200, duration: 1200 }}
+        transition={{ 
+          type: 'timing',
+          delay: 1200, 
+          duration: 1200 
+        }}
       >
         מקום להכיר, להתחבר{'\n'}ולצמוח יחד
       </MotiText>
@@ -80,6 +88,7 @@ const Sparkle = () => {
               from={{ opacity: 0 }}
               animate={{ opacity: [0, 1, 0] }}
               transition={{
+                type: 'timing', 
                 duration,
                 loop: true,
                 delay: index * 100,

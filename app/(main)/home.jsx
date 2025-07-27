@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   useFonts,
@@ -8,7 +8,6 @@ import {
 } from '@expo-google-fonts/poppins';
 import ScreenWrapper from '../../components/ScreenWrapper';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
 import { hp, wp } from '../../constants/helpers/common';
 import { theme } from '../../constants/theme';
 import { useRouter } from 'expo-router';
@@ -29,11 +28,11 @@ import HomeTabs from '../../components/HomeTabs';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as Haptics from 'expo-haptics';
 
-
 let limit = 0;
 
 export default function Home() {
-  const { user } = useAuth();
+  // 🔧 הוסף isAdmin, isParent מה-AuthContext
+  const { user, isAdmin, isParent } = useAuth();
   const router = useRouter();
   const [selectedTab, setSelectedTab] = useState('home');
   const [posts, setPosts] = useState([]);
@@ -43,7 +42,6 @@ export default function Home() {
   const [notificationCount, setNotificationCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingSaved, setLoadingSaved] = useState(false);
-  const subscriptionsRef = useRef({});
   const [chats, setChats] = useState([]);
 
   const [fontsLoaded] = useFonts({
@@ -52,17 +50,11 @@ export default function Home() {
     Poppins_400Regular,
   });
 
-
   useEffect(() => {
-
+    // Debug user data (ניתן להסיר בפרודקשן)
   }, [user]);
-  
-  // בדיקה אם המשתמש הוא הורה
-  const isParent = user?.role === 'parent';
 
   useEffect(() => {
-
-    // טען תוכן בהתאם לtab הנבחר - רק אם יש משתמש וtab השתנה
     if (user?.id) {
       if (selectedTab === 'home' && posts.length === 0) {
         getPosts();
@@ -70,6 +62,8 @@ export default function Home() {
         loadSavedContent();
       } else if (selectedTab === 'parentTips') {
         router.push('/parentTips');
+      } else if (selectedTab === 'reports') {
+        router.push('/reports'); 
       }
     }
   }, [user?.id, selectedTab]);
@@ -89,6 +83,7 @@ export default function Home() {
     }
   };
 
+  // 🔧 עדכן loadSavedContent לכלול אדמין
   const loadSavedContent = async () => {
     setLoadingSaved(true);
     
@@ -98,8 +93,8 @@ export default function Home() {
       setSavedPosts(postsRes.data);
     }
 
-    // טען טיפים שמורים (רק אם הורה)
-    if (isParent) {
+    // טען טיפים שמורים (להורים או לאדמין)
+    if (isParent() || isAdmin()) {
       const tipsRes = await fetchSavedTips(user.id);
       if (tipsRes.success) {
         setSavedTips(tipsRes.data);
@@ -125,13 +120,11 @@ export default function Home() {
   };
 
   const handleDeletePost = (deletedPost) => {
-    console.log('🗑️ Deleting post locally:', deletedPost.id);
     if (selectedTab === 'home') {
       setPosts(prevPosts => prevPosts.filter(post => post.id !== deletedPost.id));
     } else if (selectedTab === 'saved') {
       setSavedPosts(prevPosts => prevPosts.filter(post => post.id !== deletedPost.id));
     }
-    console.log('✅ Post removed from local state');
   };
 
   const handleUnsaveTip = async (tip) => {
@@ -149,37 +142,48 @@ export default function Home() {
     }
   };
 
+  // 🔧 עדכן handleTabSelect
   const handleTabSelect = (tab) => {
-    console.log('🔄 Tab selected:', tab); // Debug
     setSelectedTab(tab);
     if (tab === 'parentTips') {
       router.push('/parentTips');
+    } else if (tab === 'reports') {
+      router.push('/reports');
     }
   };
 
-  // רנדר תוכן הסמן "שמורים"
+  // 🔧 עדכן renderSavedContent
   const renderSavedContent = () => {
-    console.log('🔍 Rendering saved content. selectedTab:', selectedTab); // Debug
-    
     if (loadingSaved) {
-      return <Loading style={{ marginTop: hp(4) }} />;
+      return (
+        <View style={{ flex: 1 }}>
+          <Loading style={{ marginTop: hp(4) }} />
+        </View>
+      );
     }
 
-    const hasContent = savedPosts.length > 0 || (isParent && savedTips.length > 0);
+    const hasContent = savedPosts.length > 0 || ((isParent() || isAdmin()) && savedTips.length > 0);
 
     if (!hasContent) {
       return (
-        <View style={styles.emptyContainer}>
-          <MaterialCommunityIcons 
-            name="bookmark-outline" 
-            size={64} 
-            color={theme.colors.textLight} 
-          />
-          <Text style={styles.emptyTitle}>אין תוכן שמור</Text>
-          <Text style={styles.emptySubtitle}>
-            שמור פוסטים{isParent ? ' וטיפים' : ''} שאתה רוצה לחזור אליהם
-          </Text>
-        </View>
+        <FlatList
+          data={[]}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ flex: 1 }}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <MaterialCommunityIcons 
+                name="bookmark-outline" 
+                size={64} 
+                color={theme.colors.textLight} 
+              />
+              <Text style={styles.emptyTitle}>אין תוכן שמור</Text>
+              <Text style={styles.emptySubtitle}>
+                שמור פוסטים{(isParent() || isAdmin()) ? ' וטיפים' : ''} שאתה רוצה לחזור אליהם
+              </Text>
+            </View>
+          }
+        />
       );
     }
 
@@ -192,7 +196,7 @@ export default function Home() {
       return acc;
     }, {});
 
-    const uniqueTips = isParent ? savedTips.reduce((acc, tip) => {
+    const uniqueTips = (isParent() || isAdmin()) ? savedTips.reduce((acc, tip) => {
       const key = `tip-${tip.id}`;
       if (!acc[key]) {
         acc[key] = { ...tip, type: 'tip', uniqueKey: key };
@@ -208,6 +212,7 @@ export default function Home() {
     return (
       <FlatList
         data={allSavedContent}
+        style={{ flex: 1 }}
         refreshing={refreshing}
         onRefresh={refreshPosts}
         showsVerticalScrollIndicator={false}
@@ -222,11 +227,10 @@ export default function Home() {
                 router={router} 
                 onDelete={handleDeletePost}
                 showDelete={true}
-                isInSavedTab={true}  // ודא שזה מועבר נכון
+                isInSavedTab={true}  
               />
             );
           } else {
-            // רנדר כרטיס טיפ
             return (
               <View style={styles.tipCard}>
                 <View style={styles.tipHeader}>
@@ -252,19 +256,6 @@ export default function Home() {
             );
           }
         }}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <MaterialCommunityIcons 
-              name="bookmark-outline" 
-              size={64} 
-              color={theme.colors.textLight} 
-            />
-            <Text style={styles.emptyTitle}>אין תוכן שמור</Text>
-            <Text style={styles.emptySubtitle}>
-              שמור פוסטים{isParent ? ' וטיפים' : ''} שאתה רוצה לחזור אליהם
-            </Text>
-          </View>
-        }
       />
     );
   };
@@ -304,7 +295,6 @@ export default function Home() {
     );
   }
   
-
   return (
     <ScreenWrapper bg={theme.colors.background}>
       {/* Header */}
@@ -327,30 +317,40 @@ export default function Home() {
         </View>
       </View>
 
-      {/* Tabs */}
+      {/* 🔧 Tabs מעודכן */}
       <HomeTabs 
         selectedTab={selectedTab}
         onSelectTab={handleTabSelect}
-        isParent={isParent}
+        isParent={isParent()}
+        isAdmin={isAdmin()}
       />
 
-      {/* הודעת ברוכים הבאים מיוחדת להורים */}
-      {isParent && selectedTab === 'home' && (
+      {/* 🔧 הודעת ברוכים הבאים מעודכנת */}
+      {(isParent() || isAdmin()) && selectedTab === 'home' && (
         <View style={styles.parentWelcome}>
-          <MaterialCommunityIcons name="lightbulb-on" size={24} color={theme.colors.primary} />
+          <MaterialCommunityIcons 
+            name={isAdmin() ? "shield-check" : "lightbulb-on"} 
+            size={24} 
+            color={theme.colors.primary} 
+          />
           <Text style={styles.parentWelcomeText}>
-            ברוך הבא! גלה טיפים מועילים לחינוך וגידול ילדים
+            {isAdmin() 
+              ? "ברוך הבא אדמין! יש לך גישה לכל המערכת ולניהול דיווחים" 
+              : "ברוך הבא! גלה טיפים מועילים לחינוך וגידול ילדים"
+            }
           </Text>
           <Pressable 
             style={styles.parentWelcomeButton}
-            onPress={() => setSelectedTab('parentTips')}
+            onPress={() => setSelectedTab(isAdmin() ? 'reports' : 'parentTips')}
           >
-            <Text style={styles.parentWelcomeButtonText}>צפה בטיפים</Text>
+            <Text style={styles.parentWelcomeButtonText}>
+              {isAdmin() ? "ניהול דיווחים" : "צפה בטיפים"}
+            </Text>
           </Pressable>
         </View>
       )}
 
-      {/* Content */}
+      {/* 🔧 Content מעודכן */}
       {selectedTab === 'home' ? (
         <FlatList
           data={posts}
@@ -374,20 +374,27 @@ export default function Home() {
         />
       ) : selectedTab === 'saved' ? (
         renderSavedContent()
+      ) : selectedTab === 'reports' ? (
+        // 🔧 זמני - נוסיף את העמוד הנכון בשלב הבא
+        <View style={styles.emptyContainer}>
+          <MaterialCommunityIcons name="shield-alert" size={64} color={theme.colors.primary} />
+          <Text style={styles.emptyTitle}>מערכת דיווחים</Text>
+          <Text style={styles.emptySubtitle}>בקרוב...</Text>
+        </View>
       ) : null}
 
       {/* BottomBar */}
       <BottomBar
-          currentUser={user}
-          selected={selectedTab === 'home' ? 'home' : selectedTab === 'saved' ? 'saved' : 'home'}
-          chats={chats} // 👈 העברה חשובה של רשימת הצ׳אטים
-          onTabChange={tab => {
-            if (tab === 'search') router.push('Search');
-            if (tab === 'saved') setSelectedTab('saved');
-            if (tab === 'profile') router.push('profile');
-            if (tab === 'home') setSelectedTab('home');
-          }}
-        />
+        currentUser={user}
+        selected={selectedTab === 'home' ? 'home' : selectedTab === 'saved' ? 'saved' : 'home'}
+        chats={chats}
+        onTabChange={tab => {
+          if (tab === 'search') router.push('Search');
+          if (tab === 'saved') setSelectedTab('saved');
+          if (tab === 'profile') router.push('profile');
+          if (tab === 'home') setSelectedTab('home');
+        }}
+      />
     </ScreenWrapper>
   );
 }
@@ -522,7 +529,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins_400Regular',
   },
   emptyContainer: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: hp(8),
   },
   emptyTitle: {

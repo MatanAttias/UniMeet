@@ -5,10 +5,12 @@ import Icon from '../assets/icons';
 import Avatar from './Avatar';
 import { theme } from '../constants/theme';
 import { hp, wp } from '../constants/helpers/common';
-import { supabase } from '../lib/supabase'; // ✅ ודא שהנתיב נכון
+import { supabase } from '../lib/supabase';
 
 // 👉 פונקציה להבאת הצ'אטים של המשתמש
 const fetchUserChats = async (userId) => {
+  if (!userId) return [];
+  
   const { data, error } = await supabase
     .from('chats')
     .select('*')
@@ -22,55 +24,49 @@ const fetchUserChats = async (userId) => {
   return data || [];
 };
 
-export default function BottomBar({ selected }) {
+export default function BottomBar({ currentUser, selected }) {
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState(null);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [unreadLikes, setUnreadLikes] = useState(0);
-
   
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!currentUser?.id) return;
+      
       try {
-        // 🧑‍💻 שליפת המשתמש המחובר
-        const { data, error } = await supabase.auth.getUser();
-        if (error || !data?.user) throw error || new Error('No user logged in');
-        const user = data.user;
-        setCurrentUser(user);
-  
-        // 💬 שליפת שיחות ועדכון הודעות שלא נקראו
-        const chats = await fetchUserChats(user.id);
+        // שליפת שיחות ועדכון הודעות שלא נקראו
+        const chats = await fetchUserChats(currentUser.id);
         const unread = chats.reduce((count, chat) => {
-          const isUser1 = user.id === chat.user1_id;
+          const isUser1 = currentUser.id === chat.user1_id;
           return count + ((isUser1 ? !chat.user1_read : !chat.user2_read) ? 1 : 0);
         }, 0);
         setUnreadMessages(unread);
-  
-        // ❤️ שליפת לייקים שלא נקראו מטבלת interactions
+
+        // שליפת לייקים שלא נקראו מטבלת interactions
         const { data: likes, error: likesError } = await supabase
           .from('interactions')
           .select('*')
-          .eq('user_id', user.id)
-  
+          .eq('user_id', currentUser.id);
+
         if (likesError) throw likesError;
-  
+
         setUnreadLikes(likes?.length || 0);
-  
+
       } catch (err) {
         console.error('Error in BottomBar useEffect:', err);
       }
     };
-  
+
     fetchData();
-  }, []);
+  }, [currentUser?.id]);
 
   return (
     <View style={styles.container}>
       {/* פרופיל */}
       <Pressable style={styles.tab} onPress={() => router.push('/profile')}>
         <Avatar
-          uri={currentUser?.user_metadata?.image}
+          uri={currentUser?.image} 
           size={hp(3.3)}
           rounded={theme.radius.full}
           style={styles.avatar}

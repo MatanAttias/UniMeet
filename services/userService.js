@@ -7,17 +7,54 @@ export const getUserData = async (userId) => {
   try {
     const { data, error } = await supabase
       .from('users')
-      .select('id, name, role, image, birth_date, gender, identities, supportNeeds') // 🔧 הוסף image ושדות נוספים
+      .select(`
+        id, 
+        created_at,
+        name, 
+        image,
+        bio,
+        email,
+        phoneNumber,
+        role, 
+        birth_date, 
+        connectionTypes,
+        gender, 
+        wantsNotifications,
+        location,
+        preferredMatch,
+        hobbies,
+        showHobbies,
+        showTraits,
+        supportNeeds,
+        showSupportNeeds,
+        identities,
+        showIdentities,
+        introduction,
+        prompt,
+        audio,
+        status,
+        traits
+      `) 
       .eq('id', userId)
       .single();
 
-    if (error) return { success: false, msg: error.message };
+    if (error) {
+      console.error('❌ getUserData error:', error);
+      return { success: false, msg: error.message };
+    }
     
-   
+    // 🔧 הוסף debug לראות מה חזר
+    console.log('📦 getUserData result:', {
+      userId: userId,
+      hasImage: !!data.image,
+      imageValue: data.image,
+      hasName: !!data.name,
+      allFields: Object.keys(data)
+    });
     
     return { success: true, data };
   } catch (err) {
-    console.error('getUserData error:', err);
+    console.error('❌ getUserData error:', err);
     return { success: false, msg: err.message };
   }
 };
@@ -50,10 +87,15 @@ export const updateUser = async (userId, data) => {
       .update(data)
       .eq('id', userId);
 
-    if (error) return { success: false, msg: error.message };
+    if (error) {
+      console.error('❌ updateUser error:', error);
+      return { success: false, msg: error.message };
+    }
+    
+    console.log('✅ User updated successfully');
     return { success: true };
   } catch (err) {
-    console.error('updateUser error:', err);
+    console.error('❌ updateUser error:', err);
     return { success: false, msg: err.message };
   }
 };

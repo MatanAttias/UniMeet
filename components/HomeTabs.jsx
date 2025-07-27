@@ -2,8 +2,9 @@ import React from 'react';
 import { View, Pressable, Text, StyleSheet } from 'react-native';
 import { theme } from '../constants/theme';
 import { hp, wp } from '../constants/helpers/common';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const HomeTabs = ({ selectedTab, onSelectTab, isParent = false }) => {
+const HomeTabs = ({ selectedTab, onSelectTab, isParent = false, isAdmin = false }) => {
   return (
     <View style={styles.tabContainer}>
       {/* דף הבית */}
@@ -26,8 +27,8 @@ const HomeTabs = ({ selectedTab, onSelectTab, isParent = false }) => {
         </Text>
       </Pressable>
 
-      {/* טיפים להורים - רק להורים */}
-      {isParent && (
+      {/* טיפים להורים - להורים או לאדמין */}
+      {(isParent || isAdmin) && (
         <Pressable
           style={[styles.tab, selectedTab === 'parentTips' && styles.activeTab]}
           onPress={() => onSelectTab('parentTips')}
@@ -35,6 +36,25 @@ const HomeTabs = ({ selectedTab, onSelectTab, isParent = false }) => {
           <Text style={[styles.tabText, selectedTab === 'parentTips' && styles.activeTabText]}>
             טיפים להורים
           </Text>
+        </Pressable>
+      )}
+
+      {/* דיווחים - רק לאדמין */}
+      {isAdmin && (
+        <Pressable
+          style={[styles.tab, selectedTab === 'reports' && styles.activeTab]}
+          onPress={() => onSelectTab('reports')}
+        >
+          <View style={styles.tabWithIcon}>
+            <MaterialCommunityIcons 
+              name="shield-alert" 
+              size={16} 
+              color={selectedTab === 'reports' ? theme.colors.primary : theme.colors.textSecondary} 
+            />
+            <Text style={[styles.tabText, selectedTab === 'reports' && styles.activeTabText]}>
+              דיווחים
+            </Text>
+          </View>
         </Pressable>
       )}
     </View>
@@ -46,7 +66,7 @@ export default HomeTabs;
 const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row-reverse',
-    justifyContent: 'right',  // מרכז את הtabs
+    justifyContent: 'center',
     paddingHorizontal: wp(4),
     paddingBottom: hp(1),
     borderBottomWidth: 1,
@@ -54,9 +74,9 @@ const styles = StyleSheet.create({
     marginBottom: hp(1),
   },
   tab: {
-    marginHorizontal: wp(2),  // שינוי מmarginLeft לmarginHorizontal לחלוקה שווה
+    marginHorizontal: wp(2),
     paddingVertical: hp(1.2),
-    paddingHorizontal: wp(4),  // הגדלת padding לכפתורים יותר גדולים
+    paddingHorizontal: wp(4),
     borderBottomWidth: 2,
     borderColor: 'transparent',
   },
@@ -71,5 +91,10 @@ const styles = StyleSheet.create({
   activeTabText: {
     color: theme.colors.primary,
     fontWeight: theme.fonts.bold,
+  },
+  tabWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
 });

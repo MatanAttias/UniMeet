@@ -1,5 +1,3 @@
-require('dotenv').config();
-
 export default {
   expo: {
     name: 'UniMeet',
@@ -9,6 +7,13 @@ export default {
     icon: './assets/images/icon.png',
     scheme: 'myapp',
     userInterfaceStyle: 'automatic',
+
+    splash: {
+      image: './assets/images/logos.png',
+      resizeMode: 'contain',
+      backgroundColor: '#000000',
+    },
+
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.anonymous.UniMeet',
@@ -25,24 +30,21 @@ export default {
       output: 'static',
       favicon: './assets/images/favicon.png',
     },
-    splash: {
-      image: './assets/images/logos.png',
-      resizeMode: 'contain',
-      backgroundColor: '#000000',
-    },
+
     plugins: [
       'expo-router',
       [
         'expo-splash-screen',
         {
-          image: './assets/images/splash-icon.png',
-          imageWidth: 200,
+          // מיישר ל־splash הראשי
+          image: './assets/images/logos.png',
           resizeMode: 'contain',
-          backgroundColor: '#ffffff',
+          backgroundColor: '#000000',
         },
       ],
       'expo-font',
     ],
+
     experiments: {
       typedRoutes: true,
     },
