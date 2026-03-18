@@ -21,7 +21,7 @@ const ProfilePicture = () => {
   } = useLocalSearchParams();
 
   const [image, setImage] = useState(null);
-  
+
   useEffect(() => {
     (async () => {
       if (Platform.OS !== 'web') {
@@ -40,7 +40,7 @@ const ProfilePicture = () => {
   const onPickImage = async () => {
     try {
       console.log('ניסיון לפתוח את בורר התמונות');
-      
+
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('שגיאה', 'לא קיבלנו הרשאה לגישה לגלריה');
@@ -48,7 +48,7 @@ const ProfilePicture = () => {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.7,
@@ -99,15 +99,15 @@ const ProfilePicture = () => {
         בחר/י תמונת פרופיל שכולם יראו כשיפגשו אותך
       </Animated.Text>
 
-      <Pressable 
-        style={styles.imageWrapper} 
+      <Pressable
+        style={styles.imageWrapper}
         onPress={onPickImage}
         accessibilityLabel="הוסף תמונת פרופיל"
         accessibilityHint="לחץ כדי לבחור תמונת פרופיל מהגלריה שלך"
       >
         {image ? (
-          <Image 
-            source={{ uri: image.uri }} 
+          <Image
+            source={{ uri: image.uri }}
             style={styles.image}
             contentFit="cover"
             transition={300}
@@ -120,8 +120,8 @@ const ProfilePicture = () => {
         )}
       </Pressable>
 
-      <Pressable 
-        style={styles.button} 
+      <Pressable
+        style={styles.button}
         onPress={onNext}
         accessibilityLabel="כפתור המשך"
       >

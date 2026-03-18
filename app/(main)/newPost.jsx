@@ -52,15 +52,15 @@ const NewPost = () => {
   }, [])
 
   const onPick = async (isImage) => {
-    let mediaConfig = {
-      mediaTypes: isImage ? ImagePicker.MediaTypeOptions.Images : ImagePicker.MediaTypeOptions.Videos,
+    const mediaConfig = {
+      mediaTypes: isImage ? ['images'] : ['videos'],
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.7,
     }
 
     const result = await ImagePicker.launchImageLibraryAsync(mediaConfig)
-    if (!result.canceled) {
+    if (!result.canceled && result.assets?.length > 0) {
       setFile(result.assets[0])
     }
   }
@@ -104,6 +104,7 @@ const NewPost = () => {
       Alert.alert('פוסט', res.msg)
     }
   }
+
   return (
     <ScreenWrapper bg="black">
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -116,64 +117,68 @@ const NewPost = () => {
             <Pressable style={styles.backButton} onPress={() => router.back()}>
               <Text style={styles.backText}>חזור</Text>
             </Pressable>
-  
+
             <Text style={styles.title}>יצירת פוסט</Text>
-  
+
             <View style={styles.content}>
               <ScrollView contentContainerStyle={{ gap: 20, flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-            <View style={styles.header}>
-              <Avatar uri={user?.image} size={hp(6.5)} rounded={theme.radius.xl} />
-              <Text style={styles.username}>{user?.name}</Text>
-            </View>
+                <View style={styles.header}>
+                  <Avatar uri={user?.image} size={hp(6.5)} rounded={theme.radius.xl} />
+                  <Text style={styles.username}>{user?.name}</Text>
+                </View>
 
-            <Animated.View style={styles.textEditor}>
-              <RichTextEditor editorRef={editorRef} onChange={(body) => (bodyRef.current = body)} />
-            </Animated.View>
+                <Animated.View style={styles.textEditor}>
+                  <RichTextEditor editorRef={editorRef} onChange={(body) => (bodyRef.current = body)} />
+                </Animated.View>
 
-            {file && (
-              <View style={styles.filePreview}>
-                {getFileType(file) === 'video' ? (
-                  <Video
-                    style={{ flex: 1 }}
-                    source={{ uri: getFileUri(file) }}
-                    useNativeControls
-                    resizeMode="cover"
-                    isLooping
-                  />
-                ) : (
-                  <Image source={{ uri: getFileUri(file) }} resizeMode="cover" style={{ flex: 1 }} />
+                {file && (
+                  <View style={styles.filePreview}>
+                    {getFileType(file) === 'video' ? (
+                      <Video
+                        style={{ flex: 1 }}
+                        source={{ uri: getFileUri(file) }}
+                        useNativeControls
+                        resizeMode="cover"
+                        isLooping
+                      />
+                    ) : (
+                      <Image
+                        source={{ uri: getFileUri(file) }}
+                        contentFit="cover"
+                        style={{ flex: 1 }}
+                      />
+                    )}
+                    <Pressable style={styles.deleteButton} onPress={() => setFile(null)}>
+                      <Icon name="delete" size={20} color="white" />
+                    </Pressable>
+                  </View>
                 )}
-                <Pressable style={styles.deleteButton} onPress={() => setFile(null)}>
-                  <Icon name="delete" size={20} color="white" />
-                </Pressable>
-              </View>
-            )}
 
-            <View style={styles.mediaRow}>
-              <TouchableOpacity onPress={() => onPick(true)}>
-                <Icon name="image" size={30} color={theme.colors.dark} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => onPick(false)}>
-                <Icon name="video" size={33} color={theme.colors.dark} />
-              </TouchableOpacity>
-              <Text style={styles.addImageText}>הוסף לפוסט שלך תמונה או סירטון</Text>
+                <View style={styles.mediaRow}>
+                  <TouchableOpacity onPress={() => onPick(true)}>
+                    <Icon name="image" size={30} color={theme.colors.dark} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => onPick(false)}>
+                    <Icon name="video" size={33} color={theme.colors.dark} />
+                  </TouchableOpacity>
+                  <Text style={styles.addImageText}>הוסף לפוסט שלך תמונה או סירטון</Text>
+                </View>
+              </ScrollView>
             </View>
-          </ScrollView>
-        </View>
 
-        <View style={styles.buttonContainer}>
-          <Button
-            buttonStyle={{ height: hp(6.2), width: '100%' }}
-            title={post && post.id ? 'עדכון' : 'פרסם'}
-            loading={loading}
-            hasShadow={false}
-            onPress={onSubmit}
-          />
-        </View>
-      </View>
-      </KeyboardAvoidingView>
-    </TouchableWithoutFeedback>
-  </ScreenWrapper>
+            <View style={styles.buttonContainer}>
+              <Button
+                buttonStyle={{ height: hp(6.2), width: '100%' }}
+                title={post && post.id ? 'עדכון' : 'פרסם'}
+                loading={loading}
+                hasShadow={false}
+                onPress={onSubmit}
+              />
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
+    </ScreenWrapper>
   )
 }
 
@@ -185,7 +190,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     paddingHorizontal: wp(4),
     gap: 15,
-    backgroundColor: theme.colors.background,  
+    backgroundColor: theme.colors.background,
     writingDirection: 'rtl',
   },
   content: {
@@ -194,7 +199,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: hp(2.8),
     fontWeight: 'bold',
-    color: theme.colors.primary,  
+    color: theme.colors.primary,
     textAlign: 'center',
     marginTop: -5,
   },
@@ -207,7 +212,7 @@ const styles = StyleSheet.create({
   username: {
     fontSize: hp(2.2),
     fontWeight: theme.fonts.semibold,
-    color: theme.colors.primary, 
+    color: theme.colors.primary,
     textAlign: 'right',
   },
   textEditor: {
@@ -217,7 +222,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 5,
-    backgroundColor: theme.colors.black + 'cc', 
+    backgroundColor: theme.colors.black + 'cc',
     elevation: 6,
     transform: [{ scale: 1 }],
     transitionDuration: '300ms',
@@ -228,7 +233,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.lg,
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: '#e0e0e5', 
+    backgroundColor: '#e0e0e5',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
@@ -239,7 +244,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-    backgroundColor: 'rgba(0,0,0,0.4)', 
+    backgroundColor: 'rgba(0,0,0,0.4)',
     padding: 5,
     borderRadius: 20,
     opacity: 0.8,
@@ -249,7 +254,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: theme.colors.primary + 'cc', 
+    backgroundColor: theme.colors.primary + 'cc',
     borderRadius: theme.radius.xl,
     padding: 12,
     gap: 15,
@@ -261,7 +266,7 @@ const styles = StyleSheet.create({
   },
   addImageText: {
     fontSize: hp(1.8),
-    color: theme.colors.black + 'dd', 
+    color: theme.colors.black + 'dd',
     flex: 1,
     textAlign: 'right',
   },
@@ -282,12 +287,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 4,
-    alignSelf: 'flex-end',  
+    alignSelf: 'flex-end',
     marginTop: 13,
   },
   backText: {
     color: theme.colors.primary,
     fontSize: hp(2),
-    fontWeight: '600',
-  },
+    fontWeight: '600',
+  },
 })
